@@ -63,7 +63,7 @@ model AuditLog {
   action       String
   entityType   String
   entityId     Int
-  performedBy  Int
+  performedBy  String
   universityId String?
   metadata     Json?
   createdAt    DateTime @default(now())

@@ -29,40 +29,28 @@ router.post(
         return res.status(404).json({ error: "Student profile not found" });
       }
 
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-
-      if (start >= end) {
-        return res.status(400).json({
-          error: "startDate must be before endDate",
-        });
-      }
-
-      // 🔥 OVERLAP CHECK (THIS IS THE KEY BIT)
-      const overlappingTerm = await prisma.term.findFirst({
-        where: {
-          studentId: student.id,
-          OR: [
-            {
-              startDate: { lte: end },
-              endDate: { gte: start },
-            },
-          ],
-        },
-      });
-
-      if (overlappingTerm) {
-        return res.status(409).json({
-          error: "Term dates overlap with an existing term",
-        });
-      }
-
       const term = await prisma.term.create({
         data: {
           studentId: student.id,
           name,
-          startDate: start,
-          endDate: end,
+          startDate: new Date(startDate),
+          endDate: new Date(endDate),
+        },
+      });
+
+      // 🔥 AUDIT: CREATE TERM
+      await prisma.auditLog.create({
+        data: {
+          action: "CREATE_TERM",
+          entityType: "Term",
+          entityId: term.id,
+          performedBy: req.user.id,
+          universityId: student.universityId,
+          metadata: {
+            termName: term.name,
+            startDate: term.startDate,
+            endDate: term.endDate,
+          },
         },
       });
 

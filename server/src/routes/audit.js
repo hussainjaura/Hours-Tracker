@@ -4,6 +4,7 @@ import { authenticate, authorizeRoles } from "../middleware/auth.js";
 
 const router = express.Router();
 
+// when admin deletes a term he can view all the audit logs!
 router.get(
   "/audit-logs",
   authenticate,
@@ -23,7 +24,7 @@ router.get(
   }
 );
 
-
+// view audits for a specific uni id
 router.get(
   "/audit-logs/student/:universityId",
   authenticate,
