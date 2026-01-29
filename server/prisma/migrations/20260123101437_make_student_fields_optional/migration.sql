@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "Student" ALTER COLUMN "courseEndDate" DROP NOT NULL,
+ALTER COLUMN "termEndDate" DROP NOT NULL,
+ALTER COLUMN "termStartDate" DROP NOT NULL,
+ALTER COLUMN "maxWeeklyHours" DROP NOT NULL,
+ALTER COLUMN "maxWeeklyHours" DROP DEFAULT;

@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  EMPLOYER
+  ADMIN
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
+
+  student   Student?
+}
+
+
+model Student {
+  id              Int      @id @default(autoincrement())
+  userId          String   @unique
+  universityId    String   @unique
+  visaType        String
+  courseEndDate   DateTime
+  maxWeeklyHours  Int?
+  createdAt       DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  terms  Term[]
+}
+
+model Term {
+  id         Int      @id @default(autoincrement())
+  studentId  Int
+  name       String   // "AUTUMN", "SPRING", "SUMMER"
+  startDate  DateTime
+  endDate    DateTime
+  createdAt  DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+}
+
+
+enum TermType {
+  AUTUMN
+  SPRING
+  SUMMER
+}
