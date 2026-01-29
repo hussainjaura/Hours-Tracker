@@ -8,6 +8,7 @@ import employerRoutes from "./routes/employer.js";
 import adminRoutes from "./routes/admin.js";
 import termRoutes from "./routes/terms.js";
 import adminTermRoutes from "./routes/adminTerms.js";
+import auditRoutes from "./routes/audit.js";
 
 
 const app = express();
@@ -21,6 +22,7 @@ app.use("/employer", employerRoutes);
 app.use("/admin", adminRoutes);
 app.use("/terms", termRoutes);
 app.use("/adminTerms", adminTermRoutes);
+app.use("/audit", auditRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "API is running" });

@@ -56,3 +56,15 @@ enum TermType {
   SPRING
   SUMMER
 }
+
+
+model AuditLog {
+  id           Int      @id @default(autoincrement())
+  action       String
+  entityType   String
+  entityId     Int
+  performedBy  Int
+  universityId String?
+  metadata     Json?
+  createdAt    DateTime @default(now())
+}

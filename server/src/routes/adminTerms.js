@@ -46,6 +46,24 @@ router.delete(
       return res.status(404).json({ error: "Term not found" });
     }
 
+    // 🔥 CREATE AUDIT LOG
+    await prisma.auditLog.create({
+      data: {
+        action: "DELETE_TERM",
+        entityType: "Term",
+        entityId: term.id,
+        performedBy: req.user.id,
+        universityId: term.student.universityId,
+        metadata: {
+          termName: term.name,
+          startDate: term.startDate,
+          endDate: term.endDate,
+        },
+      },
+    });
+
+
+    // 🔥 DELETE TERM
     await prisma.term.delete({
       where: { id: termId },
     });
