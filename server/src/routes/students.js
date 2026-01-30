@@ -5,9 +5,9 @@ import { getWorkEligibility } from "../utils/workEligibility.js";
 
 const router = express.Router();
 
-
-
-// this is where you create student profile!
+/**
+ * CREATE STUDENT PROFILE (ONCE)
+ */
 router.post(
   "/profile",
   authenticate,
@@ -17,9 +17,12 @@ router.post(
       const { universityId, visaType, maxWeeklyHours, courseEndDate } = req.body;
 
       if (!universityId || !visaType || !courseEndDate) {
-        return res.status(400).json({ error: "Missing required fields" });
+        return res.status(400).json({
+          error: "universityId, visaType, and courseEndDate are required",
+        });
       }
 
+      // prevent duplicate profile
       const existingStudent = await prisma.student.findUnique({
         where: { userId: req.user.id },
       });
@@ -35,7 +38,7 @@ router.post(
           userId: req.user.id,
           universityId,
           visaType,
-          maxWeeklyHours,
+          maxWeeklyHours, // optional
           courseEndDate: new Date(courseEndDate),
         },
       });
@@ -48,8 +51,9 @@ router.post(
   }
 );
 
-
-
+/**
+ * EMPLOYER CHECK
+ */
 router.get(
   "/:universityId",
   authenticate,
@@ -79,8 +83,5 @@ router.get(
     }
   }
 );
-
-
-
 
 export default router;

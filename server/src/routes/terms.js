@@ -62,6 +62,85 @@ router.post(
   }
 );
 
+router.put(
+  "/:termId",
+  authenticate,
+  authorizeRoles("STUDENT"),
+  async (req, res) => {
+    const termId = Number(req.params.termId);
+    const { name, startDate, endDate } = req.body;
+
+    if (!name && !startDate && !endDate) {
+      return res.status(400).json({
+        error: "At least one field must be provided",
+      });
+    }
+
+    try {
+      // 1️⃣ Fetch term + ownership check
+      const term = await prisma.term.findUnique({
+        where: { id: termId },
+        include: { student: true },
+      });
+
+      if (!term) {
+        return res.status(404).json({ error: "Term not found" });
+      }
+
+      if (term.student.userId !== req.user.id) {
+        return res.status(403).json({
+          error: "You can only update your own terms",
+        });
+      }
+
+      // 2️⃣ Store old values for audit
+      const oldData = {
+        name: term.name,
+        startDate: term.startDate,
+        endDate: term.endDate,
+      };
+
+      // 3️⃣ Update term
+      const updatedTerm = await prisma.term.update({
+        where: { id: termId },
+        data: {
+          ...(name && { name }),
+          ...(startDate && { startDate: new Date(startDate) }),
+          ...(endDate && { endDate: new Date(endDate) }),
+        },
+      });
+
+      // 4️⃣ CREATE AUDIT LOG 🔥
+      await prisma.auditLog.create({
+        data: {
+          action: "UPDATE_TERM",
+          entityType: "Term",
+          entityId: term.id,
+          performedBy: req.user.id,
+          universityId: term.student.universityId,
+          metadata: {
+            before: oldData,
+            after: {
+              name: updatedTerm.name,
+              startDate: updatedTerm.startDate,
+              endDate: updatedTerm.endDate,
+            },
+          },
+        },
+      });
+
+      res.json({
+        message: "Term updated successfully",
+        term: updatedTerm,
+      });
+    } catch (err) {
+      console.error("UPDATE TERM ERROR:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+
 
 router.get(
   "/me",
