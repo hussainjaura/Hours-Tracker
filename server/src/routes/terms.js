@@ -236,6 +236,148 @@ router.delete(
   }
 );
 
+/**
+ * ============================================
+ * TERM TEMPLATE ROUTES (STUDENT)
+ * ============================================
+ */
 
+/**
+ * GET templates for student's university
+ * GET /terms/templates/me
+ */
+router.get(
+  "/templates/me",
+  authenticate,
+  authorizeRoles("STUDENT"),
+  async (req, res) => {
+    try {
+      const student = await prisma.student.findUnique({
+        where: { userId: req.user.id },
+      });
+
+      if (!student) {
+        return res.status(404).json({
+          error: "Student profile not found",
+        });
+      }
+
+      // Find university by code (stored in student.universityId)
+      const university = await prisma.university.findUnique({
+        where: { code: student.universityId },
+        include: {
+          templates: {
+            orderBy: { startDate: "asc" },
+          },
+        },
+      });
+
+      if (!university) {
+        return res.status(404).json({
+          error: "University not found for your profile",
+        });
+      }
+
+      res.json(university.templates);
+    } catch (err) {
+      console.error("GET TEMPLATES ERROR:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+/**
+ * CREATE term from template (with optional date edits)
+ * POST /terms/from-template
+ */
+router.post(
+  "/from-template",
+  authenticate,
+  authorizeRoles("STUDENT"),
+  async (req, res) => {
+    try {
+      const { templateId, startDate, endDate } = req.body;
+
+      if (!templateId) {
+        return res.status(400).json({
+          error: "templateId is required",
+        });
+      }
+
+      // 1️⃣ Get student
+      const student = await prisma.student.findUnique({
+        where: { userId: req.user.id },
+      });
+
+      if (!student) {
+        return res.status(404).json({
+          error: "Student profile not found",
+        });
+      }
+
+      // 2️⃣ Get template and verify it belongs to student's university
+      const template = await prisma.termTemplate.findUnique({
+        where: { id: Number(templateId) },
+        include: {
+          university: true,
+        },
+      });
+
+      if (!template) {
+        return res.status(404).json({
+          error: "Term template not found",
+        });
+      }
+
+      // 3️⃣ Verify template belongs to student's university
+      if (template.university.code !== student.universityId) {
+        return res.status(403).json({
+          error: "This template does not belong to your university",
+        });
+      }
+
+      // 4️⃣ Use provided dates or fall back to template dates
+      const finalStartDate = startDate ? new Date(startDate) : template.startDate;
+      const finalEndDate = endDate ? new Date(endDate) : template.endDate;
+
+      // 5️⃣ Create term from template
+      const term = await prisma.term.create({
+        data: {
+          studentId: student.id,
+          name: template.name,
+          startDate: finalStartDate,
+          endDate: finalEndDate,
+        },
+      });
+
+      // 6️⃣ AUDIT: CREATE TERM FROM TEMPLATE
+      await prisma.auditLog.create({
+        data: {
+          action: "CREATE_TERM_FROM_TEMPLATE",
+          entityType: "Term",
+          entityId: term.id,
+          performedBy: req.user.id,
+          universityId: student.universityId,
+          metadata: {
+            templateId: template.id,
+            templateName: template.name,
+            termName: term.name,
+            startDate: term.startDate,
+            endDate: term.endDate,
+            datesEdited: startDate || endDate ? true : false,
+          },
+        },
+      });
+
+      res.status(201).json({
+        term,
+        message: "Term created from template successfully",
+      });
+    } catch (err) {
+      console.error("CREATE TERM FROM TEMPLATE ERROR:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
 
 export default router;

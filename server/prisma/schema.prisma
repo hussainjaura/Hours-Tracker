@@ -24,6 +24,15 @@ model User {
 }
 
 
+model University {
+  id        Int            @id @default(autoincrement())
+  name      String
+  code      String         @unique   // e.g. "SOUTHAMPTON"
+  createdAt DateTime       @default(now())
+
+  templates TermTemplate[]
+}
+
 model Student {
   id              Int      @id @default(autoincrement())
   userId          String   @unique
@@ -35,6 +44,19 @@ model Student {
 
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   terms  Term[]
+}
+
+model TermTemplate {
+  id            Int        @id @default(autoincrement())
+  universityId  Int
+  name          String     // AUTUMN, SPRING, SUMMER
+  startDate     DateTime
+  endDate       DateTime
+  createdAt     DateTime   @default(now())
+
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  @@index([universityId])
 }
 
 model Term {
