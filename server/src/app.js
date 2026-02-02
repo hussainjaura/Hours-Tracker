@@ -10,6 +10,8 @@ import termRoutes from "./routes/terms.js";
 import adminTermRoutes from "./routes/adminTerms.js";
 import auditRoutes from "./routes/audit.js";
 import adminTermTemplateRoutes from "./routes/adminTermTemplate.js";
+import workShiftsRoutes from "./routes/workShifts.js";
+import relationshipsRoutes from "./routes/relationships.js";
 
 
 const app = express();
@@ -25,6 +27,8 @@ app.use("/terms", termRoutes);
 app.use("/adminTerms", adminTermRoutes);
 app.use("/audit", auditRoutes);
 app.use("/adminTermTemplate", adminTermTemplateRoutes);
+app.use("/work-shifts", workShiftsRoutes);
+app.use("/relationships", relationshipsRoutes);
 
 
 app.get("/", (req, res) => {

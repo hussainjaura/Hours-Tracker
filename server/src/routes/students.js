@@ -43,6 +43,22 @@ router.post(
         },
       });
 
+      // AUDIT LOG
+      await prisma.auditLog.create({
+        data: {
+          action: "CREATE_STUDENT_PROFILE",
+          entityType: "Student",
+          entityId: student.id,
+          performedBy: req.user.id,
+          universityId: student.universityId,
+          metadata: {
+            visaType: student.visaType,
+            courseEndDate: student.courseEndDate,
+            maxWeeklyHours: student.maxWeeklyHours,
+          },
+        },
+      });
+
       res.status(201).json(student);
     } catch (err) {
       console.error("CREATE PROFILE ERROR:", err);
@@ -71,6 +87,21 @@ router.get(
       }
 
       const eligibility = await getWorkEligibility(prisma, student);
+
+      // AUDIT LOG - Track eligibility checks
+      await prisma.auditLog.create({
+        data: {
+          action: "CHECK_ELIGIBILITY",
+          entityType: "Student",
+          entityId: student.id,
+          performedBy: req.user.id,
+          universityId: student.universityId,
+          metadata: {
+            eligibility,
+            checkedBy: "EMPLOYER",
+          },
+        },
+      });
 
       res.json({
         universityId: student.universityId,

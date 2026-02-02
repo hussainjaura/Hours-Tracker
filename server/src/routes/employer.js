@@ -33,6 +33,22 @@ router.post(
         requestedHours
       );
 
+      // AUDIT LOG - Track eligibility checks with requested hours
+      await prisma.auditLog.create({
+        data: {
+          action: "CHECK_ELIGIBILITY_WITH_HOURS",
+          entityType: "Student",
+          entityId: student.id,
+          performedBy: req.user.id,
+          universityId: student.universityId,
+          metadata: {
+            requestedHours,
+            eligibility,
+            checkedBy: "EMPLOYER",
+          },
+        },
+      });
+
       res.json({
         universityId,
         requestedHours,
