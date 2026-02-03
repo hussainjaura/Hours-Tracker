@@ -2,6 +2,7 @@ import express from "express";
 import prisma from "../prisma.js";
 import { authenticate, authorizeRoles } from "../middleware/auth.js";
 import { getWorkEligibility } from "../utils/workEligibility.js";
+import { validate, validateDate, validatePositiveNumber } from "../middleware/validation.js";
 
 const router = express.Router();
 
@@ -12,14 +13,22 @@ router.post(
   "/profile",
   authenticate,
   authorizeRoles("STUDENT"),
+  validate([
+    { field: 'universityId', validator: 'required' },
+    { field: 'visaType', validator: 'required' },
+    { field: 'courseEndDate', validator: 'date' }
+  ]),
   async (req, res) => {
     try {
       const { universityId, visaType, maxWeeklyHours, courseEndDate } = req.body;
-
-      if (!universityId || !visaType || !courseEndDate) {
-        return res.status(400).json({
-          error: "universityId, visaType, and courseEndDate are required",
-        });
+      
+      // Validate maxWeeklyHours if provided
+      if (maxWeeklyHours != null) {
+        const hoursValidation = validatePositiveNumber(maxWeeklyHours, 'maxWeeklyHours', { min: 1, max: 168 }); // Max 168 hours per week
+        if (!hoursValidation.valid) {
+          return res.status(400).json({ error: hoursValidation.error });
+        }
+        req.body.maxWeeklyHours = hoursValidation.number;
       }
 
       // prevent duplicate profile
@@ -38,8 +47,8 @@ router.post(
           userId: req.user.id,
           universityId,
           visaType,
-          maxWeeklyHours, // optional
-          courseEndDate: new Date(courseEndDate),
+          maxWeeklyHours: req.body.maxWeeklyHours || maxWeeklyHours, // optional
+          courseEndDate: courseEndDate,
         },
       });
 

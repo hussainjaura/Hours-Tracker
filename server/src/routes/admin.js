@@ -1,6 +1,7 @@
 import express from "express";
 import prisma from "../prisma.js";
 import { authenticate, authorizeRoles } from "../middleware/auth.js";
+import { validate, validateUniversityCode } from "../middleware/validation.js";
 
 const router = express.Router();
 
@@ -216,20 +217,18 @@ router.post(
   "/universities",
   authenticate,
   authorizeRoles("ADMIN"),
+  validate([
+    { field: 'name', validator: 'required' },
+    { field: 'code', validator: 'universityCode' }
+  ]),
   async (req, res) => {
     try {
       const { name, code } = req.body;
 
-      if (!name || !code) {
-        return res.status(400).json({
-          error: "name and code are required",
-        });
-      }
-
       const university = await prisma.university.create({
         data: {
           name,
-          code: code.toUpperCase(), // Normalize to uppercase
+          code, // Already normalized by validation middleware
         },
       });
 

@@ -3,6 +3,8 @@ import prisma from "../prisma.js";
 import { authenticate, authorizeRoles } from "../middleware/auth.js";
 import { getWeeklyHours, checkWeeklyLimit, getHoursInRange } from "../utils/weeklyHours.js";
 import { getWorkEligibility } from "../utils/workEligibility.js";
+import { validate, validateDate } from "../middleware/validation.js";
+import { detectViolation, logViolation } from "../utils/compliance.js";
 
 const router = express.Router();
 
@@ -20,21 +22,14 @@ router.post(
   "/",
   authenticate,
   authorizeRoles("EMPLOYER"),
+  validate([
+    { field: 'studentUniversityId', validator: 'required' },
+    { field: 'date', validator: 'date' },
+    { field: 'hours', validator: 'positiveNumber', options: { max: 24 } }
+  ]),
   async (req, res) => {
     try {
       const { studentUniversityId, date, hours, description } = req.body;
-
-      if (!studentUniversityId || !date || hours == null) {
-        return res.status(400).json({
-          error: "studentUniversityId, date, and hours are required",
-        });
-      }
-
-      if (hours <= 0 || hours > 24) {
-        return res.status(400).json({
-          error: "Hours must be between 0 and 24",
-        });
-      }
 
       // 1️⃣ Find student
       const student = await prisma.student.findUnique({
@@ -92,7 +87,7 @@ router.post(
         data: {
           studentId: student.id,
           employerId: req.user.id,
-          date: new Date(date),
+          date: date,
           hours: hours,
           description: description || null,
           status: "PENDING",
@@ -382,10 +377,27 @@ router.put(
         },
       });
 
+      // 🔥 COMPLIANCE CHECK: Detect and log violations
+      let violation = null;
+      try {
+        violation = await detectViolation(prisma, updatedShift, student);
+        if (violation) {
+          await logViolation(prisma, violation, updatedShift, student);
+        }
+      } catch (error) {
+        console.error("VIOLATION DETECTION ERROR:", error);
+        // Don't fail the request if violation detection fails
+      }
+
       res.json({
         workShift: updatedShift,
         message: "Work shift confirmed",
         limitCheck,
+        violation: violation ? {
+          type: violation.violationType,
+          severity: violation.severity,
+          description: violation.description,
+        } : null,
       });
     } catch (error) {
       console.error("CONFIRM WORK SHIFT ERROR:", error);

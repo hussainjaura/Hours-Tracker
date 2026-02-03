@@ -1,6 +1,7 @@
 import express from "express";
 import prisma from "../prisma.js";
 import { authenticate, authorizeRoles } from "../middleware/auth.js";
+import { validate, validateDateRangeFields, validateDate, validateDateRange } from "../middleware/validation.js";
 
 const router = express.Router();
 
@@ -55,6 +56,12 @@ router.get(
     "/universities/:universityId/templates",
     authenticate,
     authorizeRoles("ADMIN"),
+    validate([
+      { field: 'name', validator: 'required' },
+      { field: 'startDate', validator: 'date' },
+      { field: 'endDate', validator: 'date' }
+    ]),
+    validateDateRangeFields('startDate', 'endDate'),
     async (req, res) => {
       try {
         const universityId = Number(req.params.universityId);
@@ -62,12 +69,6 @@ router.get(
   
         if (isNaN(universityId)) {
           return res.status(400).json({ error: "Invalid university ID" });
-        }
-  
-        if (!name || !startDate || !endDate) {
-          return res.status(400).json({
-            error: "name, startDate, and endDate are required",
-          });
         }
   
         // Verify university exists
@@ -83,8 +84,8 @@ router.get(
           data: {
             universityId,
             name: name.toUpperCase(), // Normalize to uppercase
-            startDate: new Date(startDate),
-            endDate: new Date(endDate),
+            startDate,
+            endDate,
           },
         });
   
@@ -139,10 +140,37 @@ router.get(
           return res.status(404).json({ error: "Term template not found" });
         }
   
+        // Validate dates if provided
+        if (startDate || endDate) {
+          const startValidation = startDate ? validateDate(startDate, 'startDate') : { valid: true };
+          const endValidation = endDate ? validateDate(endDate, 'endDate') : { valid: true };
+          
+          if (!startValidation.valid) {
+            return res.status(400).json({ error: startValidation.error });
+          }
+          if (!endValidation.valid) {
+            return res.status(400).json({ error: endValidation.error });
+          }
+          
+          // If both dates provided, validate range
+          if (startDate && endDate) {
+            const rangeValidation = validateDateRange(startDate, endDate);
+            if (!rangeValidation.valid) {
+              return res.status(400).json({ error: rangeValidation.error });
+            }
+            req.body.startDate = rangeValidation.startDate;
+            req.body.endDate = rangeValidation.endDate;
+          } else if (startDate) {
+            req.body.startDate = startValidation.date;
+          } else if (endDate) {
+            req.body.endDate = endValidation.date;
+          }
+        }
+  
         const updateData = {};
         if (name) updateData.name = name.toUpperCase();
-        if (startDate) updateData.startDate = new Date(startDate);
-        if (endDate) updateData.endDate = new Date(endDate);
+        if (req.body.startDate) updateData.startDate = req.body.startDate;
+        if (req.body.endDate) updateData.endDate = req.body.endDate;
   
         if (Object.keys(updateData).length === 0) {
           return res.status(400).json({

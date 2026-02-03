@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import prisma from "../prisma.js";
 import { signToken } from "../utils/jwt.js";
 import requireAuth from "../middleware/requireAuth.js";
+import { validate } from "../middleware/validation.js";
 
 const router = express.Router();
 
@@ -30,15 +31,15 @@ router.get("/me", requireAuth, async (req, res) => {
 
 
 // REGISTER
-router.post("/register", async (req, res) => {
+router.post("/register", 
+  validate([
+    { field: 'email', validator: 'email' },
+    { field: 'password', validator: 'required' },
+    { field: 'role', validator: 'role' }
+  ]),
+  async (req, res) => {
   try {
     const { email, password, role } = req.body;
-
-    if (!email || !password || !role) {
-      return res.status(400).json({
-        error: "Email, password, and role are required",
-      });
-    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -130,7 +131,12 @@ router.post("/register", async (req, res) => {
 
 
 // LOGIN
-router.post("/login", async (req, res) => {
+router.post("/login",
+  validate([
+    { field: 'email', validator: 'email' },
+    { field: 'password', validator: 'required' }
+  ]),
+  async (req, res) => {
   try {
     const { email, password } = req.body;
 

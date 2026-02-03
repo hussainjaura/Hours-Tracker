@@ -12,6 +12,7 @@ import auditRoutes from "./routes/audit.js";
 import adminTermTemplateRoutes from "./routes/adminTermTemplate.js";
 import workShiftsRoutes from "./routes/workShifts.js";
 import relationshipsRoutes from "./routes/relationships.js";
+import complianceRoutes from "./routes/compliance.js";
 
 
 const app = express();
@@ -29,6 +30,7 @@ app.use("/audit", auditRoutes);
 app.use("/adminTermTemplate", adminTermTemplateRoutes);
 app.use("/work-shifts", workShiftsRoutes);
 app.use("/relationships", relationshipsRoutes);
+app.use("/compliance", complianceRoutes);
 
 
 app.get("/", (req, res) => {

@@ -20,41 +20,41 @@ model User {
   role      Role
   createdAt DateTime @default(now())
 
-  student   Student?
+  student Student?
 }
 
-
 model University {
-  id        Int            @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   name      String
-  code      String         @unique   // e.g. "SOUTHAMPTON"
-  createdAt DateTime       @default(now())
+  code      String   @unique // e.g. "SOUTHAMPTON"
+  createdAt DateTime @default(now())
 
   templates TermTemplate[]
 }
 
 model Student {
-  id              Int      @id @default(autoincrement())
-  userId          String   @unique
-  universityId    String   @unique
-  visaType        String
-  courseEndDate   DateTime
-  maxWeeklyHours  Int?
-  createdAt       DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  userId         String   @unique
+  universityId   String   @unique
+  visaType       String
+  courseEndDate  DateTime
+  maxWeeklyHours Int?
+  createdAt      DateTime @default(now())
 
-  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  terms           Term[]
-  workShifts      WorkShift[]
-  employerLinks   StudentEmployer[]
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  terms         Term[]
+  workShifts    WorkShift[]
+  employerLinks StudentEmployer[]
+  violations    ComplianceViolation[]
 }
 
 model TermTemplate {
-  id            Int        @id @default(autoincrement())
-  universityId  Int
-  name          String     // AUTUMN, SPRING, SUMMER
-  startDate     DateTime
-  endDate       DateTime
-  createdAt     DateTime   @default(now())
+  id           Int      @id @default(autoincrement())
+  universityId Int
+  name         String // AUTUMN, SPRING, SUMMER
+  startDate    DateTime
+  endDate      DateTime
+  createdAt    DateTime @default(now())
 
   university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
 
@@ -62,18 +62,17 @@ model TermTemplate {
 }
 
 model Term {
-  id         Int      @id @default(autoincrement())
-  studentId  Int
-  name       String   // "AUTUMN", "SPRING", "SUMMER"
-  startDate  DateTime
-  endDate    DateTime
-  createdAt  DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  name      String // "AUTUMN", "SPRING", "SUMMER"
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime @default(now())
 
   student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([studentId])
 }
-
 
 enum TermType {
   AUTUMN
@@ -82,9 +81,9 @@ enum TermType {
 }
 
 enum ShiftStatus {
-  PENDING      // Awaiting student confirmation
-  CONFIRMED    // Student confirmed
-  REJECTED     // Student rejected
+  PENDING // Awaiting student confirmation
+  CONFIRMED // Student confirmed
+  REJECTED // Student rejected
 }
 
 enum RelationshipStatus {
@@ -94,14 +93,14 @@ enum RelationshipStatus {
 }
 
 model StudentEmployer {
-  id            Int                 @id @default(autoincrement())
-  studentId     Int
-  employerId    String              // User ID of employer
-  status        RelationshipStatus  @default(PENDING)
-  linkedAt      DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
+  id         Int                @id @default(autoincrement())
+  studentId  Int
+  employerId String // User ID of employer
+  status     RelationshipStatus @default(PENDING)
+  linkedAt   DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
 
-  student       Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, employerId])
   @@index([employerId])
@@ -109,17 +108,18 @@ model StudentEmployer {
 }
 
 model WorkShift {
-  id            Int         @id @default(autoincrement())
-  studentId     Int
-  employerId    String       // User ID of employer
-  date          DateTime
-  hours         Decimal      @db.Decimal(4, 2)  // e.g., 8.50 hours
-  description   String?
-  status        ShiftStatus  @default(PENDING)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  id          Int         @id @default(autoincrement())
+  studentId   Int
+  employerId  String // User ID of employer
+  date        DateTime
+  hours       Decimal     @db.Decimal(4, 2) // e.g., 8.50 hours
+  description String?
+  status      ShiftStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
-  student       Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  student    Student               @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  violations ComplianceViolation[]
 
   @@index([studentId, date])
   @@index([date])
@@ -136,4 +136,58 @@ model AuditLog {
   universityId String?
   metadata     Json?
   createdAt    DateTime @default(now())
+}
+
+enum ViolationType {
+  WEEKLY_LIMIT_EXCEEDED // Student worked more than allowed hours in a week
+  COURSE_ENDED // Student worked after course end date
+  TERM_LIMIT_EXCEEDED // Student worked more than term-time limit during term
+  INVALID_SHIFT_CONFIRMED // Shift was confirmed that violated rules
+}
+
+enum ViolationSeverity {
+  LOW // Minor violation, warning only
+  MEDIUM // Moderate violation, requires attention
+  HIGH // Serious violation, may affect visa status
+  CRITICAL // Critical violation, immediate action required
+}
+
+model ComplianceViolation {
+  id            Int               @id @default(autoincrement())
+  studentId     Int
+  employerId    String? // Null if violation not tied to specific employer
+  workShiftId   Int? // Null if violation not tied to specific shift
+  violationType ViolationType
+  severity      ViolationSeverity @default(MEDIUM)
+
+  // Violation details
+  weekStart    DateTime // Start of the week when violation occurred
+  weekEnd      DateTime // End of the week when violation occurred
+  allowedHours Decimal  @db.Decimal(5, 2) // e.g., 20.00 or 40.00
+  actualHours  Decimal  @db.Decimal(5, 2) // Hours actually worked
+  excessHours  Decimal  @db.Decimal(5, 2) // How many hours over limit
+
+  // Context
+  inTermTime     Boolean   @default(false)
+  activeTermName String?
+  courseEndDate  DateTime?
+
+  // Responsibility tracking
+  causedBy    String // "STUDENT", "EMPLOYER", or "SYSTEM"
+  description String? // Human-readable description
+
+  // Metadata
+  metadata  Json? // Additional context (eligibility check, limit check, etc.)
+  createdAt DateTime @default(now())
+
+  student   Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  workShift WorkShift? @relation(fields: [workShiftId], references: [id], onDelete: SetNull)
+
+  @@index([studentId])
+  @@index([employerId])
+  @@index([workShiftId])
+  @@index([violationType])
+  @@index([severity])
+  @@index([weekStart])
+  @@index([createdAt])
 }

@@ -2,6 +2,7 @@ import express from "express";
 import prisma from "../prisma.js";
 import { authenticate, authorizeRoles } from "../middleware/auth.js";
 import { getWorkEligibility } from "../utils/workEligibility.js";
+import { validate, validatePositiveNumber } from "../middleware/validation.js";
 
 const router = express.Router();
 
@@ -9,14 +10,12 @@ router.post(
   "/check-eligibility",
   authenticate,
   authorizeRoles("EMPLOYER"),
+  validate([
+    { field: 'universityId', validator: 'required' },
+    { field: 'requestedHours', validator: 'positiveNumber', options: { max: 168 } }
+  ]),
   async (req, res) => {
     const { universityId, requestedHours } = req.body;
-
-    if (!universityId || requestedHours == null) {
-      return res.status(400).json({
-        error: "universityId and requestedHours are required",
-      });
-    }
 
     try {
       const student = await prisma.student.findUnique({

@@ -1,6 +1,7 @@
 import express from "express";
 import prisma from "../prisma.js";
 import { authenticate, authorizeRoles } from "../middleware/auth.js";
+import { validate, validateDateRangeFields, validateDate, validateDateRange } from "../middleware/validation.js";
 
 const router = express.Router();
 
@@ -11,15 +12,15 @@ router.post(
   "/",
   authenticate,
   authorizeRoles("STUDENT"),
+  validate([
+    { field: 'name', validator: 'required' },
+    { field: 'startDate', validator: 'date' },
+    { field: 'endDate', validator: 'date' }
+  ]),
+  validateDateRangeFields('startDate', 'endDate'),
   async (req, res) => {
     try {
       const { name, startDate, endDate } = req.body;
-
-      if (!name || !startDate || !endDate) {
-        return res.status(400).json({
-          error: "name, startDate, and endDate are required",
-        });
-      }
 
       const student = await prisma.student.findUnique({
         where: { userId: req.user.id },
@@ -33,8 +34,8 @@ router.post(
         data: {
           studentId: student.id,
           name,
-          startDate: new Date(startDate),
-          endDate: new Date(endDate),
+          startDate,
+          endDate,
         },
       });
 
@@ -77,6 +78,33 @@ router.put(
     }
 
     try {
+      // Validate dates if provided
+      if (startDate || endDate) {
+        const startValidation = startDate ? validateDate(startDate, 'startDate') : { valid: true };
+        const endValidation = endDate ? validateDate(endDate, 'endDate') : { valid: true };
+        
+        if (!startValidation.valid) {
+          return res.status(400).json({ error: startValidation.error });
+        }
+        if (!endValidation.valid) {
+          return res.status(400).json({ error: endValidation.error });
+        }
+        
+        // If both dates provided, validate range
+        if (startDate && endDate) {
+          const rangeValidation = validateDateRange(startDate, endDate);
+          if (!rangeValidation.valid) {
+            return res.status(400).json({ error: rangeValidation.error });
+          }
+          req.body.startDate = rangeValidation.startDate;
+          req.body.endDate = rangeValidation.endDate;
+        } else if (startDate) {
+          req.body.startDate = startValidation.date;
+        } else if (endDate) {
+          req.body.endDate = endValidation.date;
+        }
+      }
+
       // 1️⃣ Fetch term + ownership check
       const term = await prisma.term.findUnique({
         where: { id: termId },
@@ -105,8 +133,8 @@ router.put(
         where: { id: termId },
         data: {
           ...(name && { name }),
-          ...(startDate && { startDate: new Date(startDate) }),
-          ...(endDate && { endDate: new Date(endDate) }),
+          ...(req.body.startDate && { startDate: req.body.startDate }),
+          ...(req.body.endDate && { endDate: req.body.endDate }),
         },
       });
 
