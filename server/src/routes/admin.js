@@ -73,14 +73,53 @@ router.put(
   authenticate,
   authorizeRoles("ADMIN"),
   async (req, res) => {
-    const studentId = Number(req.params.id);
+    try {
+      const studentId = Number(req.params.id);
 
-    const updated = await prisma.student.update({
-      where: { id: studentId },
-      data: req.body,
-    });
+      // Get old values for audit
+      const oldStudent = await prisma.student.findUnique({
+        where: { id: studentId },
+      });
 
-    res.json(updated);
+      if (!oldStudent) {
+        return res.status(404).json({ error: "Student not found" });
+      }
+
+      const updated = await prisma.student.update({
+        where: { id: studentId },
+        data: req.body,
+      });
+
+      // AUDIT LOG
+      await prisma.auditLog.create({
+        data: {
+          action: "UPDATE_STUDENT_PROFILE",
+          entityType: "Student",
+          entityId: updated.id,
+          performedBy: req.user.id,
+          universityId: updated.universityId,
+          metadata: {
+            before: {
+              universityId: oldStudent.universityId,
+              visaType: oldStudent.visaType,
+              courseEndDate: oldStudent.courseEndDate,
+              maxWeeklyHours: oldStudent.maxWeeklyHours,
+            },
+            after: {
+              universityId: updated.universityId,
+              visaType: updated.visaType,
+              courseEndDate: updated.courseEndDate,
+              maxWeeklyHours: updated.maxWeeklyHours,
+            },
+          },
+        },
+      });
+
+      res.json(updated);
+    } catch (error) {
+      console.error("UPDATE STUDENT ERROR:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
 );
 
@@ -194,6 +233,21 @@ router.post(
         },
       });
 
+      // AUDIT LOG
+      await prisma.auditLog.create({
+        data: {
+          action: "CREATE_UNIVERSITY",
+          entityType: "University",
+          entityId: university.id,
+          performedBy: req.user.id,
+          universityId: null, // University creation doesn't belong to a university
+          metadata: {
+            name: university.name,
+            code: university.code,
+          },
+        },
+      });
+
       res.status(201).json(university);
     } catch (error) {
       if (error.code === "P2002") {
@@ -222,6 +276,15 @@ router.put(
         return res.status(400).json({ error: "Invalid university ID" });
       }
 
+      // Get old values for audit
+      const oldUniversity = await prisma.university.findUnique({
+        where: { id: universityId },
+      });
+
+      if (!oldUniversity) {
+        return res.status(404).json({ error: "University not found" });
+      }
+
       const updateData = {};
       if (name) updateData.name = name;
       if (code) updateData.code = code.toUpperCase();
@@ -235,6 +298,27 @@ router.put(
       const updated = await prisma.university.update({
         where: { id: universityId },
         data: updateData,
+      });
+
+      // AUDIT LOG
+      await prisma.auditLog.create({
+        data: {
+          action: "UPDATE_UNIVERSITY",
+          entityType: "University",
+          entityId: updated.id,
+          performedBy: req.user.id,
+          universityId: null, // University updates don't belong to a university
+          metadata: {
+            before: {
+              name: oldUniversity.name,
+              code: oldUniversity.code,
+            },
+            after: {
+              name: updated.name,
+              code: updated.code,
+            },
+          },
+        },
       });
 
       res.json(updated);
@@ -263,6 +347,30 @@ router.delete(
       if (isNaN(universityId)) {
         return res.status(400).json({ error: "Invalid university ID" });
       }
+
+      // Get university data for audit before deletion
+      const university = await prisma.university.findUnique({
+        where: { id: universityId },
+      });
+
+      if (!university) {
+        return res.status(404).json({ error: "University not found" });
+      }
+
+      // AUDIT LOG (before deletion)
+      await prisma.auditLog.create({
+        data: {
+          action: "DELETE_UNIVERSITY",
+          entityType: "University",
+          entityId: university.id,
+          performedBy: req.user.id,
+          universityId: null, // University deletion doesn't belong to a university
+          metadata: {
+            name: university.name,
+            code: university.code,
+          },
+        },
+      });
 
       // This will cascade delete templates due to onDelete: Cascade
       await prisma.university.delete({

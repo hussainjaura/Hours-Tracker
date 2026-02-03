@@ -88,6 +88,23 @@ router.get(
           },
         });
   
+        // AUDIT LOG
+        await prisma.auditLog.create({
+          data: {
+            action: "CREATE_TERM_TEMPLATE",
+            entityType: "TermTemplate",
+            entityId: template.id,
+            performedBy: req.user.id,
+            universityId: university.code, // Use university code for filtering
+            metadata: {
+              universityId: template.universityId,
+              name: template.name,
+              startDate: template.startDate,
+              endDate: template.endDate,
+            },
+          },
+        });
+  
         res.status(201).json(template);
       } catch (error) {
         console.error("CREATE TEMPLATE ERROR:", error);
@@ -112,6 +129,16 @@ router.get(
           return res.status(400).json({ error: "Invalid template ID" });
         }
   
+        // Get old values and university for audit
+        const oldTemplate = await prisma.termTemplate.findUnique({
+          where: { id: templateId },
+          include: { university: true },
+        });
+  
+        if (!oldTemplate) {
+          return res.status(404).json({ error: "Term template not found" });
+        }
+  
         const updateData = {};
         if (name) updateData.name = name.toUpperCase();
         if (startDate) updateData.startDate = new Date(startDate);
@@ -126,6 +153,29 @@ router.get(
         const updated = await prisma.termTemplate.update({
           where: { id: templateId },
           data: updateData,
+        });
+  
+        // AUDIT LOG
+        await prisma.auditLog.create({
+          data: {
+            action: "UPDATE_TERM_TEMPLATE",
+            entityType: "TermTemplate",
+            entityId: updated.id,
+            performedBy: req.user.id,
+            universityId: oldTemplate.university.code,
+            metadata: {
+              before: {
+                name: oldTemplate.name,
+                startDate: oldTemplate.startDate,
+                endDate: oldTemplate.endDate,
+              },
+              after: {
+                name: updated.name,
+                startDate: updated.startDate,
+                endDate: updated.endDate,
+              },
+            },
+          },
         });
   
         res.json(updated);
@@ -150,6 +200,33 @@ router.get(
         if (isNaN(templateId)) {
           return res.status(400).json({ error: "Invalid template ID" });
         }
+  
+        // Get template data for audit before deletion
+        const template = await prisma.termTemplate.findUnique({
+          where: { id: templateId },
+          include: { university: true },
+        });
+  
+        if (!template) {
+          return res.status(404).json({ error: "Term template not found" });
+        }
+  
+        // AUDIT LOG (before deletion)
+        await prisma.auditLog.create({
+          data: {
+            action: "DELETE_TERM_TEMPLATE",
+            entityType: "TermTemplate",
+            entityId: template.id,
+            performedBy: req.user.id,
+            universityId: template.university.code,
+            metadata: {
+              universityId: template.universityId,
+              name: template.name,
+              startDate: template.startDate,
+              endDate: template.endDate,
+            },
+          },
+        });
   
         await prisma.termTemplate.delete({
           where: { id: templateId },
