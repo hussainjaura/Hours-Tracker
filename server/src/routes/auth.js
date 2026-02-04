@@ -5,6 +5,14 @@ import prisma from "../prisma.js";
 import { signToken } from "../utils/jwt.js";
 import requireAuth from "../middleware/requireAuth.js";
 import { validate } from "../middleware/validation.js";
+import { authRateLimiter } from "../middleware/security.js";
+import { AppError } from "../utils/errors.js";
+import { 
+  generateVerificationToken, 
+  sendVerificationEmail, 
+  isEmailVerificationEnabled,
+  verifyToken
+} from "../utils/emailVerification.js";
 
 const router = express.Router();
 
@@ -32,9 +40,10 @@ router.get("/me", requireAuth, async (req, res) => {
 
 // REGISTER
 router.post("/register", 
+  authRateLimiter, // Stricter rate limiting for registration
   validate([
     { field: 'email', validator: 'email' },
-    { field: 'password', validator: 'required' },
+    { field: 'password', validator: 'password' }, // Password strength validation
     { field: 'role', validator: 'role' }
   ]),
   async (req, res) => {
@@ -67,16 +76,31 @@ router.post("/register",
       },
     });
 
+    // Optional email verification
+    let emailVerificationToken = null;
+    if (isEmailVerificationEnabled()) {
+      emailVerificationToken = generateVerificationToken(user.email);
+      await sendVerificationEmail(user.email, emailVerificationToken);
+    }
+
     const token = signToken({ id: user.id, role: user.role });
 
-    res.status(201).json({
+    const response = {
       token,
       user: {
         id: user.id,
         email: user.email,
         role: user.role,
       },
-    });
+    };
+
+    // Include verification message if enabled
+    if (isEmailVerificationEnabled()) {
+      response.message = "Registration successful. Please check your email to verify your account.";
+      response.emailVerificationRequired = true;
+    }
+
+    res.status(201).json(response);
   } catch (error) {
     if (error.code === "P2002") {
       // Log failed registration attempt (duplicate email)
@@ -132,6 +156,7 @@ router.post("/register",
 
 // LOGIN
 router.post("/login",
+  authRateLimiter, // Stricter rate limiting for login
   validate([
     { field: 'email', validator: 'email' },
     { field: 'password', validator: 'required' }
@@ -227,6 +252,48 @@ router.post("/login",
   } catch (error) {
     console.error("LOGIN ERROR:", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Email verification endpoint (optional)
+router.get("/verify-email", async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      throw new AppError("Verification token is required", 400, "MISSING_TOKEN");
+    }
+
+    const { email } = verifyToken(token);
+
+    // Update user's email verification status (if you add this field to the schema)
+    // For now, we'll just return success
+    res.json({
+      success: true,
+      message: "Email verified successfully",
+      email,
+    });
+  } catch (error) {
+    if (error instanceof AppError) {
+      return res.status(error.statusCode).json({
+        success: false,
+        error: {
+          message: error.message,
+          code: error.code,
+          requestId: req.requestId || null,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: {
+        message: "Internal server error",
+        requestId: req.requestId || null,
+        timestamp: new Date().toISOString(),
+      },
+    });
   }
 });
 

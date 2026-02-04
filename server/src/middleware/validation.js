@@ -3,6 +3,8 @@
  * Provides reusable validation functions for common input validation needs
  */
 
+import { passwordValidator } from "../utils/password.js";
+
 /**
  * Validates email format
  */
@@ -191,6 +193,9 @@ export const validate = (validations) => {
           case 'role':
             result = validateRole(value);
             break;
+          case 'password':
+            result = passwordValidator(value, field);
+            break;
           default:
             continue;
         }
@@ -212,8 +217,14 @@ export const validate = (validations) => {
     
     if (errors.length > 0) {
       return res.status(400).json({
-        error: 'Validation failed',
-        details: errors
+        success: false,
+        error: {
+          message: 'Validation failed',
+          code: 'VALIDATION_ERROR',
+          requestId: req.requestId || null,
+          timestamp: new Date().toISOString(),
+          details: errors
+        }
       });
     }
     
@@ -234,8 +245,14 @@ export const validateDateRangeFields = (startField, endField) => {
       const result = validateDateRange(startDate, endDate);
       if (!result.valid) {
         return res.status(400).json({
-          error: 'Validation failed',
-          details: [{ field: `${startField}/${endField}`, error: result.error }]
+          success: false,
+          error: {
+            message: 'Validation failed',
+            code: 'VALIDATION_ERROR',
+            requestId: req.requestId || null,
+            timestamp: new Date().toISOString(),
+            details: [{ field: `${startField}/${endField}`, error: result.error }]
+          }
         });
       }
       
