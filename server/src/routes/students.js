@@ -7,6 +7,31 @@ import { validate, validateDate, validatePositiveNumber } from "../middleware/va
 const router = express.Router();
 
 /**
+ * GET STUDENT PROFILE
+ */
+router.get(
+  "/profile",
+  authenticate,
+  authorizeRoles("STUDENT"),
+  async (req, res) => {
+    try {
+      const student = await prisma.student.findUnique({
+        where: { userId: req.user.id },
+      });
+
+      if (!student) {
+        return res.status(404).json({ error: "Student profile not found" });
+      }
+
+      res.json(student);
+    } catch (err) {
+      console.error("GET PROFILE ERROR:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+/**
  * CREATE STUDENT PROFILE (ONCE)
  */
 router.post(

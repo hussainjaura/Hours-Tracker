@@ -6,6 +6,7 @@
 import express from "express";
 import prisma from "../prisma.js";
 import { AppError } from "../utils/errors.js";
+import { clearRateLimitStore } from "../middleware/security.js";
 
 const router = express.Router();
 
@@ -96,6 +97,26 @@ router.get("/ready", async (req, res) => {
 router.get("/live", (req, res) => {
   res.status(200).json({
     status: "alive",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+/**
+ * Clear rate limit store (development only)
+ * POST /health/clear-rate-limit
+ * Clears the in-memory rate limit store
+ */
+router.post("/clear-rate-limit", (req, res) => {
+  // Only allow in development mode
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({
+      error: "This endpoint is only available in development mode",
+    });
+  }
+
+  clearRateLimitStore();
+  res.status(200).json({
+    message: "Rate limit store cleared successfully",
     timestamp: new Date().toISOString(),
   });
 });

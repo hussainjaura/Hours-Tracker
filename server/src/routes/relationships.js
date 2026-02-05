@@ -48,8 +48,12 @@ router.post(
 
       if (existing) {
         return res.status(409).json({
-          error: "Relationship already exists",
-          relationship: existing,
+          success: false,
+          error: {
+            message: `Relationship already exists with status: ${existing.status}`,
+            code: "RELATIONSHIP_EXISTS",
+            relationship: existing,
+          },
         });
       }
 

@@ -30,10 +30,78 @@ router.post(
         return res.status(404).json({ error: "Student profile not found" });
       }
 
+      // Check for duplicate term in the same year
+      const startYear = new Date(startDate).getFullYear();
+      const endYear = new Date(endDate).getFullYear();
+      
+      // Get all existing terms for this student
+      const existingTerms = await prisma.term.findMany({
+        where: {
+          studentId: student.id,
+        },
+      });
+
+      // Check if any existing term overlaps with the same year (same term name)
+      const duplicateTerm = existingTerms.find(term => {
+        if (term.name.toUpperCase() !== name.toUpperCase()) return false;
+        const termStartYear = new Date(term.startDate).getFullYear();
+        const termEndYear = new Date(term.endDate).getFullYear();
+        // Check if years overlap
+        return termStartYear === startYear || termStartYear === endYear || 
+               termEndYear === startYear || termEndYear === endYear;
+      });
+
+      if (duplicateTerm) {
+        const duplicateYear = new Date(duplicateTerm.startDate).getFullYear();
+        return res.status(409).json({
+          success: false,
+          error: {
+            message: `You already have a ${name} term in ${duplicateYear}. Each term (Autumn, Spring, Summer) can only be created once per year.`,
+            code: "DUPLICATE_TERM",
+            existingTerm: duplicateTerm,
+          },
+        });
+      }
+
+      // Check for date range overlaps with ANY existing term
+      const newStart = new Date(startDate);
+      const newEnd = new Date(endDate);
+      
+      const overlappingTerm = existingTerms.find(term => {
+        const termStart = new Date(term.startDate);
+        const termEnd = new Date(term.endDate);
+        
+        // Check if date ranges overlap
+        // Two ranges overlap if: newStart <= termEnd && newEnd >= termStart
+        return newStart <= termEnd && newEnd >= termStart;
+      });
+
+      if (overlappingTerm) {
+        const termStartStr = new Date(overlappingTerm.startDate).toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric'
+        });
+        const termEndStr = new Date(overlappingTerm.endDate).toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric'
+        });
+        
+        return res.status(409).json({
+          success: false,
+          error: {
+            message: `This term overlaps with your existing ${overlappingTerm.name} term (${termStartStr} - ${termEndStr}). Terms cannot have overlapping dates.`,
+            code: "OVERLAPPING_TERM",
+            existingTerm: overlappingTerm,
+          },
+        });
+      }
+
       const term = await prisma.term.create({
         data: {
           studentId: student.id,
-          name,
+          name: name.toUpperCase(),
           startDate,
           endDate,
         },
@@ -127,6 +195,50 @@ router.put(
         startDate: term.startDate,
         endDate: term.endDate,
       };
+
+      // 2.5️⃣ Check for overlapping terms if dates are being updated
+      if (req.body.startDate || req.body.endDate) {
+        const updatedStart = req.body.startDate ? new Date(req.body.startDate) : term.startDate;
+        const updatedEnd = req.body.endDate ? new Date(req.body.endDate) : term.endDate;
+
+        // Get all other terms (excluding the one being updated)
+        const otherTerms = await prisma.term.findMany({
+          where: {
+            studentId: student.id,
+            id: { not: termId },
+          },
+        });
+
+        // Check for date range overlaps
+        const overlappingTerm = otherTerms.find(otherTerm => {
+          const otherStart = new Date(otherTerm.startDate);
+          const otherEnd = new Date(otherTerm.endDate);
+          // Two ranges overlap if: updatedStart <= otherEnd && updatedEnd >= otherStart
+          return updatedStart <= otherEnd && updatedEnd >= otherStart;
+        });
+
+        if (overlappingTerm) {
+          const termStartStr = new Date(overlappingTerm.startDate).toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+          });
+          const termEndStr = new Date(overlappingTerm.endDate).toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+          });
+          
+          return res.status(409).json({
+            success: false,
+            error: {
+              message: `This update would cause overlap with your existing ${overlappingTerm.name} term (${termStartStr} - ${termEndStr}). Terms cannot have overlapping dates.`,
+              code: "OVERLAPPING_TERM",
+              existingTerm: overlappingTerm,
+            },
+          });
+        }
+      }
 
       // 3️⃣ Update term
       const updatedTerm = await prisma.term.update({
@@ -367,6 +479,73 @@ router.post(
       // 4️⃣ Use provided dates or fall back to template dates
       const finalStartDate = startDate ? new Date(startDate) : template.startDate;
       const finalEndDate = endDate ? new Date(endDate) : template.endDate;
+
+      // 4.5️⃣ Check for duplicate term in the same year
+      const startYear = new Date(finalStartDate).getFullYear();
+      const endYear = new Date(finalEndDate).getFullYear();
+      
+      // Get all existing terms for this student
+      const existingTerms = await prisma.term.findMany({
+        where: {
+          studentId: student.id,
+        },
+      });
+
+      // Check if any existing term with same name overlaps with the same year
+      const duplicateTerm = existingTerms.find(term => {
+        if (term.name.toUpperCase() !== template.name.toUpperCase()) return false;
+        const termStartYear = new Date(term.startDate).getFullYear();
+        const termEndYear = new Date(term.endDate).getFullYear();
+        return termStartYear === startYear || termStartYear === endYear || 
+               termEndYear === startYear || termEndYear === endYear;
+      });
+
+      if (duplicateTerm) {
+        const duplicateYear = new Date(duplicateTerm.startDate).getFullYear();
+        return res.status(409).json({
+          success: false,
+          error: {
+            message: `You already have a ${template.name} term in ${duplicateYear}. Each term (Autumn, Spring, Summer) can only be created once per year.`,
+            code: "DUPLICATE_TERM",
+            existingTerm: duplicateTerm,
+          },
+        });
+      }
+
+      // Check for date range overlaps with ANY existing term
+      const newStart = new Date(finalStartDate);
+      const newEnd = new Date(finalEndDate);
+      
+      const overlappingTerm = existingTerms.find(term => {
+        const termStart = new Date(term.startDate);
+        const termEnd = new Date(term.endDate);
+        
+        // Check if date ranges overlap
+        // Two ranges overlap if: newStart <= termEnd && newEnd >= termStart
+        return newStart <= termEnd && newEnd >= termStart;
+      });
+
+      if (overlappingTerm) {
+        const termStartStr = new Date(overlappingTerm.startDate).toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric'
+        });
+        const termEndStr = new Date(overlappingTerm.endDate).toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric'
+        });
+        
+        return res.status(409).json({
+          success: false,
+          error: {
+            message: `This term overlaps with your existing ${overlappingTerm.name} term (${termStartStr} - ${termEndStr}). Terms cannot have overlapping dates.`,
+            code: "OVERLAPPING_TERM",
+            existingTerm: overlappingTerm,
+          },
+        });
+      }
 
       // 5️⃣ Create term from template
       const term = await prisma.term.create({

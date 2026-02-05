@@ -11,11 +11,19 @@ router.post(
   authenticate,
   authorizeRoles("EMPLOYER"),
   validate([
-    { field: 'universityId', validator: 'required' },
-    { field: 'requestedHours', validator: 'positiveNumber', options: { max: 168 } }
+    { field: 'universityId', validator: 'required' }
   ]),
   async (req, res) => {
     const { universityId, requestedHours } = req.body;
+    
+    // Validate requestedHours if provided (optional)
+    if (requestedHours != null && requestedHours !== '') {
+      const hoursValidation = validatePositiveNumber(requestedHours, 'requestedHours', { min: 0.5, max: 168 });
+      if (!hoursValidation.valid) {
+        return res.status(400).json({ error: hoursValidation.error });
+      }
+      req.body.requestedHours = hoursValidation.number;
+    }
 
     try {
       const student = await prisma.student.findUnique({

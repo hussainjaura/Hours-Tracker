@@ -76,9 +76,20 @@ router.post(
       );
 
       if (limitCheck.wouldExceed) {
+        const isTermTime = eligibility.inTermTime;
+        const errorMessage = isTermTime
+          ? `⚠️ TERM TIME RESTRICTION: Cannot log more than 20 hours per week during term time. Current: ${limitCheck.currentHours}h, Adding: ${hours}h, Limit: ${limitCheck.allowedWeeklyHours}h. This is ILLEGAL and violates UK student visa regulations.`
+          : `This would exceed weekly limit. Current: ${limitCheck.currentHours}h, Adding: ${hours}h, Limit: ${limitCheck.allowedWeeklyHours}h`;
+        
         return res.status(400).json({
-          error: `This would exceed weekly limit. Current: ${limitCheck.currentHours}h, Adding: ${hours}h, Limit: ${limitCheck.allowedWeeklyHours}h`,
-          limitCheck,
+          success: false,
+          error: {
+            message: errorMessage,
+            code: isTermTime ? "TERM_TIME_LIMIT_EXCEEDED" : "WEEKLY_LIMIT_EXCEEDED",
+            limitCheck,
+            eligibility,
+            isTermTime,
+          },
         });
       }
 

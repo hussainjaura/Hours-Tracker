@@ -95,7 +95,7 @@ const Landing = () => {
                 <li>
                   The system <strong>calculates automatically:</strong>
                   <ul>
-                    <li>Term-time vs vacation rules</li>
+                    <li>Term-time vs Holiday rules</li>
                     <li>Maximum allowed weekly hours</li>
                   </ul>
                 </li>

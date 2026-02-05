@@ -49,6 +49,40 @@
   animation: fadeInUp 0.5s ease-out;
 }
 
+/* Back Button */
+.auth-back-button {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: all var(--transition-base);
+  cursor: pointer;
+  z-index: 10;
+}
+
+.auth-back-button:hover {
+  background: var(--bg-tertiary);
+  color: var(--primary-color);
+  transform: translateX(-2px);
+}
+
+.auth-back-button:active {
+  transform: translateX(-2px) scale(0.95);
+}
+
+.auth-back-button svg {
+  width: 24px;
+  height: 24px;
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -117,6 +151,7 @@
 .auth-header {
   text-align: center;
   margin-bottom: 2rem;
+  padding-top: 0.5rem;
 }
 
 /* Auth Form */
@@ -204,6 +239,18 @@
   .auth-card {
     padding: 2rem 1.5rem;
     border-radius: var(--radius-xl);
+  }
+
+  .auth-back-button {
+    top: 1rem;
+    left: 1rem;
+    width: 36px;
+    height: 36px;
+  }
+
+  .auth-back-button svg {
+    width: 20px;
+    height: 20px;
   }
 
   .auth-card h1 {

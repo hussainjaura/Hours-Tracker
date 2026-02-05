@@ -9,6 +9,14 @@ import { AppError } from "../utils/errors.js";
 const rateLimitStore = new Map();
 
 /**
+ * Clear rate limit store (useful for development/testing)
+ */
+export const clearRateLimitStore = () => {
+  rateLimitStore.clear();
+  console.log('Rate limit store cleared');
+};
+
+/**
  * Rate limiting middleware
  * @param {Object} options - Rate limit options
  * @param {number} options.windowMs - Time window in milliseconds (default: 15 minutes)
@@ -18,7 +26,7 @@ const rateLimitStore = new Map();
 export const rateLimiter = (options = {}) => {
   const {
     windowMs = 15 * 60 * 1000, // 15 minutes
-    maxRequests = 100,
+    maxRequests = process.env.NODE_ENV === 'production' ? 100 : 1000, // More lenient in development
     message = "Too many requests, please try again later",
   } = options;
 
@@ -85,10 +93,11 @@ export const rateLimiter = (options = {}) => {
 
 /**
  * Strict rate limiter for authentication endpoints
+ * More lenient in development mode
  */
 export const authRateLimiter = rateLimiter({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  maxRequests: 5, // Only 5 login attempts per 15 minutes
+  maxRequests: process.env.NODE_ENV === 'production' ? 5 : 20, // 5 in production, 20 in development
   message: "Too many authentication attempts, please try again later",
 });
 

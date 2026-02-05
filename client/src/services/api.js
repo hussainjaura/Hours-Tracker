@@ -58,6 +58,10 @@ api.interceptors.response.use(
       status: error.response?.status || 500,
       requestId: error.response?.data?.error?.requestId || null,
       details: error.response?.data?.error?.details || null,
+      // Preserve original response for accessing nested data
+      response: error.response,
+      // Preserve relationship data if present
+      relationship: error.response?.data?.relationship || error.response?.data?.error?.relationship || null,
     })
   }
 )
@@ -79,10 +83,20 @@ export const studentAPI = {
   getWorkHistory: () => api.get('/work-shifts/me/history'),
   confirmShift: (shiftId) => api.put(`/work-shifts/${shiftId}/confirm`),
   rejectShift: (shiftId, reason) => api.put(`/work-shifts/${shiftId}/reject`, { reason }),
-  getComplianceSummary: () => api.get('/compliance/summary'),
-  getViolations: () => api.get('/compliance/violations'),
+  getComplianceSummary: () => api.get('/compliance/weekly-summary/me'),
+  getViolations: () => api.get('/compliance/violations/me'),
   getEmployers: () => api.get('/relationships/my-employers'),
-  getTerms: () => api.get('/terms'),
+  getRequests: () => api.get('/relationships/requests'),
+  acceptRequest: (relationshipId) => api.put(`/relationships/${relationshipId}/accept`),
+  rejectRequest: (relationshipId) => api.put(`/relationships/${relationshipId}/reject`),
+  deactivateRelationship: (relationshipId) => api.put(`/relationships/${relationshipId}/deactivate`),
+  getTerms: () => api.get('/terms/me'),
+  createTerm: (data) => api.post('/terms', data),
+  updateTerm: (termId, data) => api.put(`/terms/${termId}`, data),
+  deleteTerm: (termId) => api.delete(`/terms/${termId}`),
+  deleteAllTerms: () => api.delete('/terms/me'),
+  getTemplates: () => api.get('/terms/templates/me'),
+  createTermFromTemplate: (data) => api.post('/terms/from-template', data),
 }
 
 // Employer endpoints
@@ -91,9 +105,10 @@ export const employerAPI = {
     api.post('/employer/check-eligibility', { universityId, requestedHours }),
   logHours: (data) => api.post('/work-shifts', data),
   getStudentShifts: (universityId) => api.get(`/work-shifts/student/${universityId}`),
-  requestAccess: (universityId) => api.post('/relationships/request', { universityId }),
+  requestAccess: (universityId) => api.post('/relationships/request', { studentUniversityId: universityId }),
   getStudents: () => api.get('/relationships/my-students'),
   getRequests: () => api.get('/relationships/requests'),
+  searchStudent: (universityId) => api.get(`/students/${universityId}`),
 }
 
 // Admin endpoints (if needed later)
