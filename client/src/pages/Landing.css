@@ -121,11 +121,23 @@
 .hero-description {
   font-size: 1.25rem;
   color: var(--text-secondary);
-  margin-bottom: 2.5rem;
+  margin-bottom: 1.5rem;
   line-height: 1.7;
-  max-width: 600px;
+  max-width: 700px;
   margin-left: auto;
   margin-right: auto;
+  font-weight: 500;
+}
+
+.hero-supporting-text {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 2.5rem;
+  line-height: 1.7;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  opacity: 0.9;
 }
 
 .hero-cta {
@@ -164,6 +176,222 @@
   font-size: 0.9375rem;
   color: var(--text-secondary);
   font-weight: 500;
+}
+
+/* How It Works Section */
+.how-it-works-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 3rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.how-it-works-card {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-xl);
+  padding: 2.5rem;
+  border: 1px solid var(--border-light);
+}
+
+.how-it-works-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.how-it-works-steps {
+  list-style: none;
+  counter-reset: step-counter;
+  padding: 0;
+  margin: 0 0 1.5rem 0;
+}
+
+.how-it-works-steps > li {
+  counter-increment: step-counter;
+  margin-bottom: 1.25rem;
+  padding-left: 2.5rem;
+  position: relative;
+  line-height: 1.7;
+  color: var(--text-primary);
+}
+
+.how-it-works-steps > li::before {
+  content: counter(step-counter);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2rem;
+  height: 2rem;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.how-it-works-steps ul {
+  margin-top: 0.5rem;
+  margin-left: 1.5rem;
+  list-style: disc;
+  color: var(--text-secondary);
+}
+
+.how-it-works-steps ul li {
+  margin-bottom: 0.5rem;
+}
+
+.how-it-works-note {
+  background: var(--primary-light);
+  border-left: 4px solid var(--primary-color);
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius-md);
+  margin-top: 1.5rem;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+
+/* Confirmation Section */
+.confirmation-section {
+  padding: 6rem 2rem;
+  background: var(--bg-secondary);
+}
+
+.confirmation-content {
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.confirmation-main-text {
+  font-size: 1.125rem;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  line-height: 1.8;
+  font-weight: 500;
+}
+
+.confirmation-benefit-text {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  line-height: 1.7;
+}
+
+.confirmation-statement {
+  background: var(--bg-primary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  margin-top: 2rem;
+  font-style: italic;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  font-size: 1.0625rem;
+}
+
+/* What It Is Section */
+.what-it-is-section {
+  padding: 6rem 2rem;
+  background: var(--bg-primary);
+}
+
+.what-it-is-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 3rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.what-it-is-card {
+  border-radius: var(--radius-xl);
+  padding: 2.5rem;
+  border: 2px solid var(--border-light);
+}
+
+.what-it-is-card-positive {
+  background: var(--bg-secondary);
+  border-color: var(--success-color);
+}
+
+.what-it-is-card-negative {
+  background: var(--bg-secondary);
+  border-color: var(--text-tertiary);
+}
+
+.what-it-is-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.what-it-is-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.what-it-is-list li {
+  padding: 0.875rem 0;
+  font-size: 1.0625rem;
+  color: var(--text-primary);
+  line-height: 1.7;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.what-it-is-list li:last-child {
+  border-bottom: none;
+}
+
+/* Benefits Section */
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 3rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.benefits-column {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-xl);
+  padding: 2.5rem;
+  border: 1px solid var(--border-light);
+}
+
+.benefits-column-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.benefits-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.benefits-list li {
+  padding: 0.875rem 0;
+  font-size: 1.0625rem;
+  color: var(--text-primary);
+  line-height: 1.7;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.benefits-list li:last-child {
+  border-bottom: none;
 }
 
 /* Features Section */
@@ -329,6 +557,23 @@
   font-size: 0.875rem;
 }
 
+.footer-disclaimer {
+  max-width: 900px;
+  margin: 0 auto 2rem;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  border-left: 4px solid var(--warning-color);
+}
+
+.disclaimer-text {
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin: 0;
+  text-align: left;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .hero-title {
@@ -363,7 +608,23 @@
     grid-template-columns: 1fr;
   }
 
+  .how-it-works-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .what-it-is-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .benefits-grid {
+    grid-template-columns: 1fr;
+  }
+
   .cta-title {
     font-size: 2rem;
+  }
+
+  .hero-supporting-text {
+    font-size: 0.9375rem;
   }
 }
