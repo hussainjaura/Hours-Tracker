@@ -61,14 +61,16 @@ router.post("/register",
     });
 
     // AUDIT LOG - User registration
+    // Note: entityId is Int, but User.id is UUID, so we use 0 and store userId in metadata
     await prisma.auditLog.create({
       data: {
         action: "USER_REGISTRATION",
         entityType: "User",
-        entityId: user.id,
+        entityId: 0, // User IDs are UUIDs, not integers
         performedBy: user.id, // User registers themselves
         universityId: null, // Registration doesn't belong to a university yet
         metadata: {
+          userId: user.id, // Store actual UUID here
           email: user.email,
           role: user.role,
           success: true,
@@ -123,7 +125,15 @@ router.post("/register",
       } catch (logError) {
         console.error("Failed to log registration attempt:", logError);
       }
-      return res.status(409).json({ error: "Email already in use" });
+      return res.status(409).json({ 
+        success: false,
+        error: {
+          message: "Email already in use",
+          code: "EMAIL_ALREADY_EXISTS",
+          requestId: req.requestId || null,
+          timestamp: new Date().toISOString(),
+        }
+      });
     }
 
     // Log failed registration attempt (other errors)
@@ -197,10 +207,11 @@ router.post("/login",
           data: {
             action: "LOGIN_ATTEMPT",
             entityType: "User",
-            entityId: user.id,
+            entityId: 0, // User IDs are UUIDs, not integers
             performedBy: user.id,
             universityId: null,
             metadata: {
+              userId: user.id, // Store actual UUID here
               email: user.email,
               role: user.role,
               success: false,
@@ -232,10 +243,11 @@ router.post("/login",
         data: {
           action: "LOGIN_ATTEMPT",
           entityType: "User",
-          entityId: user.id,
+          entityId: 0, // User IDs are UUIDs, not integers
           performedBy: user.id,
           universityId: universityId,
           metadata: {
+            userId: user.id, // Store actual UUID here
             email: user.email,
             role: user.role,
             success: true,
@@ -248,7 +260,14 @@ router.post("/login",
 
     const token = signToken({ id: user.id, role: user.role });
 
-    res.json({ token });
+    res.json({ 
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      }
+    });
   } catch (error) {
     console.error("LOGIN ERROR:", error);
     res.status(500).json({ error: "Internal server error" });
