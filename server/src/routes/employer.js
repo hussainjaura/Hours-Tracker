@@ -3,6 +3,7 @@ import prisma from "../prisma.js";
 import { authenticate, authorizeRoles } from "../middleware/auth.js";
 import { getWorkEligibility } from "../utils/workEligibility.js";
 import { validate, validatePositiveNumber } from "../middleware/validation.js";
+import { logComplianceRule } from "../utils/auditLogger.js";
 
 const router = express.Router();
 
@@ -34,24 +35,23 @@ router.post(
         return res.status(404).json({ error: "Student not found" });
       }
 
-      const eligibility = await getWorkEligibility(
-        prisma,
-        student,
-        requestedHours
-      );
+      const eligibility = await getWorkEligibility(prisma, student);
 
-      // AUDIT LOG - Track eligibility checks with requested hours
+      // AUDIT LOG - Layer 4: System-generated Compliance Rule
+      await logComplianceRule(prisma, student, eligibility, req);
+
+      // Additional audit log for eligibility check
       await prisma.auditLog.create({
         data: {
-          action: "CHECK_ELIGIBILITY_WITH_HOURS",
+          action: "CHECK_ELIGIBILITY_COMPLIANCE",
           entityType: "Student",
           entityId: student.id,
           performedBy: req.user.id,
           universityId: student.universityId,
           metadata: {
-            requestedHours,
             eligibility,
             checkedBy: "EMPLOYER",
+            checkedAt: new Date(),
           },
         },
       });

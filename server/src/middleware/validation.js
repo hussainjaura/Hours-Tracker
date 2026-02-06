@@ -90,6 +90,47 @@ export const validatePositiveNumber = (value, fieldName = 'number', options = {}
 };
 
 /**
+ * Validates academic year format (e.g., "2025/26", "26/27")
+ * Accepts formats: YYYY/YY or YY/YY
+ */
+export const validateAcademicYear = (academicYear) => {
+  if (!academicYear || typeof academicYear !== 'string') {
+    return { valid: false, error: 'Academic year is required and must be a string' };
+  }
+  
+  const trimmed = academicYear.trim();
+  
+  // Match formats: YYYY/YY (e.g., "2025/26") or YY/YY (e.g., "25/26")
+  const academicYearRegex = /^(\d{2,4})\/(\d{2})$/;
+  const match = trimmed.match(academicYearRegex);
+  
+  if (!match) {
+    return { valid: false, error: 'Academic year must be in format YYYY/YY or YY/YY (e.g., "2025/26" or "25/26")' };
+  }
+  
+  const startYear = parseInt(match[1]);
+  const endYear = parseInt(match[2]);
+  
+  // Validate year logic: end year should be start year + 1 (last 2 digits)
+  // For YYYY/YY format: 2025/26 means 2025-2026
+  // For YY/YY format: 25/26 means 2025-2026
+  let expectedEndYear;
+  if (startYear >= 100) {
+    // Full year format (e.g., 2025)
+    expectedEndYear = (startYear + 1) % 100;
+  } else {
+    // Short year format (e.g., 25)
+    expectedEndYear = (startYear + 1) % 100;
+  }
+  
+  if (endYear !== expectedEndYear) {
+    return { valid: false, error: `Academic year end year (${endYear}) should be ${expectedEndYear} (start year + 1)` };
+  }
+  
+  return { valid: true, academicYear: trimmed };
+};
+
+/**
  * Validates university code format (uppercase alphanumeric, no spaces)
  */
 export const validateUniversityCode = (code) => {

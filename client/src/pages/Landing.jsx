@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../hooks/useAuth'
 import './Landing.css'
 
 const Landing = () => {
@@ -12,7 +12,7 @@ const Landing = () => {
         <div className="landing-header-content">
           <div className="landing-logo">
             <span className="logo-icon">WH</span>
-            <span className="logo-text">Work Hours Tracker</span>
+            <span className="logo-text">Right to Work Compliance</span>
           </div>
           <nav className="landing-nav">
             <a href="#how-it-works" className="nav-link">How It Works</a>
@@ -38,11 +38,11 @@ const Landing = () => {
       <section className="hero-section">
         <div className="hero-content">
           <h1 className="hero-title">
-            Work Hour Compliance Made Simple
-            <span className="hero-title-accent"> for International Students & Employers</span>
+            Right-to-Work Compliance Evidence
+            <span className="hero-title-accent"> for Student Employees & Employers</span>
           </h1>
           <p className="hero-description">
-            Track, calculate, and record student work eligibility with confidence — built around student declarations and employer due diligence.
+            Right-to-work compliance evidence for student employees. Built around student declarations and employer due diligence to create audit-ready compliance records.
           </p>
           <p className="hero-supporting-text">
             This platform helps international students and employers manage weekly working limits by combining student-declared academic status, automated calculations, and clear audit trails. The system supports compliance — it does not replace legal responsibility.
@@ -71,7 +71,7 @@ const Landing = () => {
         <div className="container">
           <h2 className="section-title">How It Works</h2>
           <p className="section-subtitle">
-            A clear process for students and employers to manage work hour compliance together
+            A clear process for students and employers to manage right-to-work compliance together
           </p>
           
           <div className="how-it-works-grid">
@@ -124,10 +124,10 @@ const Landing = () => {
                   </ul>
                 </li>
                 <li>
-                  <strong>Log work hours</strong> for your students
+                  <strong>View student-declared compliance information</strong> including term dates and work hour rules
                 </li>
                 <li>
-                  Students <strong>confirm worked hours weekly</strong>
+                  <strong>Acknowledge student declarations</strong> to create an audit trail of due diligence
                 </li>
               </ol>
               <p className="how-it-works-note">
@@ -195,8 +195,8 @@ const Landing = () => {
               <ul className="benefits-list">
                 <li>✓ Avoid accidental visa breaches</li>
                 <li>✓ Understand weekly work limits clearly</li>
-                <li>✓ Keep a personal work history</li>
-                <li>✓ Share eligibility information with employers easily</li>
+                <li>✓ Create compliance evidence records</li>
+                <li>✓ Share compliance information with employers easily</li>
               </ul>
             </div>
             <div className="benefits-column">
@@ -218,7 +218,7 @@ const Landing = () => {
           <div className="cta-content">
             <h2 className="cta-title">Ready to Get Started?</h2>
             <p className="cta-description">
-              Start managing work hour compliance with confidence. This platform helps you prove you did the right thing.
+              Start managing right-to-work compliance with confidence. This platform helps you create audit-ready compliance evidence.
             </p>
             {!isAuthenticated ? (
               <div className="hero-cta">
@@ -243,9 +243,9 @@ const Landing = () => {
         <div className="container">
           <div className="footer-content">
             <div className="footer-section">
-              <h4 className="footer-title">Work Hours Tracker</h4>
+              <h4 className="footer-title">Right to Work Compliance</h4>
               <p className="footer-text">
-                The easiest way to track work hours and stay compliant.
+                Compliance assurance and audit evidence for student employees.
               </p>
             </div>
             <div className="footer-section">
@@ -271,7 +271,7 @@ const Landing = () => {
                 <strong>Important Disclaimer:</strong> This platform supports compliance by recording student declarations and confirmations. It does not provide legal advice or determine immigration status. Responsibility remains with the student and employer.
               </p>
             </div>
-            <p>&copy; 2024 Work Hours Tracker. All rights reserved.</p>
+            <p>&copy; 2024 Right to Work Compliance. All rights reserved.</p>
           </div>
         </div>
       </footer>

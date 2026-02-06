@@ -1,4 +1,4 @@
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import './Layout.css'
 
@@ -24,7 +24,7 @@ const Layout = ({ children }) => {
     <div className="layout">
       <header className="header">
         <div className="header-content">
-          <h1 className="logo">Work Hours Tracker</h1>
+          <h1 className="logo">Right to Work Compliance</h1>
           <div className="header-actions">
             <div className="user-info">
               <span className="user-email">{user?.email}</span>

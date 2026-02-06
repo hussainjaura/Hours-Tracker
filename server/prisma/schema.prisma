@@ -62,16 +62,22 @@ model TermTemplate {
 }
 
 model Term {
-  id        Int      @id @default(autoincrement())
-  studentId Int
-  name      String // "AUTUMN", "SPRING", "SUMMER"
-  startDate DateTime
-  endDate   DateTime
-  createdAt DateTime @default(now())
+  id           Int      @id @default(autoincrement())
+  studentId    Int
+  name         String // "AUTUMN", "SPRING", "SUMMER"
+  academicYear String? // e.g., "2025/26", "2026/27" (optional for backward compatibility)
+  startDate    DateTime
+  endDate      DateTime
+  createdAt    DateTime @default(now())
+
+  // Student confirmation (compliance requirement)
+  confirmedAt DateTime? // When student confirmed these term dates
+  confirmedBy String? // Student user ID who confirmed
 
   student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([studentId])
+  @@index([studentId, academicYear, name])
 }
 
 enum TermType {
@@ -99,6 +105,10 @@ model StudentEmployer {
   status     RelationshipStatus @default(PENDING)
   linkedAt   DateTime           @default(now())
   updatedAt  DateTime           @updatedAt
+
+  // Employer acknowledgement (compliance requirement)
+  acknowledgedAt DateTime? // When employer acknowledged student's declarations
+  acknowledgedBy String? // Employer user ID who acknowledged
 
   student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
@@ -136,6 +146,20 @@ model AuditLog {
   universityId String?
   metadata     Json?
   createdAt    DateTime @default(now())
+
+  // Enhanced audit fields for compliance
+  ipAddress           String? // IP address of the user performing the action
+  userAgent           String? // User agent/browser information
+  declarationText     String? // Student declaration text (Layer 2)
+  acknowledgementText String? // Employer acknowledgement text (Layer 3)
+  complianceRule      Json? // System-generated compliance rule (Layer 4)
+  changeHistory       Json? // Previous vs new values for change tracking (Layer 5)
+
+  @@index([performedBy])
+  @@index([universityId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@index([action])
 }
 
 enum ViolationType {

@@ -137,7 +137,7 @@ const CreateProfileForm = ({ onSuccess }) => {
         <div className="create-profile-header">
           <h1>Create Your Student Profile</h1>
           <p className="create-profile-subtitle">
-            Complete your profile to start tracking your work hours and ensure compliance with UK visa regulations.
+            Complete your profile to declare your academic information and create compliance evidence for UK visa regulations.
           </p>
         </div>
 
@@ -233,7 +233,7 @@ const CreateProfileForm = ({ onSuccess }) => {
               disabled={loading}
             />
             <small className="form-hint">
-              Optional: Set a custom maximum weekly work hours limit (1-168 hours). 
+              Optional: Set a custom maximum weekly work hours limit (1-168 hours) for compliance purposes. 
               If not specified, default visa rules will apply.
             </small>
           </div>

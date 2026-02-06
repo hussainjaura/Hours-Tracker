@@ -1,7 +1,12 @@
 import express from "express";
 import prisma from "../prisma.js";
 import { authenticate, authorizeRoles } from "../middleware/auth.js";
-import { validate, validateDateRangeFields, validateDate, validateDateRange } from "../middleware/validation.js";
+import { validate, validateDateRangeFields, validateDate, validateDateRange, validateAcademicYear } from "../middleware/validation.js";
+import {
+  logTermDeclaration,
+  logChangeHistory,
+  createComprehensiveAuditLog,
+} from "../utils/auditLogger.js";
 
 const router = express.Router();
 
@@ -14,13 +19,37 @@ router.post(
   authorizeRoles("STUDENT"),
   validate([
     { field: 'name', validator: 'required' },
+    { field: 'academicYear', validator: 'required' },
     { field: 'startDate', validator: 'date' },
     { field: 'endDate', validator: 'date' }
   ]),
   validateDateRangeFields('startDate', 'endDate'),
   async (req, res) => {
     try {
-      const { name, startDate, endDate } = req.body;
+      const { name, startDate, endDate, academicYear } = req.body;
+
+      // Validate academic year (required)
+      if (!academicYear) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: "Academic year is required. Please provide in format YYYY/YY or YY/YY (e.g., '2025/26' or '25/26')",
+            code: "ACADEMIC_YEAR_REQUIRED",
+          },
+        });
+      }
+
+      const academicYearValidation = validateAcademicYear(academicYear);
+      if (!academicYearValidation.valid) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: academicYearValidation.error,
+            code: "INVALID_ACADEMIC_YEAR",
+          },
+        });
+      }
+      req.body.academicYear = academicYearValidation.academicYear;
 
       const student = await prisma.student.findUnique({
         where: { userId: req.user.id },
@@ -30,10 +59,6 @@ router.post(
         return res.status(404).json({ error: "Student profile not found" });
       }
 
-      // Check for duplicate term in the same year
-      const startYear = new Date(startDate).getFullYear();
-      const endYear = new Date(endDate).getFullYear();
-      
       // Get all existing terms for this student
       const existingTerms = await prisma.term.findMany({
         where: {
@@ -41,22 +66,18 @@ router.post(
         },
       });
 
-      // Check if any existing term overlaps with the same year (same term name)
+      // Check for duplicate term in the same academic year (same term name)
       const duplicateTerm = existingTerms.find(term => {
         if (term.name.toUpperCase() !== name.toUpperCase()) return false;
-        const termStartYear = new Date(term.startDate).getFullYear();
-        const termEndYear = new Date(term.endDate).getFullYear();
-        // Check if years overlap
-        return termStartYear === startYear || termStartYear === endYear || 
-               termEndYear === startYear || termEndYear === endYear;
+        if (!term.academicYear) return false; // Skip terms without academic year
+        return term.academicYear === req.body.academicYear;
       });
 
       if (duplicateTerm) {
-        const duplicateYear = new Date(duplicateTerm.startDate).getFullYear();
         return res.status(409).json({
           success: false,
           error: {
-            message: `You already have a ${name} term in ${duplicateYear}. Each term (Autumn, Spring, Summer) can only be created once per year.`,
+            message: `You already have a ${name} term in academic year ${req.body.academicYear}. Each term (Autumn, Spring, Summer) can only be created once per academic year.`,
             code: "DUPLICATE_TERM",
             existingTerm: duplicateTerm,
           },
@@ -102,26 +123,19 @@ router.post(
         data: {
           studentId: student.id,
           name: name.toUpperCase(),
+          academicYear: req.body.academicYear,
           startDate,
           endDate,
         },
       });
 
-      // 🔥 AUDIT: CREATE TERM
-      await prisma.auditLog.create({
-        data: {
-          action: "CREATE_TERM",
-          entityType: "Term",
-          entityId: term.id,
-          performedBy: req.user.id,
-          universityId: student.universityId,
-          metadata: {
-            termName: term.name,
-            startDate: term.startDate,
-            endDate: term.endDate,
-          },
-        },
+      // Get user for audit log
+      const user = await prisma.user.findUnique({
+        where: { id: req.user.id },
       });
+
+      // 🔥 AUDIT: Layer 2 - Term Declaration
+      await logTermDeclaration(prisma, term, student, user, null, req);
 
       res.status(201).json(term);
     } catch (err) {
@@ -137,7 +151,7 @@ router.put(
   authorizeRoles("STUDENT"),
   async (req, res) => {
     const termId = Number(req.params.termId);
-    const { name, startDate, endDate } = req.body;
+    const { name, startDate, endDate, academicYear } = req.body;
 
     if (!name && !startDate && !endDate) {
       return res.status(400).json({
@@ -189,14 +203,67 @@ router.put(
         });
       }
 
-      // 2️⃣ Store old values for audit
+      // 2️⃣ Validate academic year if provided (must be valid if updating)
+      let validatedAcademicYear = term.academicYear; // Keep existing if not updating
+      if (academicYear !== undefined) {
+        if (academicYear === null || academicYear === '') {
+          return res.status(400).json({
+            success: false,
+            error: {
+              message: "Academic year is required. Please provide in format YYYY/YY or YY/YY (e.g., '2025/26' or '25/26')",
+              code: "ACADEMIC_YEAR_REQUIRED",
+            },
+          });
+        }
+        const academicYearValidation = validateAcademicYear(academicYear);
+        if (!academicYearValidation.valid) {
+          return res.status(400).json({
+            success: false,
+            error: {
+              message: academicYearValidation.error,
+              code: "INVALID_ACADEMIC_YEAR",
+            },
+          });
+        }
+        validatedAcademicYear = academicYearValidation.academicYear;
+      }
+
+      // 2.5️⃣ Check for duplicate term in same academic year if academic year is being updated
+      if (academicYear !== undefined && validatedAcademicYear) {
+        const otherTerms = await prisma.term.findMany({
+          where: {
+            studentId: term.studentId,
+            id: { not: termId },
+          },
+        });
+
+        const duplicateTerm = otherTerms.find(otherTerm => {
+          if (otherTerm.name.toUpperCase() !== (name || term.name).toUpperCase()) return false;
+          if (!otherTerm.academicYear) return false;
+          return otherTerm.academicYear === validatedAcademicYear;
+        });
+
+        if (duplicateTerm) {
+          return res.status(409).json({
+            success: false,
+            error: {
+              message: `You already have a ${name || term.name} term in academic year ${validatedAcademicYear}. Each term (Autumn, Spring, Summer) can only be created once per academic year.`,
+              code: "DUPLICATE_TERM",
+              existingTerm: duplicateTerm,
+            },
+          });
+        }
+      }
+
+      // 2.6️⃣ Store old values for audit
       const oldData = {
         name: term.name,
+        academicYear: term.academicYear,
         startDate: term.startDate,
         endDate: term.endDate,
       };
 
-      // 2.5️⃣ Check for overlapping terms if dates are being updated
+      // 2.7️⃣ Check for overlapping terms if dates are being updated
       if (req.body.startDate || req.body.endDate) {
         const updatedStart = req.body.startDate ? new Date(req.body.startDate) : term.startDate;
         const updatedEnd = req.body.endDate ? new Date(req.body.endDate) : term.endDate;
@@ -241,33 +308,45 @@ router.put(
       }
 
       // 3️⃣ Update term
+      // If dates are being updated, clear confirmation (dates changed, needs re-confirmation)
+      const updateData = {
+        ...(name && { name: name.toUpperCase() }),
+        ...(academicYear !== undefined && { academicYear: validatedAcademicYear }),
+        ...(req.body.startDate && { startDate: req.body.startDate }),
+        ...(req.body.endDate && { endDate: req.body.endDate }),
+      };
+      
+      // Clear confirmation if dates are being updated
+      if (req.body.startDate || req.body.endDate) {
+        updateData.confirmedAt = null;
+        updateData.confirmedBy = null;
+      }
+      
       const updatedTerm = await prisma.term.update({
         where: { id: termId },
-        data: {
-          ...(name && { name }),
-          ...(req.body.startDate && { startDate: req.body.startDate }),
-          ...(req.body.endDate && { endDate: req.body.endDate }),
-        },
+        data: updateData,
       });
 
-      // 4️⃣ CREATE AUDIT LOG 🔥
-      await prisma.auditLog.create({
-        data: {
-          action: "UPDATE_TERM",
-          entityType: "Term",
-          entityId: term.id,
-          performedBy: req.user.id,
-          universityId: term.student.universityId,
-          metadata: {
-            before: oldData,
-            after: {
-              name: updatedTerm.name,
-              startDate: updatedTerm.startDate,
-              endDate: updatedTerm.endDate,
-            },
-          },
-        },
-      });
+      // 4️⃣ CREATE AUDIT LOG - Layer 5: Change History 🔥
+      const newData = {
+        name: updatedTerm.name,
+        academicYear: updatedTerm.academicYear,
+        startDate: updatedTerm.startDate,
+        endDate: updatedTerm.endDate,
+      };
+
+      await logChangeHistory(
+        prisma,
+        "UPDATE_TERM",
+        "Term",
+        term.id,
+        req.user.id,
+        term.student.universityId,
+        oldData,
+        newData,
+        "Student updated term dates",
+        req
+      );
 
       res.json({
         message: "Term updated successfully",
@@ -297,6 +376,64 @@ router.get(
     }
 
     res.json(student.terms);
+  }
+);
+
+/**
+ * PUT /terms/:termId/confirm - Student confirms term dates (compliance requirement)
+ */
+router.put(
+  "/:termId/confirm",
+  authenticate,
+  authorizeRoles("STUDENT"),
+  async (req, res) => {
+    try {
+      const termId = Number(req.params.termId);
+
+      if (isNaN(termId)) {
+        return res.status(400).json({ error: "Invalid term ID" });
+      }
+
+      const term = await prisma.term.findUnique({
+        where: { id: termId },
+        include: { student: true },
+      });
+
+      if (!term) {
+        return res.status(404).json({ error: "Term not found" });
+      }
+
+      if (term.student.userId !== req.user.id) {
+        return res.status(403).json({
+          error: "You can only confirm your own terms",
+        });
+      }
+
+      const updated = await prisma.term.update({
+        where: { id: termId },
+        data: {
+          confirmedAt: new Date(),
+          confirmedBy: req.user.id,
+        },
+      });
+
+      // Get user for audit log
+      const user = await prisma.user.findUnique({
+        where: { id: req.user.id },
+      });
+
+      // AUDIT LOG - Layer 2: Declaration Confirmation
+      const declarationText = "I confirm these term dates are accurate to the best of my knowledge.";
+      await logTermDeclaration(prisma, updated, term.student, user, declarationText, req);
+
+      res.json({
+        term: updated,
+        message: "Term dates confirmed. This confirmation has been recorded for compliance purposes.",
+      });
+    } catch (error) {
+      console.error("CONFIRM TERM ERROR:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
 );
 
@@ -436,7 +573,7 @@ router.post(
   authorizeRoles("STUDENT"),
   async (req, res) => {
     try {
-      const { templateId, startDate, endDate } = req.body;
+      const { templateId, startDate, endDate, academicYear } = req.body;
 
       if (!templateId) {
         return res.status(400).json({
@@ -480,10 +617,20 @@ router.post(
       const finalStartDate = startDate ? new Date(startDate) : template.startDate;
       const finalEndDate = endDate ? new Date(endDate) : template.endDate;
 
-      // 4.5️⃣ Check for duplicate term in the same year
-      const startYear = new Date(finalStartDate).getFullYear();
-      const endYear = new Date(finalEndDate).getFullYear();
-      
+      // Validate academic year (required)
+      const academicYearValidation = validateAcademicYear(academicYear);
+      if (!academicYearValidation.valid) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: academicYearValidation.error,
+            code: "INVALID_ACADEMIC_YEAR",
+          },
+        });
+      }
+      const validatedAcademicYear = academicYearValidation.academicYear;
+
+      // 4.5️⃣ Check for duplicate term in the same academic year
       // Get all existing terms for this student
       const existingTerms = await prisma.term.findMany({
         where: {
@@ -491,21 +638,18 @@ router.post(
         },
       });
 
-      // Check if any existing term with same name overlaps with the same year
+      // Check for duplicate term in the same academic year (same term name)
       const duplicateTerm = existingTerms.find(term => {
         if (term.name.toUpperCase() !== template.name.toUpperCase()) return false;
-        const termStartYear = new Date(term.startDate).getFullYear();
-        const termEndYear = new Date(term.endDate).getFullYear();
-        return termStartYear === startYear || termStartYear === endYear || 
-               termEndYear === startYear || termEndYear === endYear;
+        if (!term.academicYear) return false; // Skip terms without academic year
+        return term.academicYear === validatedAcademicYear;
       });
 
       if (duplicateTerm) {
-        const duplicateYear = new Date(duplicateTerm.startDate).getFullYear();
         return res.status(409).json({
           success: false,
           error: {
-            message: `You already have a ${template.name} term in ${duplicateYear}. Each term (Autumn, Spring, Summer) can only be created once per year.`,
+            message: `You already have a ${template.name} term in academic year ${validatedAcademicYear}. Each term (Autumn, Spring, Summer) can only be created once per academic year.`,
             code: "DUPLICATE_TERM",
             existingTerm: duplicateTerm,
           },
@@ -552,6 +696,7 @@ router.post(
         data: {
           studentId: student.id,
           name: template.name,
+          academicYear: validatedAcademicYear,
           startDate: finalStartDate,
           endDate: finalEndDate,
         },

@@ -1,6 +1,7 @@
 import express from "express";
 import prisma from "../prisma.js";
 import { authenticate, authorizeRoles } from "../middleware/auth.js";
+import { logEmployerAcknowledgement } from "../utils/auditLogger.js";
 
 const router = express.Router();
 
@@ -121,6 +122,9 @@ router.get(
                 select: {
                   email: true,
                 },
+              },
+              terms: {
+                orderBy: { startDate: "asc" },
               },
             },
           },
@@ -485,6 +489,78 @@ router.put(
       });
     } catch (error) {
       console.error("DEACTIVATE RELATIONSHIP ERROR:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+/**
+ * PUT /relationships/:relationshipId/acknowledge - Employer acknowledges student declarations
+ */
+router.put(
+  "/:relationshipId/acknowledge",
+  authenticate,
+  authorizeRoles("EMPLOYER"),
+  async (req, res) => {
+    try {
+      const relationshipId = Number(req.params.relationshipId);
+
+      if (isNaN(relationshipId)) {
+        return res.status(400).json({ error: "Invalid relationship ID" });
+      }
+
+      const relationship = await prisma.studentEmployer.findUnique({
+        where: { id: relationshipId },
+        include: {
+          student: true,
+        },
+      });
+
+      if (!relationship) {
+        return res.status(404).json({ error: "Relationship not found" });
+      }
+
+      if (relationship.employerId !== req.user.id) {
+        return res.status(403).json({
+          error: "You can only acknowledge your own relationships",
+        });
+      }
+
+      if (relationship.status !== "ACTIVE") {
+        return res.status(400).json({
+          error: "You can only acknowledge active relationships",
+        });
+      }
+
+      const updated = await prisma.studentEmployer.update({
+        where: { id: relationshipId },
+        data: {
+          acknowledgedAt: new Date(),
+          acknowledgedBy: req.user.id,
+        },
+      });
+
+      // Get employer user for audit log
+      const employer = await prisma.user.findUnique({
+        where: { id: req.user.id },
+      });
+
+      // AUDIT LOG - Layer 3: Employer Acknowledgement
+      await logEmployerAcknowledgement(
+        prisma,
+        updated,
+        relationship.student,
+        employer,
+        null, // Use default acknowledgement text
+        req
+      );
+
+      res.json({
+        relationship: updated,
+        message: "Student declarations acknowledged. This has been recorded for compliance purposes.",
+      });
+    } catch (error) {
+      console.error("ACKNOWLEDGE RELATIONSHIP ERROR:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   }

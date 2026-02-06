@@ -1,5 +1,3 @@
-import { getWeeklyHours } from "./weeklyHours.js";
-
 export async function getWorkEligibility(prisma, student, requestedHours = null) {
   if (!student?.id) {
     throw new Error("Invalid student object passed to getWorkEligibility");
@@ -12,8 +10,6 @@ export async function getWorkEligibility(prisma, student, requestedHours = null)
     return {
       canWork: false,
       allowedWeeklyHours: 0,
-      currentWeeklyHours: 0,
-      remainingWeeklyHours: 0,
       inTermTime: false,
       activeTerm: null,
       reason: "Course has ended",
@@ -32,41 +28,29 @@ export async function getWorkEligibility(prisma, student, requestedHours = null)
   const inTermTime = !!activeTerm;
   const allowedWeeklyHours = inTermTime ? 20 : 40;
 
-  // 3️⃣ Get current week's hours worked
-  const weeklyData = await getWeeklyHours(prisma, student.id, today);
-  const currentWeeklyHours = weeklyData.totalHours;
-  const remainingWeeklyHours = Math.max(0, allowedWeeklyHours - currentWeeklyHours);
-
-  // 4️⃣ Check if requested hours would exceed limit
+  // 3️⃣ Compliance rules - no hour tracking, just rules
   let canWork = true;
   let reason = inTermTime
-    ? `In ${activeTerm.name} term`
-    : "Outside term time";
+    ? `In ${activeTerm?.name || 'term time'} - Maximum ${allowedWeeklyHours} hours per week allowed`
+    : "Outside term time - Full-time work allowed (no weekly limit)";
 
-  if (requestedHours != null) {
-    const wouldExceed = (currentWeeklyHours + requestedHours) > allowedWeeklyHours;
-    canWork = !wouldExceed && requestedHours <= allowedWeeklyHours;
-    
-    if (wouldExceed) {
-      reason = `Would exceed weekly limit. Current: ${currentWeeklyHours}h, Requested: ${requestedHours}h, Limit: ${allowedWeeklyHours}h`;
-    } else if (currentWeeklyHours >= allowedWeeklyHours) {
-      canWork = false;
-      reason = `Weekly limit already reached. Current: ${currentWeeklyHours}h, Limit: ${allowedWeeklyHours}h`;
-    }
-  } else if (currentWeeklyHours >= allowedWeeklyHours) {
+  // If custom maxWeeklyHours is set, use that instead
+  const effectiveLimit = student.maxWeeklyHours || allowedWeeklyHours;
+  
+  if (requestedHours != null && requestedHours > effectiveLimit) {
     canWork = false;
-    reason = `Weekly limit already reached. Current: ${currentWeeklyHours}h, Limit: ${allowedWeeklyHours}h`;
+    reason = `Requested ${requestedHours}h exceeds the weekly limit of ${effectiveLimit}h. During ${inTermTime ? 'term time' : 'holidays'}, the maximum allowed is ${effectiveLimit}h per week.`;
+  } else if (inTermTime) {
+    reason = `Term time: Maximum ${effectiveLimit} hours per week allowed. Student can work up to ${effectiveLimit}h but not more.`;
+  } else {
+    reason = `Holiday period: Full-time work allowed. No weekly hour limit applies.`;
   }
 
   return {
     canWork,
-    allowedWeeklyHours,
-    currentWeeklyHours: parseFloat(currentWeeklyHours.toFixed(2)),
-    remainingWeeklyHours: parseFloat(remainingWeeklyHours.toFixed(2)),
+    allowedWeeklyHours: effectiveLimit,
     inTermTime,
     activeTerm: activeTerm?.name ?? null,
     reason,
-    weekStart: weeklyData.weekStart,
-    weekEnd: weeklyData.weekEnd,
   };
 }

@@ -78,11 +78,6 @@ export const authAPI = {
 export const studentAPI = {
   createProfile: (data) => api.post('/students/profile', data),
   getProfile: () => api.get('/students/profile'),
-  getShifts: () => api.get('/work-shifts/me'),
-  getWeeklyShifts: () => api.get('/work-shifts/me/weekly'),
-  getWorkHistory: () => api.get('/work-shifts/me/history'),
-  confirmShift: (shiftId) => api.put(`/work-shifts/${shiftId}/confirm`),
-  rejectShift: (shiftId, reason) => api.put(`/work-shifts/${shiftId}/reject`, { reason }),
   getComplianceSummary: () => api.get('/compliance/weekly-summary/me'),
   getViolations: () => api.get('/compliance/violations/me'),
   getEmployers: () => api.get('/relationships/my-employers'),
@@ -94,21 +89,29 @@ export const studentAPI = {
   createTerm: (data) => api.post('/terms', data),
   updateTerm: (termId, data) => api.put(`/terms/${termId}`, data),
   deleteTerm: (termId) => api.delete(`/terms/${termId}`),
+  confirmTerm: (termId) => api.put(`/terms/${termId}/confirm`),
   deleteAllTerms: () => api.delete('/terms/me'),
   getTemplates: () => api.get('/terms/templates/me'),
   createTermFromTemplate: (data) => api.post('/terms/from-template', data),
+  // Audit trail endpoints
+  getAuditTrail: () => api.get('/audit/my-audit-trail'),
+  getAuditLogs: () => api.get('/audit/my-audit-logs'),
+  exportAuditPack: (format = 'json') => api.get(`/audit-export/student?format=${format}`, { responseType: 'blob' }),
 }
 
 // Employer endpoints
 export const employerAPI = {
   checkEligibility: (universityId, requestedHours) => 
     api.post('/employer/check-eligibility', { universityId, requestedHours }),
-  logHours: (data) => api.post('/work-shifts', data),
-  getStudentShifts: (universityId) => api.get(`/work-shifts/student/${universityId}`),
   requestAccess: (universityId) => api.post('/relationships/request', { studentUniversityId: universityId }),
   getStudents: () => api.get('/relationships/my-students'),
   getRequests: () => api.get('/relationships/requests'),
   searchStudent: (universityId) => api.get(`/students/${universityId}`),
+  acknowledgeStudent: (relationshipId) => api.put(`/relationships/${relationshipId}/acknowledge`),
+  // Audit trail endpoints
+  getRelationshipAuditTrail: (relationshipId) => api.get(`/audit/relationship/${relationshipId}`),
+  getAllRelationshipAuditTrails: () => api.get('/audit/my-relationships'),
+  exportRelationshipAuditPack: (relationshipId, format = 'json') => api.get(`/audit-export/relationship/${relationshipId}?format=${format}`, { responseType: 'blob' }),
 }
 
 // Admin endpoints (if needed later)

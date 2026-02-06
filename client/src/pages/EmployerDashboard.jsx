@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { employerAPI } from '../services/api'
+import { useAuth } from '../hooks/useAuth'
 import './Dashboard.css'
 
 const EmployerDashboard = () => {
+  const { user } = useAuth()
   const [loading, setLoading] = useState(true)
   const [students, setStudents] = useState([])
-  const [recentShifts, setRecentShifts] = useState([])
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('overview')
   
@@ -13,22 +14,10 @@ const EmployerDashboard = () => {
   const [searchUniversityId, setSearchUniversityId] = useState('')
   const [searchedStudent, setSearchedStudent] = useState(null)
   const [searching, setSearching] = useState(false)
-  
-  // Log hours form state
-  const [logHoursForm, setLogHoursForm] = useState({
-    studentUniversityId: '',
-    date: new Date().toISOString().split('T')[0],
-    hours: '',
-    description: ''
-  })
-  const [loggingHours, setLoggingHours] = useState(false)
-  const [logHoursEligibilityCheck, setLogHoursEligibilityCheck] = useState(null)
-  const [checkingEligibilityForDate, setCheckingEligibilityForDate] = useState(false)
 
   // Eligibility checker state
   const [eligibilityCheck, setEligibilityCheck] = useState({
-    universityId: '',
-    requestedHours: ''
+    universityId: ''
   })
   const [eligibilityResult, setEligibilityResult] = useState(null)
   const [checkingEligibility, setCheckingEligibility] = useState(false)
@@ -49,19 +38,6 @@ const EmployerDashboard = () => {
       if (studentsRes.status === 'fulfilled') {
         const studentsData = studentsRes.value?.data || []
         setStudents(studentsData)
-        
-        // Load shifts for active students
-        if (studentsData.length > 0) {
-          const activeStudents = studentsData.filter(s => s.status === 'ACTIVE')
-          if (activeStudents.length > 0) {
-            try {
-              const shiftsRes = await employerAPI.getStudentShifts(activeStudents[0].student.universityId)
-              setRecentShifts(shiftsRes.data.slice(0, 5))
-            } catch (err) {
-              // Ignore errors for shifts
-            }
-          }
-        }
       }
     } catch (err) {
       setError(err.message || 'Failed to load dashboard data')
@@ -70,94 +46,17 @@ const EmployerDashboard = () => {
     }
   }
 
-  const handleLogHours = async (e) => {
-    e.preventDefault()
-    try {
-      setLoggingHours(true)
-      setError('')
-      
-      const hoursToLog = parseFloat(logHoursForm.hours)
-      
-      // Check eligibility before logging if we have student ID and date
-      if (logHoursForm.studentUniversityId && logHoursForm.date) {
-        try {
-          const eligibilityRes = await employerAPI.checkEligibility(
-            logHoursForm.studentUniversityId,
-            hoursToLog
-          )
-          const eligibility = eligibilityRes.data
-          
-          // Check if in term time and would exceed 20 hours
-          if (eligibility.inTermTime && (eligibility.currentWeeklyHours + hoursToLog) > 20) {
-            const confirmMessage = `⚠️ TERM TIME WARNING: This student is in term time (${eligibility.activeTerm || 'Active Term'}). Logging ${hoursToLog}h would result in ${(eligibility.currentWeeklyHours + hoursToLog).toFixed(1)}h this week, exceeding the 20-hour limit.\n\nThis is ILLEGAL and violates UK student visa regulations.\n\nAre you sure you want to proceed?`
-            
-            if (!window.confirm(confirmMessage)) {
-              setLoggingHours(false)
-              return
-            }
-          }
-        } catch (eligibilityErr) {
-          // If eligibility check fails, still try to log (backend will validate)
-          console.warn('Eligibility check failed:', eligibilityErr)
-        }
-      }
-      
-      await employerAPI.logHours({
-        studentUniversityId: logHoursForm.studentUniversityId,
-        date: logHoursForm.date,
-        hours: hoursToLog,
-        description: logHoursForm.description
-      })
-
-      // Reset form
-      setLogHoursForm({
-        studentUniversityId: '',
-        date: new Date().toISOString().split('T')[0],
-        hours: '',
-        description: ''
-      })
-      setLogHoursEligibilityCheck(null)
-
-      // Reload data
-      loadDashboardData()
-      
-      alert('Work hours logged successfully! Student will need to confirm.')
-    } catch (err) {
-      // Handle term time violation errors with better messaging
-      if (err.status === 400 || err.response?.status === 400) {
-        const errorData = err.response?.data?.error || err.response?.data
-        if (errorData?.code === 'TERM_TIME_LIMIT_EXCEEDED' || errorData?.isTermTime) {
-          setError(errorData?.message || 'Cannot log more than 20 hours during term time. This violates UK student visa regulations.')
-        } else {
-          setError(errorData?.message || err.message || 'Failed to log hours')
-        }
-      } else {
-        setError(err.message || 'Failed to log hours')
-      }
-    } finally {
-      setLoggingHours(false)
-    }
-  }
-
-  // Check eligibility when date or student changes
-  const handleCheckEligibilityForLogging = async () => {
-    if (!logHoursForm.studentUniversityId || !logHoursForm.date) {
-      setLogHoursEligibilityCheck(null)
+  const handleAcknowledgeStudent = async (relationshipId) => {
+    if (!window.confirm('By acknowledging, you confirm that you have reviewed the student\'s declared term dates and understand the compliance rules. This creates an audit trail for compliance purposes.')) {
       return
     }
-
+    
     try {
-      setCheckingEligibilityForDate(true)
-      const res = await employerAPI.checkEligibility(
-        logHoursForm.studentUniversityId,
-        parseFloat(logHoursForm.hours) || null
-      )
-      setLogHoursEligibilityCheck(res.data)
+      await employerAPI.acknowledgeStudent(relationshipId)
+      alert('Student declarations acknowledged successfully. This has been recorded in the audit trail.')
+      loadDashboardData()
     } catch (err) {
-      setLogHoursEligibilityCheck(null)
-      // Silently fail - this is just a preview
-    } finally {
-      setCheckingEligibilityForDate(false)
+      setError(err.message || 'Failed to acknowledge student declarations')
     }
   }
 
@@ -169,7 +68,7 @@ const EmployerDashboard = () => {
       
       const res = await employerAPI.checkEligibility(
         eligibilityCheck.universityId,
-        parseFloat(eligibilityCheck.requestedHours) || null
+        null
       )
       
       setEligibilityResult(res.data)
@@ -264,7 +163,7 @@ const EmployerDashboard = () => {
       <div className="dashboard-header">
         <div>
           <h1>Employer Dashboard</h1>
-          <p className="dashboard-subtitle">Manage your students and log work hours</p>
+          <p className="dashboard-subtitle">Right-to-Work Compliance Evidence & Audit Assurance</p>
         </div>
         <div className="dashboard-stats-quick">
           <div className="stat-box">
@@ -274,10 +173,6 @@ const EmployerDashboard = () => {
           <div className="stat-box">
             <div className="stat-value">{pendingRequests.length}</div>
             <div className="stat-label">Pending Requests</div>
-          </div>
-          <div className="stat-box">
-            <div className="stat-value">{recentShifts.length}</div>
-            <div className="stat-label">Recent Shifts</div>
           </div>
         </div>
       </div>
@@ -291,10 +186,10 @@ const EmployerDashboard = () => {
           Overview
         </button>
         <button
-          className={activeTab === 'log-hours' ? 'tab-active' : ''}
-          onClick={() => setActiveTab('log-hours')}
+          className={activeTab === 'compliance' ? 'tab-active' : ''}
+          onClick={() => setActiveTab('compliance')}
         >
-          Log Hours
+          Compliance Rules
         </button>
         <button
           className={activeTab === 'students' ? 'tab-active' : ''}
@@ -314,85 +209,430 @@ const EmployerDashboard = () => {
         >
           Find Students
         </button>
+        <button
+          className={activeTab === 'profile' ? 'tab-active' : ''}
+          onClick={() => setActiveTab('profile')}
+        >
+          Profile
+        </button>
+        <button
+          className={activeTab === 'audit' ? 'tab-active' : ''}
+          onClick={() => setActiveTab('audit')}
+        >
+          Audit Trail
+        </button>
       </div>
 
       {/* Overview Tab */}
       {activeTab === 'overview' && (
         <div className="dashboard-content">
-          {/* Quick Stats */}
-          <div className="dashboard-card">
-            <h2>Quick Overview</h2>
-            <div className="overview-grid">
-              <div className="overview-item">
-                <div className="overview-label">Total Students</div>
-                <div className="overview-value">{students.length}</div>
+          {/* Welcome Banner */}
+          <div className="overview-banner banner-employer">
+            <div className="banner-content">
+              <div className="banner-icon">👔</div>
+              <div className="banner-text">
+                <h2>Compliance Assurance Dashboard</h2>
+                <p>Manage student compliance information and create audit-ready records for right-to-work compliance.</p>
               </div>
-              <div className="overview-item">
-                <div className="overview-label">Active Relationships</div>
-                <div className="overview-value">{activeStudents.length}</div>
-              </div>
-              <div className="overview-item">
-                <div className="overview-label">Pending Requests</div>
-                <div className="overview-value">{pendingRequests.length}</div>
+              <div className="banner-stat">
+                <div className="banner-stat-value">{activeStudents.length}</div>
+                <div className="banner-stat-label">Active Students</div>
               </div>
             </div>
           </div>
 
-          {/* Recent Shifts */}
-          {recentShifts.length > 0 && (
-            <div className="dashboard-card">
-              <h2>Recent Work Shifts</h2>
-              <div className="shifts-list">
-                {recentShifts.map((shift) => (
-                  <div key={shift.id} className="shift-card">
-                    <div className="shift-header">
-                      <div>
-                        <div className="shift-date">{formatDate(shift.date)}</div>
-                        <div className="shift-hours">{formatHours(shift.hours)} hours</div>
+          {/* Quick Stats Grid */}
+          <div className="overview-stats-grid">
+            <div className="overview-stat-card">
+              <div className="stat-card-icon">👥</div>
+              <div className="stat-card-content">
+                <div className="stat-card-value">{students.length}</div>
+                <div className="stat-card-label">Total Students</div>
+              </div>
+            </div>
+            <div className="overview-stat-card">
+              <div className="stat-card-icon">✓</div>
+              <div className="stat-card-content">
+                <div className="stat-card-value">{activeStudents.length}</div>
+                <div className="stat-card-label">Active Relationships</div>
+              </div>
+            </div>
+            <div className="overview-stat-card">
+              <div className="stat-card-icon">⏳</div>
+              <div className="stat-card-content">
+                <div className="stat-card-value">{pendingRequests.length}</div>
+                <div className="stat-card-label">Pending Requests</div>
+              </div>
+            </div>
+            <div className="overview-stat-card">
+              <div className="stat-card-icon">✓</div>
+              <div className="stat-card-content">
+                <div className="stat-card-value">
+                  {activeStudents.filter(s => s.acknowledgedAt).length}
+                </div>
+                <div className="stat-card-label">Acknowledged</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Two Column Layout */}
+          <div className="overview-two-column">
+            {/* Left Column */}
+            <div className="overview-column">
+              {/* Active Students */}
+              {activeStudents.length > 0 ? (
+                <div className="dashboard-card">
+                  <h3>Active Students</h3>
+                  <div className="students-list">
+                    {activeStudents.slice(0, 5).map((rel) => (
+                      <div key={rel.id} className="student-card">
+                        <div className="student-header">
+                          <div>
+                            <div className="student-id">University ID: {rel.student.universityId}</div>
+                            <div className="student-email">
+                              {rel.student.user?.email || 'N/A'}
+                            </div>
+                            <div className="student-meta">
+                              Linked: {formatDate(rel.linkedAt)}
+                            </div>
+                          </div>
+                          <span className="status-badge status-active">Active</span>
+                        </div>
+                        {rel.acknowledgedAt ? (
+                          <div className="acknowledgement-badge-small" style={{ marginTop: '0.5rem' }}>
+                            ✓ Acknowledged on {formatDate(rel.acknowledgedAt)}
+                          </div>
+                        ) : (
+                          <div className="acknowledgement-badge-small pending" style={{ marginTop: '0.5rem' }}>
+                            ⚠️ Pending Acknowledgement
+                          </div>
+                        )}
                       </div>
-                      <span className={`status-badge status-${shift.status.toLowerCase()}`}>
-                        {shift.status}
-                      </span>
-                    </div>
-                    {shift.description && (
-                      <div className="shift-description">{shift.description}</div>
+                    ))}
+                    {activeStudents.length > 5 && (
+                      <div className="view-all-link" onClick={() => setActiveTab('students')}>
+                        View all {activeStudents.length} active students →
+                      </div>
                     )}
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                </div>
+              ) : (
+                <div className="dashboard-card">
+                  <h3>Active Students</h3>
+                  <div className="empty-state">
+                    <p className="text-secondary">No active student relationships yet.</p>
+                    <p className="text-secondary">Use "Find Students" to search and request access.</p>
+                  </div>
+                </div>
+              )}
 
-          {/* Active Students Quick View */}
-          {activeStudents.length > 0 && (
-            <div className="dashboard-card">
-              <h2>Active Students</h2>
-              <div className="students-list">
-                {activeStudents.slice(0, 5).map((rel) => (
-                  <div key={rel.id} className="student-card">
-                    <div className="student-header">
-                      <div>
-                        <div className="student-id">University ID: {rel.student.universityId}</div>
-                        <div className="student-email">
-                          {rel.student.user?.email || 'N/A'}
-                        </div>
+              {/* Pending Requests */}
+              {pendingRequests.length > 0 && (
+                <div className="dashboard-card alert-card">
+                  <h3>Action Required</h3>
+                  <div className="alert-content">
+                    <div className="alert-icon">🔔</div>
+                    <div className="alert-text">
+                      <strong>{pendingRequests.length} pending access request{pendingRequests.length > 1 ? 's' : ''}</strong>
+                      <p>Waiting for student approval</p>
+                    </div>
+                    <button 
+                      className="btn btn-primary btn-sm"
+                      onClick={() => setActiveTab('students')}
+                    >
+                      View
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Right Column */}
+            <div className="overview-column">
+              {/* Compliance Summary */}
+              <div className="dashboard-card">
+                <h3>Compliance Overview</h3>
+                <div className="compliance-summary-box">
+                  <div className="compliance-summary-item">
+                    <div className="summary-icon">📋</div>
+                    <div className="summary-content">
+                      <div className="summary-title">Your Role</div>
+                      <div className="summary-description">
+                        As an employer, you can view student-declared compliance information and acknowledge their declarations to create audit trails.
                       </div>
-                      <span className="status-badge status-active">Active</span>
                     </div>
                   </div>
-                ))}
+                  <div className="compliance-summary-item">
+                    <div className="summary-icon">✓</div>
+                    <div className="summary-content">
+                      <div className="summary-title">Acknowledged Students</div>
+                      <div className="summary-description">
+                        {activeStudents.filter(s => s.acknowledgedAt).length} of {activeStudents.length} active students acknowledged
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="dashboard-card">
+                <h3>Quick Actions</h3>
+                <div className="quick-actions-list">
+                  <button
+                    className="quick-action-btn"
+                    onClick={() => setActiveTab('find-students')}
+                  >
+                    <span className="action-icon">🔍</span>
+                    <span className="action-text">Find Students</span>
+                  </button>
+                  <button
+                    className="quick-action-btn"
+                    onClick={() => setActiveTab('eligibility')}
+                  >
+                    <span className="action-icon">✓</span>
+                    <span className="action-text">Check Eligibility</span>
+                  </button>
+                  <button
+                    className="quick-action-btn"
+                    onClick={() => setActiveTab('compliance')}
+                  >
+                    <span className="action-icon">📋</span>
+                    <span className="action-text">View Compliance Rules</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Important Information */}
+              <div className="dashboard-card info-card">
+                <h3>Important Information</h3>
+                <div className="info-list">
+                  <div className="info-item">
+                    <span className="info-icon">ℹ️</span>
+                    <div className="info-content">
+                      <strong>Compliance Evidence:</strong> This platform helps you create audit-ready records by acknowledging student-declared information.
+                    </div>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-icon">⚠️</span>
+                    <div className="info-content">
+                      <strong>Term Time Rules:</strong> During term time, students can work a maximum of 20 hours per week. During holidays, full-time work is allowed.
+                    </div>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-icon">✓</span>
+                    <div className="info-content">
+                      <strong>Acknowledgement:</strong> Acknowledging student declarations creates a timestamped audit trail for compliance purposes.
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
       )}
 
-      {/* Log Hours Tab */}
-      {activeTab === 'log-hours' && (
+      {/* Profile Tab */}
+      {activeTab === 'profile' && (
+        <div className="dashboard-content">
+          <div className="dashboard-card">
+            <h2>My Profile</h2>
+            <p className="text-secondary">View your employer account information and compliance dashboard details.</p>
+            
+            {user ? (
+              <div className="profile-details">
+                <div className="profile-section">
+                  <h3>Account Information</h3>
+                  <div className="profile-info-grid">
+                    <div className="profile-info-item">
+                      <div className="profile-info-label">Email Address</div>
+                      <div className="profile-info-value">{user.email}</div>
+                    </div>
+                    <div className="profile-info-item">
+                      <div className="profile-info-label">Account Type</div>
+                      <div className="profile-info-value">Employer</div>
+                    </div>
+                    {user.createdAt && (
+                      <div className="profile-info-item">
+                        <div className="profile-info-label">Account Created</div>
+                        <div className="profile-info-value">{formatDate(user.createdAt)}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="profile-section">
+                  <h3>Dashboard Statistics</h3>
+                  <div className="profile-stats-grid">
+                    <div className="profile-stat-card">
+                      <div className="profile-stat-icon">👥</div>
+                      <div className="profile-stat-content">
+                        <div className="profile-stat-value">{students.length}</div>
+                        <div className="profile-stat-label">Total Students</div>
+                      </div>
+                    </div>
+                    <div className="profile-stat-card">
+                      <div className="profile-stat-icon">✓</div>
+                      <div className="profile-stat-content">
+                        <div className="profile-stat-value">{activeStudents.length}</div>
+                        <div className="profile-stat-label">Active Relationships</div>
+                      </div>
+                    </div>
+                    <div className="profile-stat-card">
+                      <div className="profile-stat-icon">⏳</div>
+                      <div className="profile-stat-content">
+                        <div className="profile-stat-value">{pendingRequests.length}</div>
+                        <div className="profile-stat-label">Pending Requests</div>
+                      </div>
+                    </div>
+                    <div className="profile-stat-card">
+                      <div className="profile-stat-icon">📋</div>
+                      <div className="profile-stat-content">
+                        <div className="profile-stat-value">
+                          {activeStudents.filter(s => s.acknowledgedAt).length}
+                        </div>
+                        <div className="profile-stat-label">Acknowledged</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="profile-section">
+                  <h3>Your Compliance Role</h3>
+                  <div className="role-description">
+                    <p>
+                      As an employer using this platform, you can:
+                    </p>
+                    <ul className="role-features">
+                      <li>✓ View student-declared academic term dates and compliance information</li>
+                      <li>✓ Acknowledge student declarations to create audit-ready compliance records</li>
+                      <li>✓ Check student eligibility and work hour compliance rules</li>
+                      <li>✓ Access compliance evidence for right-to-work verification</li>
+                    </ul>
+                    <p className="role-note">
+                      <strong>Important:</strong> This platform provides compliance evidence and audit trails. 
+                      It does not replace your legal responsibility to verify right-to-work status. 
+                      Always follow UK Home Office guidelines for right-to-work checks.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="empty-state">
+                <p className="text-secondary">Unable to load profile information.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Compliance Rules Tab */}
+      {activeTab === 'compliance' && (
+        <div className="dashboard-content">
+          <div className="dashboard-card">
+            <h2>Compliance Rules & Student Information</h2>
+            <p className="text-secondary">
+              View student-declared term dates and compliance rules. This information is provided by students and must be acknowledged.
+            </p>
+            
+            {activeStudents.length > 0 ? (
+              <div className="compliance-students-list">
+                {activeStudents.map((rel) => {
+                  const student = rel.student
+                  return (
+                    <div key={rel.id} className="compliance-student-card">
+                      <div className="compliance-student-header">
+                        <div>
+                          <h3>University ID: {student.universityId}</h3>
+                          <div className="student-info">
+                            <div><strong>Visa Type:</strong> {student.visaType}</div>
+                            <div><strong>Course End Date:</strong> {formatDate(student.courseEndDate)}</div>
+                            {rel.acknowledgedAt ? (
+                              <div className="acknowledgement-status acknowledged">
+                                ✓ Acknowledged on {formatDate(rel.acknowledgedAt)}
+                              </div>
+                            ) : (
+                              <div className="acknowledgement-status pending">
+                                ⚠️ Pending Acknowledgement
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        {!rel.acknowledgedAt && (
+                          <button
+                            className="btn btn-primary"
+                            onClick={() => handleAcknowledgeStudent(rel.id)}
+                          >
+                            Acknowledge Declarations
+                          </button>
+                        )}
+                      </div>
+                      
+                      <div className="compliance-rules">
+                        <h4>Compliance Rules</h4>
+                        <div className="rules-list">
+                          <div className="rule-item">
+                            <strong>During Term Time:</strong> Maximum 20 hours per week
+                          </div>
+                          <div className="rule-item">
+                            <strong>Outside Term Time:</strong> Full-time allowed (no weekly limit)
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {student.terms && student.terms.length > 0 ? (
+                        <div className="student-terms">
+                          <h4>Student-Declared Term Dates</h4>
+                          <div className="terms-list">
+                            {student.terms.map((term) => (
+                              <div key={term.id} className="term-info-card">
+                                <div className="term-info-header">
+                                  <div>
+                                    <div className="term-name">{term.name}</div>
+                                    {term.academicYear && (
+                                      <div className="term-academic-year">Academic Year: {term.academicYear}</div>
+                                    )}
+                                    <div className="term-dates">
+                                      {formatDate(term.startDate)} - {formatDate(term.endDate)}
+                                    </div>
+                                  </div>
+                                  {term.confirmedAt ? (
+                                    <span className="confirmation-badge confirmed">
+                                      ✓ Confirmed
+                                    </span>
+                                  ) : (
+                                    <span className="confirmation-badge pending">
+                                      ⚠️ Not Confirmed
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="no-terms">
+                          <p className="text-secondary">Student has not declared any term dates yet.</p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <p className="text-secondary">No active student relationships. Find students and request access to view their compliance information.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Legacy Log Hours Tab - REMOVED */}
+      {false && activeTab === 'log-hours' && (
         <div className="dashboard-content">
           <div className="dashboard-card">
             <h2>Log Work Hours</h2>
-            <p className="text-secondary">Log work hours for a student. The student will need to confirm the shift.</p>
+            <p className="text-secondary">This feature has been removed. Use your payroll system to track hours.</p>
             
             <form onSubmit={handleLogHours} className="log-hours-form">
               <div className="form-group">
@@ -568,22 +808,6 @@ const EmployerDashboard = () => {
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label" htmlFor="requestedHours">
-                  Requested Hours (Optional)
-                </label>
-                <input
-                  id="requestedHours"
-                  type="number"
-                  step="0.5"
-                  min="0.5"
-                  className="form-input"
-                  value={eligibilityCheck.requestedHours}
-                  onChange={(e) => setEligibilityCheck({ ...eligibilityCheck, requestedHours: e.target.value })}
-                  placeholder="Check if student can work these hours"
-                />
-              </div>
-
               <button
                 type="submit"
                 className="btn btn-primary"
@@ -595,14 +819,18 @@ const EmployerDashboard = () => {
 
             {eligibilityResult && (
               <div className="eligibility-result">
-                <h3>Eligibility Result</h3>
-                <div className={`eligibility-status ${eligibilityResult.canWork ? 'can-work' : 'cannot-work'}`}>
+                <h3>Compliance Information</h3>
+                <div className={`eligibility-status ${eligibilityResult.canWork !== false ? 'can-work' : 'cannot-work'}`}>
                   <div className="eligibility-icon">
-                    {eligibilityResult.canWork ? '✓' : '✗'}
+                    {eligibilityResult.canWork !== false ? '✓' : '✗'}
                   </div>
                   <div>
                     <div className="eligibility-title">
-                      {eligibilityResult.canWork ? 'Student Can Work' : 'Student Cannot Work'}
+                      {eligibilityResult.canWork === false 
+                        ? 'Student Cannot Work' 
+                        : eligibilityResult.inTermTime 
+                          ? 'Student Can Work - Term Time Rules Apply'
+                          : 'Student Can Work - Holiday Period'}
                     </div>
                     {eligibilityResult.reason && (
                       <div className="eligibility-reason">{eligibilityResult.reason}</div>
@@ -612,22 +840,46 @@ const EmployerDashboard = () => {
                 
                 <div className="eligibility-details">
                   <div className="detail-item">
-                    <span className="detail-label">Allowed Weekly Hours:</span>
-                    <span className="detail-value">{eligibilityResult.allowedWeeklyHours || 'N/A'}h</span>
+                    <span className="detail-label">Weekly Hour Limit:</span>
+                    <span className="detail-value">
+                      {eligibilityResult.allowedWeeklyHours || 'N/A'}h
+                      {eligibilityResult.inTermTime && (
+                        <span className="detail-note"> (Term time limit)</span>
+                      )}
+                      {!eligibilityResult.inTermTime && (
+                        <span className="detail-note"> (Full-time allowed)</span>
+                      )}
+                    </span>
                   </div>
                   <div className="detail-item">
-                    <span className="detail-label">In Term Time:</span>
-                    <span className="detail-value">{eligibilityResult.inTermTime ? 'Yes' : 'No'}</span>
+                    <span className="detail-label">Current Period:</span>
+                    <span className="detail-value">
+                      {eligibilityResult.inTermTime ? 'Term Time' : 'Holiday'}
+                    </span>
                   </div>
                   {eligibilityResult.activeTerm && (
                     <div className="detail-item">
                       <span className="detail-label">Active Term:</span>
-                      <span className="detail-value">{eligibilityResult.activeTerm.name}</span>
+                      <span className="detail-value">
+                        {typeof eligibilityResult.activeTerm === 'object' 
+                          ? eligibilityResult.activeTerm.name || eligibilityResult.activeTerm 
+                          : eligibilityResult.activeTerm}
+                      </span>
+                    </div>
+                  )}
+                  {eligibilityResult.inTermTime && (
+                    <div className="compliance-warning-box">
+                      <strong>⚠️ Compliance Rule:</strong> During term time, this student must not be scheduled for more than {eligibilityResult.allowedWeeklyHours} hours per week. This is a legal requirement for UK student visas.
+                    </div>
+                  )}
+                  {!eligibilityResult.inTermTime && (
+                    <div className="compliance-info-box">
+                      <strong>✓ Holiday Period:</strong> During holidays, this student can work full-time with no weekly hour limit.
                     </div>
                   )}
                 </div>
 
-                {eligibilityResult.canWork && (
+                {eligibilityResult.canWork !== false && (
                   <button
                     className="btn btn-secondary"
                     onClick={() => handleRequestAccess(eligibilityCheck.universityId)}
@@ -718,7 +970,7 @@ const EmployerDashboard = () => {
                   <button
                     className="btn btn-secondary"
                     onClick={() => {
-                      setEligibilityCheck({ universityId: searchedStudent.universityId, requestedHours: '' })
+                      setEligibilityCheck({ universityId: searchedStudent.universityId })
                       setActiveTab('eligibility')
                     }}
                   >
@@ -730,6 +982,434 @@ const EmployerDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Audit Trail Tab */}
+      {activeTab === 'audit' && (
+        <EmployerAuditTrailTab students={students} />
+      )}
+    </div>
+  )
+}
+
+// Employer Audit Trail Tab Component
+const EmployerAuditTrailTab = ({ students }) => {
+  const [auditTrails, setAuditTrails] = useState([])
+  const [selectedRelationship, setSelectedRelationship] = useState(null)
+  const [selectedAuditTrail, setSelectedAuditTrail] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [exporting, setExporting] = useState(false)
+
+  const activeStudents = students.filter(s => s.status === 'ACTIVE')
+
+  useEffect(() => {
+    if (activeStudents.length > 0) {
+      loadAuditTrails()
+    } else {
+      setLoading(false)
+    }
+  }, [students])
+
+  const loadAuditTrails = async () => {
+    try {
+      setLoading(true)
+      setError('')
+      const response = await employerAPI.getAllRelationshipAuditTrails()
+      if (response?.data) {
+        setAuditTrails(response.data)
+        // Select first relationship by default
+        if (response.data.length > 0 && response.data[0].auditTrail) {
+          setSelectedRelationship(response.data[0].relationshipId)
+          setSelectedAuditTrail(response.data[0].auditTrail)
+        }
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to load audit trails')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSelectRelationship = async (relationshipId) => {
+    try {
+      setSelectedRelationship(relationshipId)
+      const trail = auditTrails.find(t => t.relationshipId === relationshipId)
+      if (trail?.auditTrail) {
+        setSelectedAuditTrail(trail.auditTrail)
+      } else {
+        // Load individual trail if not in list
+        const response = await employerAPI.getRelationshipAuditTrail(relationshipId)
+        if (response?.data) {
+          setSelectedAuditTrail(response.data)
+        }
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to load audit trail')
+    }
+  }
+
+  const handleExportAuditPack = async (relationshipId, format = 'json') => {
+    try {
+      setExporting(true)
+      const response = await employerAPI.exportRelationshipAuditPack(relationshipId, format)
+      
+      // Detect content type from response
+      const contentType = response.headers['content-type'] || response.data.type
+      const isPDF = contentType.includes('application/pdf') || format === 'pdf'
+      
+      // Create blob and download
+      const blob = new Blob([response.data], { 
+        type: isPDF ? 'application/pdf' : 'application/json' 
+      })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      const extension = isPDF ? 'pdf' : 'json'
+      link.download = `audit-pack-relationship-${relationshipId}-${Date.now()}.${extension}`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      setError(err.message || 'Failed to export audit pack')
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A'
+    return new Date(dateString).toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  if (loading) {
+    return (
+      <div className="dashboard-content">
+        <div className="dashboard-loading">
+          <div className="spinner"></div>
+          <p>Loading audit trails...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="dashboard-content">
+      <div className="dashboard-card">
+        <div className="audit-header">
+          <div>
+            <h2>Compliance Audit Trails</h2>
+            <p className="text-secondary">
+              View and export audit trails for your student relationships. Complete records for Home Office compliance.
+            </p>
+          </div>
+        </div>
+
+        {error && (
+          <div className="alert alert-error">
+            {error}
+          </div>
+        )}
+
+        {activeStudents.length === 0 ? (
+          <div className="empty-state">
+            <p className="text-secondary">No active student relationships. Audit trails will appear here once you have active relationships.</p>
+          </div>
+        ) : (
+          <div className="audit-trails-layout">
+            {/* Left Sidebar - Relationship List */}
+            <div className="audit-relationships-sidebar">
+              <h3>Select Student Relationship</h3>
+              <div className="relationships-list">
+                {auditTrails.map((trail) => {
+                  const student = activeStudents.find(s => 
+                    s.student?.universityId === trail.studentUniversityId
+                  )
+                  return (
+                    <div
+                      key={trail.relationshipId}
+                      className={`relationship-item ${selectedRelationship === trail.relationshipId ? 'active' : ''}`}
+                      onClick={() => handleSelectRelationship(trail.relationshipId)}
+                    >
+                      <div className="relationship-student-id">
+                        {trail.studentUniversityId || 'N/A'}
+                      </div>
+                      <div className="relationship-status">
+                        {trail.status === 'ACTIVE' && (
+                          <span className="badge badge-success">Active</span>
+                        )}
+                        {trail.acknowledgedAt && (
+                          <span className="badge badge-info">Acknowledged</span>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Right Content - Audit Trail Details */}
+            <div className="audit-trail-content">
+              {selectedAuditTrail ? (
+                <>
+                  <div className="audit-trail-header">
+                    <div>
+                      <h3>Audit Trail for {selectedAuditTrail.student?.universityId || 'Student'}</h3>
+                      <p className="text-secondary">
+                        Relationship ID: {selectedRelationship}
+                      </p>
+                      <div className="export-info">
+                        <small className="text-secondary">
+                          <strong>PDF:</strong> Professional document ready for submission | <strong>JSON:</strong> Machine-readable data format
+                        </small>
+                      </div>
+                    </div>
+                    <div className="export-buttons-group">
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => handleExportAuditPack(selectedRelationship, 'pdf')}
+                        disabled={exporting}
+                        title="Export as PDF document - Ready for Home Office submission"
+                      >
+                        {exporting ? 'Exporting...' : '📄 Export PDF'}
+                      </button>
+                      <button
+                        className="btn btn-secondary"
+                        onClick={() => handleExportAuditPack(selectedRelationship, 'json')}
+                        disabled={exporting}
+                        title="Export as JSON file - Machine-readable format"
+                      >
+                        {exporting ? 'Exporting...' : '📥 Export JSON'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Layer 1: Identity */}
+                  <div className="audit-section">
+                    <h3>1. Identity & Context</h3>
+                    <div className="audit-identity-grid">
+                      <div className="audit-identity-item">
+                        <div className="identity-label">Student University ID</div>
+                        <div className="identity-value">{selectedAuditTrail.student?.universityId || 'N/A'}</div>
+                      </div>
+                      <div className="audit-identity-item">
+                        <div className="identity-label">Visa Type</div>
+                        <div className="identity-value">{selectedAuditTrail.student?.visaType || 'N/A'}</div>
+                      </div>
+                      <div className="audit-identity-item">
+                        <div className="identity-label">Course End Date</div>
+                        <div className="identity-value">{formatDate(selectedAuditTrail.student?.courseEndDate)}</div>
+                      </div>
+                      <div className="audit-identity-item">
+                        <div className="identity-label">Employer ID</div>
+                        <div className="identity-value">{selectedAuditTrail.relationship?.employerId || 'N/A'}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Layer 2: Student Declarations */}
+                  <div className="audit-section">
+                    <h3>2. Student Term Declarations</h3>
+                    {selectedAuditTrail.studentDeclarations && selectedAuditTrail.studentDeclarations.length > 0 ? (
+                      <div className="audit-declarations-list">
+                        {selectedAuditTrail.studentDeclarations.map((decl, idx) => (
+                          <div key={idx} className="audit-declaration-card">
+                            <div className="declaration-header">
+                              <div>
+                                <div className="declaration-term-name">{decl.term.name} Term</div>
+                                <div className="declaration-academic-year">{decl.term.academicYear}</div>
+                              </div>
+                              {decl.confirmedAt ? (
+                                <span className="badge badge-success">✓ Confirmed</span>
+                              ) : (
+                                <span className="badge badge-warning">Pending</span>
+                              )}
+                            </div>
+                            <div className="declaration-dates">
+                              <div className="date-item">
+                                <span className="date-label">Start:</span>
+                                <span className="date-value">{formatDate(decl.term.startDate)}</span>
+                              </div>
+                              <div className="date-item">
+                                <span className="date-label">End:</span>
+                                <span className="date-value">{formatDate(decl.term.endDate)}</span>
+                              </div>
+                            </div>
+                            <div className="declaration-meta">
+                              <div className="meta-item">
+                                <span className="meta-label">Declared:</span>
+                                <span className="meta-value">{formatDate(decl.declaredAt)}</span>
+                              </div>
+                              {decl.confirmedAt && (
+                                <div className="meta-item">
+                                  <span className="meta-label">Confirmed:</span>
+                                  <span className="meta-value">{formatDate(decl.confirmedAt)}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="empty-state">
+                        <p className="text-secondary">No student declarations available.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Layer 3: Employer Acknowledgement */}
+                  <div className="audit-section">
+                    <h3>3. Employer Acknowledgement</h3>
+                    {selectedAuditTrail.employerAcknowledgement ? (
+                      <div className="audit-acknowledgement-card">
+                        <div className="acknowledgement-header">
+                          <div>
+                            <div className="acknowledgement-status">✓ Acknowledged</div>
+                            <div className="acknowledgement-date">
+                              Date: {formatDate(selectedAuditTrail.employerAcknowledgement.acknowledgedAt)}
+                            </div>
+                          </div>
+                          <span className="badge badge-success">Acknowledged</span>
+                        </div>
+                        {selectedAuditTrail.employerAcknowledgement.acknowledgementText && (
+                          <div className="acknowledgement-text">
+                            <strong>Employer Statement:</strong> "{selectedAuditTrail.employerAcknowledgement.acknowledgementText}"
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="empty-state">
+                        <p className="text-secondary">No acknowledgement recorded yet.</p>
+                        <p className="text-secondary">Please acknowledge student declarations in the Compliance Rules tab.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Layer 4: Compliance Rules */}
+                  <div className="audit-section">
+                    <h3>4. System-Generated Compliance Rules</h3>
+                    {selectedAuditTrail.complianceRules && selectedAuditTrail.complianceRules.length > 0 ? (
+                      <div className="audit-rules-list">
+                        {selectedAuditTrail.complianceRules.map((rule, idx) => (
+                          <div key={idx} className="audit-rule-card">
+                            <div className="rule-header">
+                              <div className="rule-action">{rule.action}</div>
+                              <div className="rule-date">{formatDate(rule.createdAt)}</div>
+                            </div>
+                            {rule.complianceRule && (
+                              <div className="rule-details">
+                                <div className="rule-detail-item">
+                                  <span className="rule-detail-label">Rule Applied:</span>
+                                  <span className="rule-detail-value">{rule.complianceRule.ruleApplied || 'N/A'}</span>
+                                </div>
+                                {rule.complianceRule.allowedWeeklyHours && (
+                                  <div className="rule-detail-item">
+                                    <span className="rule-detail-label">Allowed Hours:</span>
+                                    <span className="rule-detail-value">{rule.complianceRule.allowedWeeklyHours}h/week</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="empty-state">
+                        <p className="text-secondary">No compliance rules generated yet.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Layer 5: Change History */}
+                  <div className="audit-section">
+                    <h3>5. Change History</h3>
+                    {selectedAuditTrail.changeHistory && selectedAuditTrail.changeHistory.length > 0 ? (
+                      <div className="audit-changes-list">
+                        {selectedAuditTrail.changeHistory.map((change, idx) => (
+                          <div key={idx} className="audit-change-card">
+                            <div className="change-header">
+                              <div className="change-action">{change.action}</div>
+                              <div className="change-date">{formatDate(change.createdAt)}</div>
+                            </div>
+                            {change.changeHistory && (
+                              <div className="change-details">
+                                <div className="change-before">
+                                  <strong>Before:</strong>
+                                  <pre>{JSON.stringify(change.changeHistory.before, null, 2)}</pre>
+                                </div>
+                                <div className="change-arrow">→</div>
+                                <div className="change-after">
+                                  <strong>After:</strong>
+                                  <pre>{JSON.stringify(change.changeHistory.after, null, 2)}</pre>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="empty-state">
+                        <p className="text-secondary">No changes recorded yet.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* All Audit Logs */}
+                  <div className="audit-section">
+                    <h3>Complete Audit Log</h3>
+                    <p className="text-secondary">All audit events for this relationship.</p>
+                    {selectedAuditTrail.allAuditLogs && selectedAuditTrail.allAuditLogs.length > 0 ? (
+                      <div className="audit-logs-table">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Date & Time</th>
+                              <th>Action</th>
+                              <th>Entity Type</th>
+                              <th>Performed By</th>
+                              <th>IP Address</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {selectedAuditTrail.allAuditLogs.map((log) => (
+                              <tr key={log.id}>
+                                <td>{formatDate(log.createdAt)}</td>
+                                <td>{log.action}</td>
+                                <td>{log.entityType}</td>
+                                <td>{log.performedBy}</td>
+                                <td>{log.ipAddress || 'N/A'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="empty-state">
+                        <p className="text-secondary">No audit logs available.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Disclaimer */}
+                  <div className="audit-disclaimer">
+                    <strong>Important:</strong> This system records declarations and acknowledgements. It does not replace payroll or legal advice. This export is for compliance evidence purposes only.
+                  </div>
+                </>
+              ) : (
+                <div className="empty-state">
+                  <p className="text-secondary">Select a student relationship to view audit trail.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
