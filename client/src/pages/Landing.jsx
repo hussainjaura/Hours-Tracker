@@ -16,7 +16,8 @@ const Landing = () => {
           </div>
           <nav className="landing-nav">
             <a href="#how-it-works" className="nav-link">How It Works</a>
-            <a href="#features" className="nav-link">Benefits</a>
+            <a href="#features" className="nav-link">Features</a>
+            <a href="#faq" className="nav-link">FAQs</a>
             {!isAuthenticated && (
               <>
                 <Link to="/login" className="nav-link">Login</Link>
@@ -62,6 +63,75 @@ const Landing = () => {
                 Go to Dashboard
               </Link>
             )}
+          </div>
+        </div>
+      </section>
+
+      {/* Main Value Proposition Section */}
+      <section className="value-proposition-section">
+        <div className="container">
+          <div className="value-proposition-content">
+            <h2 className="value-proposition-title">
+              Empower your team to maintain compliance with confidence
+            </h2>
+            <p className="value-proposition-description">
+              Right to Work Compliance is a comprehensive platform that allows you to digitize all elements of your student employee compliance process. As a compliance management system, our platform lets students declare their academic status, employers verify eligibility, and both parties maintain complete audit trails – all from one easy-to-use application.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Feature Showcase Section */}
+      <section className="feature-showcase-section">
+        <div className="container">
+          <div className="feature-showcase-grid">
+            <div className="feature-showcase-item">
+              <div className="feature-showcase-icon">📋</div>
+              <h3 className="feature-showcase-title">Term Declarations</h3>
+              <p className="feature-showcase-description">
+                Students can declare their academic term dates in minutes. Our intuitive interface makes it easy to add and confirm term periods, ensuring accurate compliance calculations.
+              </p>
+            </div>
+
+            <div className="feature-showcase-item">
+              <div className="feature-showcase-icon">✅</div>
+              <h3 className="feature-showcase-title">Employer Acknowledgements</h3>
+              <p className="feature-showcase-description">
+                Employers can acknowledge student declarations and view compliance rules. Set clear work hour limits and create an audit trail of due diligence with a single click.
+              </p>
+            </div>
+
+            <div className="feature-showcase-item">
+              <div className="feature-showcase-icon">📊</div>
+              <h3 className="feature-showcase-title">Audit Trails</h3>
+              <p className="feature-showcase-description">
+                Instantly generate comprehensive audit reports that show all declarations, confirmations, and acknowledgements. Export complete compliance evidence in PDF or JSON format.
+              </p>
+            </div>
+
+            <div className="feature-showcase-item">
+              <div className="feature-showcase-icon">🔔</div>
+              <h3 className="feature-showcase-title">Compliance Alerts</h3>
+              <p className="feature-showcase-description">
+                Stay informed about important compliance updates. Receive notifications when term dates change, acknowledgements are required, or compliance rules are updated.
+              </p>
+            </div>
+
+            <div className="feature-showcase-item">
+              <div className="feature-showcase-icon">🔍</div>
+              <h3 className="feature-showcase-title">Eligibility Checks</h3>
+              <p className="feature-showcase-description">
+                Employers can quickly check student eligibility and view calculated work hour limits. See term-time vs holiday rules instantly with clear, actionable information.
+              </p>
+            </div>
+
+            <div className="feature-showcase-item">
+              <div className="feature-showcase-icon">📈</div>
+              <h3 className="feature-showcase-title">Compliance Dashboard</h3>
+              <p className="feature-showcase-description">
+                Get real-time visibility into your compliance status. View active relationships, pending confirmations, and compliance summaries all in one place.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -212,6 +282,93 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* Additional Capabilities Section */}
+      <section className="capabilities-section">
+        <div className="container">
+          <h2 className="section-title">Do even more with Right to Work Compliance</h2>
+          <p className="section-subtitle">
+            Connect with your workflow and customize your setup to match your unique compliance needs. Our platform helps teams discover efficient ways of working, saving time and reducing risk without compromising compliance.
+          </p>
+          
+          <div className="capabilities-grid">
+            <div className="capability-card">
+              <div className="capability-icon">👥</div>
+              <h3 className="capability-title">Relationship Management</h3>
+              <p className="capability-description">
+                Set up student-employer relationships and manage access permissions. Quickly share compliance data and collaborate with ease.
+              </p>
+            </div>
+
+            <div className="capability-card">
+              <div className="capability-icon">🔗</div>
+              <h3 className="capability-title">Export & Integration</h3>
+              <p className="capability-description">
+                Export complete audit packs in PDF or JSON format. Integrate compliance data with your existing HR and payroll systems.
+              </p>
+            </div>
+
+            <div className="capability-card">
+              <div className="capability-icon">📱</div>
+              <h3 className="capability-title">Mobile-First Design</h3>
+              <p className="capability-description">
+                Access your compliance dashboard from anywhere. Our responsive design works seamlessly on desktop, tablet, and mobile devices.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section id="faq" className="faq-section">
+        <div className="container">
+          <h2 className="section-title">Frequently Asked Questions</h2>
+          
+          <div className="faq-grid">
+            <div className="faq-item">
+              <h3 className="faq-question">What can I get out of using Right to Work Compliance?</h3>
+              <p className="faq-answer">
+                Our platform provides comprehensive compliance evidence for student employees and employers. Students can declare their academic terms and create audit trails, while employers can verify eligibility and document due diligence. Both parties benefit from clear compliance rules and complete audit records.
+              </p>
+            </div>
+
+            <div className="faq-item">
+              <h3 className="faq-question">Can I import my existing student information?</h3>
+              <p className="faq-answer">
+                Yes! Students can easily add their university information, course details, and term dates through our intuitive interface. The system automatically calculates compliance rules based on your declared information.
+              </p>
+            </div>
+
+            <div className="faq-item">
+              <h3 className="faq-question">Can I create professional audit reports?</h3>
+              <p className="faq-answer">
+                Absolutely! Our platform generates comprehensive audit packs that include all declarations, confirmations, acknowledgements, and compliance rules. Export complete evidence in PDF or JSON format for your records.
+              </p>
+            </div>
+
+            <div className="faq-item">
+              <h3 className="faq-question">How does the system calculate work hour limits?</h3>
+              <p className="faq-answer">
+                The system automatically calculates work hour limits based on student-declared term dates. During term time, the limit is 20 hours per week. Outside term time (holidays), students can work full-time. The system clearly displays which rules apply and when.
+              </p>
+            </div>
+
+            <div className="faq-item">
+              <h3 className="faq-question">Is this platform a legal authority?</h3>
+              <p className="faq-answer">
+                No. This platform is a compliance support tool that records student declarations and creates audit trails. It does not provide legal advice or determine immigration status. Responsibility remains with the student and employer to ensure compliance with UK visa regulations.
+              </p>
+            </div>
+
+            <div className="faq-item">
+              <h3 className="faq-question">Do I have to pay to use Right to Work Compliance?</h3>
+              <p className="faq-answer">
+                Currently, our platform is free to use. Students and employers can create accounts, manage relationships, and export audit trails at no cost. This helps ensure compliance is accessible to everyone who needs it.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="cta-section">
         <div className="container">
@@ -245,23 +402,42 @@ const Landing = () => {
             <div className="footer-section">
               <h4 className="footer-title">Right to Work Compliance</h4>
               <p className="footer-text">
-                Compliance assurance and audit evidence for student employees.
+                Compliance assurance and audit evidence for student employees. Built for students and employers to manage right-to-work compliance together.
               </p>
             </div>
             <div className="footer-section">
-              <h4 className="footer-title">Quick Links</h4>
+              <h4 className="footer-title">Product</h4>
               <ul className="footer-links">
-                <li><Link to="/login">Login</Link></li>
-                <li><Link to="/register">Register</Link></li>
                 <li><a href="#how-it-works">How It Works</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><Link to="/register">Get Started</Link></li>
+                <li><Link to="/login">Login</Link></li>
+              </ul>
+            </div>
+            <div className="footer-section">
+              <h4 className="footer-title">Support</h4>
+              <ul className="footer-links">
+                <li><a href="#faq">FAQs</a></li>
+                <li><a href="#how-it-works">For Students</a></li>
+                <li><a href="#how-it-works">For Employers</a></li>
                 <li><a href="#features">Benefits</a></li>
               </ul>
             </div>
             <div className="footer-section">
-              <h4 className="footer-title">Information</h4>
+              <h4 className="footer-title">Resources</h4>
               <ul className="footer-links">
-                <li><a href="#how-it-works">For Students</a></li>
-                <li><a href="#how-it-works">For Employers</a></li>
+                <li><a href="#how-it-works">Documentation</a></li>
+                <li><a href="#features">Compliance Guide</a></li>
+                <li><a href="#faq">Help Center</a></li>
+              </ul>
+            </div>
+            <div className="footer-section">
+              <h4 className="footer-title">Company</h4>
+              <ul className="footer-links">
+                <li><a href="#about">About</a></li>
+                <li><a href="#legal">Legal</a></li>
+                <li><a href="#privacy">Privacy</a></li>
+                <li><a href="#terms">Terms</a></li>
               </ul>
             </div>
           </div>
@@ -271,7 +447,9 @@ const Landing = () => {
                 <strong>Important Disclaimer:</strong> This platform supports compliance by recording student declarations and confirmations. It does not provide legal advice or determine immigration status. Responsibility remains with the student and employer.
               </p>
             </div>
-            <p>&copy; 2024 Right to Work Compliance. All rights reserved.</p>
+            <div className="footer-copyright">
+              <p>&copy; 2024 Right to Work Compliance. All rights reserved.</p>
+            </div>
           </div>
         </div>
       </footer>
