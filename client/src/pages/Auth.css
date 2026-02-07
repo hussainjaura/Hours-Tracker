@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   padding: var(--spacing-md);
-  background: var(--bg-secondary);
+  background: #ffffff;
   position: relative;
   overflow: hidden;
 }
@@ -18,8 +18,8 @@
   right: 0;
   bottom: 0;
   background: 
-    radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.06) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.06) 0%, transparent 50%);
+    radial-gradient(circle at 20% 50%, rgba(31, 41, 55, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(107, 114, 128, 0.02) 0%, transparent 50%);
   pointer-events: none;
   animation: pulse 15s ease-in-out infinite;
 }
@@ -34,18 +34,18 @@
 }
 
 .auth-card {
-  background: var(--bg-primary);
-  border-radius: var(--radius-2xl);
+  background: #ffffff;
+  border-radius: 20px;
   box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.05),
     0 4px 6px -1px rgba(0, 0, 0, 0.05),
-    0 10px 15px -3px rgba(0, 0, 0, 0.08),
-    0 20px 25px -5px rgba(0, 0, 0, 0.04);
+    0 10px 15px -3px rgba(0, 0, 0, 0.08);
   padding: 3rem 2.5rem;
   width: 100%;
   max-width: 480px;
   position: relative;
   z-index: 1;
-  border: 1px solid var(--border-light);
+  border: 1px solid #e5e7eb;
   animation: fadeInUp 0.5s ease-out;
 }
 
@@ -69,8 +69,8 @@
 }
 
 .auth-back-button:hover {
-  background: var(--bg-tertiary);
-  color: var(--primary-color);
+  background: #f3f4f6;
+  color: #1f2937;
   transform: translateX(-2px);
 }
 
@@ -136,14 +136,14 @@
 }
 
 .auth-footer a {
-  color: var(--primary-color);
+  color: #1f2937;
   text-decoration: none;
   font-weight: 600;
   transition: color var(--transition-base);
 }
 
 .auth-footer a:hover {
-  color: var(--secondary-color);
+  color: #374151;
   text-decoration: underline;
 }
 
@@ -169,7 +169,14 @@
 }
 
 .auth-card .form-input:hover {
-  border-color: var(--text-tertiary);
+  border-color: #9ca3af;
+}
+
+.auth-card .form-input:focus {
+  outline: none;
+  border-color: #1f2937;
+  box-shadow: 0 0 0 3px rgba(31, 41, 55, 0.1);
+  background-color: #ffffff;
 }
 
 .auth-card .form-label {

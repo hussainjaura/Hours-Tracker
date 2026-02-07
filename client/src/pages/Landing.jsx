@@ -11,74 +11,122 @@ const Landing = () => {
       <header className="landing-header">
         <div className="landing-header-content">
           <div className="landing-logo">
-            <span className="logo-icon">WH</span>
+            <div className="logo-icon">
+              <div className="logo-icon-inner"></div>
+            </div>
             <span className="logo-text">RTW Compliance Audit</span>
           </div>
-          <nav className="landing-nav">
+          <nav className="landing-nav-center">
             <a href="#how-it-works" className="nav-link">How It Works</a>
             <a href="#statistics" className="nav-link">Statistics</a>
             <a href="#compliance-risks" className="nav-link">Compliance Risks</a>
             <a href="#solutions" className="nav-link">Solutions</a>
             <a href="#features" className="nav-link">Features</a>
             <a href="#faq" className="nav-link">FAQs</a>
-            {!isAuthenticated && (
+          </nav>
+          <div className="landing-nav-right">
+            {!isAuthenticated ? (
               <>
-                <Link to="/login" className="nav-link">Login</Link>
-                <Link to="/register" className="btn btn-primary nav-btn">
-                  Get Started
+                <Link to="/login" className="nav-link-login">Log in</Link>
+                <Link to="/register" className="btn-start-free">
+                  Start for free
+                  <span className="btn-arrow">→</span>
                 </Link>
               </>
-            )}
-            {isAuthenticated && (
-              <Link to="/student" className="btn btn-primary nav-btn">
+            ) : (
+              <Link to="/student" className="btn-start-free">
                 Go to Dashboard
+                <span className="btn-arrow">→</span>
               </Link>
             )}
-          </nav>
+          </div>
         </div>
       </header>
 
       {/* Hero Section */}
       <section className="hero-section">
-        <div className="hero-content">
-          <h1 className="hero-title">
-            Stop Guessing Student Work Hours
-          </h1>
-          <p className="hero-subtitle">
-            Protect your business from £60,000 Right-to-Work fines
-          </p>
-          <p className="hero-description">
-            Automated compliance audit trails for student workers — built on student declarations, employer acknowledgements, and immutable records that support your Statutory Excuse.
-          </p>
-          <div className="hero-cta">
-            {!isAuthenticated ? (
-              <>
-                <Link to="/register" className="btn btn-primary btn-large">
-                  Get Started as a Student
-                </Link>
-                <Link to="/register" className="btn btn-secondary btn-large">
-                  Employer / Manager Access
-                </Link>
-              </>
-            ) : (
-              <Link to="/student" className="btn btn-primary btn-large">
-                Go to Dashboard
-              </Link>
-            )}
+        <div className="hero-container">
+          <div className="hero-left">
+            <h1 className="hero-title">
+              <span className="hero-title-main">STOP GUESSING</span>
+              <span className="hero-title-accent">STUDENT WORK HOURS</span>
+            </h1>
+            <div className="hero-content-box">
+              <p className="hero-description">
+                Protect your business from £60,000 Right-to-Work fines. Automated compliance audit trails for student workers — built on student declarations, employer acknowledgements, and immutable records that support your Statutory Excuse.
+              </p>
+              <div className="hero-cta">
+                {!isAuthenticated ? (
+                  <>
+                    <Link to="/register" className="btn-hero-primary">
+                      Get Started
+                    </Link>
+                    <Link to="/register" className="btn-hero-secondary">
+                      Employer Access
+                    </Link>
+                  </>
+                ) : (
+                  <Link to="/student" className="btn-hero-primary">
+                    Go to Dashboard
+                  </Link>
+                )}
+              </div>
+              <div className="hero-app-info">
+                <p className="app-availability">The platform is available now</p>
+                <div className="app-store-icons">
+                  <div className="app-icon-placeholder">App Store</div>
+                  <div className="app-icon-placeholder">Google Play</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="hero-right">
+            <div className="hero-image-placeholder">
+              <div className="image-placeholder-content">
+                <p>Dashboard Screenshot</p>
+                <p className="placeholder-subtitle">Add your dashboard image here</p>
+              </div>
+            </div>
           </div>
         </div>
+        <div className="hero-wave-bg"></div>
       </section>
 
       {/* Main Value Proposition Section */}
       <section className="value-proposition-section">
-        <div className="container">
-          <div className="value-proposition-content">
+        <div className="value-prop-container">
+          <div className="value-prop-left">
+            <div className="value-prop-stats">
+              <div className="stat-item">
+                <div className="stat-number">1K+</div>
+                <div className="stat-label">ACTIVE USERS</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-number">500+</div>
+                <div className="stat-label">COMPLIANCE CHECKS</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-number">4.9+</div>
+                <div className="stat-label">USER RATING</div>
+              </div>
+            </div>
             <h2 className="value-proposition-title">
-              Empower your team to maintain compliance with confidence
+              IMMENSE COMPLIANCE PROTECTION
             </h2>
-            <p className="value-proposition-description">
-              RTW Compliance Audit is a comprehensive platform that allows you to digitize all elements of your student employee compliance process. As a compliance management system, our platform lets students declare their academic status, employers verify eligibility, and both parties maintain complete audit trails – all from one easy-to-use application.
+            <p className="value-proposition-tagline">
+              WE TURN YOUR COMPLIANCE WORRIES INTO AUDIT-READY EVIDENCE
             </p>
+            <Link to="/register" className="btn-view-reviews">
+              View Features
+            </Link>
+          </div>
+          <div className="value-prop-right">
+            <div className="value-prop-image-placeholder">
+              <div className="image-placeholder-content">
+                <p>Platform Screenshot</p>
+                <p className="placeholder-subtitle">Add your platform image here</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

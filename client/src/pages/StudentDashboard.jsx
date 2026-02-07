@@ -550,7 +550,7 @@ const StudentDashboard = () => {
       )}
 
       {/* Dashboard Header */}
-      <div className="dashboard-header">
+      <div className="dashboard-page-header">
         <div>
           <h1>Student Dashboard</h1>
           <p className="dashboard-subtitle">University ID: {profile.universityId}</p>
@@ -623,9 +623,6 @@ const StudentDashboard = () => {
           {/* Welcome & Status Banner */}
           <div className={`overview-banner ${isInTermTime() ? 'banner-term-time' : 'banner-holiday'}`}>
             <div className="banner-content">
-              <div className="banner-icon">
-                {isInTermTime() ? '📚' : '🏖️'}
-              </div>
               <div className="banner-text">
                 <h2>
                   {isInTermTime() 
@@ -648,28 +645,24 @@ const StudentDashboard = () => {
           {/* Quick Stats Grid */}
           <div className="overview-stats-grid">
             <div className="overview-stat-card">
-              <div className="stat-card-icon">⏰</div>
               <div className="stat-card-content">
                 <div className="stat-card-value">{getAllowedHours()}h</div>
                 <div className="stat-card-label">Weekly Limit</div>
               </div>
             </div>
             <div className="overview-stat-card">
-              <div className="stat-card-icon">📅</div>
               <div className="stat-card-content">
                 <div className="stat-card-value">{terms.length}</div>
                 <div className="stat-card-label">Academic Terms</div>
               </div>
             </div>
             <div className="overview-stat-card">
-              <div className="stat-card-icon">👔</div>
               <div className="stat-card-content">
                 <div className="stat-card-value">{employers.filter(e => e.status === 'ACTIVE').length}</div>
                 <div className="stat-card-label">Active Employers</div>
               </div>
             </div>
             <div className="overview-stat-card">
-              <div className="stat-card-icon">⚠️</div>
               <div className="stat-card-content">
                 <div className="stat-card-value">{violations.length}</div>
                 <div className="stat-card-label">Violations</div>
@@ -715,11 +708,11 @@ const StudentDashboard = () => {
                       </div>
                       {activeTerm.confirmedAt ? (
                         <div className="term-confirmation-status confirmed">
-                          ✓ Term dates confirmed
+                          Term dates confirmed
                         </div>
                       ) : (
                         <div className="term-confirmation-status pending">
-                          ⚠️ Term dates not confirmed
+                          Term dates not confirmed
                         </div>
                       )}
                     </div>
@@ -817,7 +810,7 @@ const StudentDashboard = () => {
                           </div>
                           <div className="employer-summary-meta">
                             {rel.acknowledgedAt ? (
-                              <span className="acknowledgement-badge-small">✓ Acknowledged</span>
+                              <span className="acknowledgement-badge-small">Acknowledged</span>
                             ) : rel.status === 'ACTIVE' ? (
                               <span className="acknowledgement-badge-small pending">Pending Acknowledgement</span>
                             ) : null}
@@ -839,7 +832,6 @@ const StudentDashboard = () => {
                 <div className="dashboard-card alert-card">
                   <h3>Action Required</h3>
                   <div className="alert-content">
-                    <div className="alert-icon">🔔</div>
                     <div className="alert-text">
                       <strong>{pendingRequests.length} pending access request{pendingRequests.length > 1 ? 's' : ''}</strong>
                       <p>Employers are waiting for your approval</p>
@@ -858,9 +850,6 @@ const StudentDashboard = () => {
               <div className="dashboard-card">
                 <h3>Compliance Status</h3>
                 <div className={`compliance-status-overview ${violations.length === 0 ? 'compliant' : 'non-compliant'}`}>
-                  <div className="compliance-icon-large">
-                    {violations.length === 0 ? '✓' : '⚠'}
-                  </div>
                   <div className="compliance-text">
                     <div className="compliance-title-large">
                       {violations.length === 0 ? 'All Compliant' : `${violations.length} Violation${violations.length > 1 ? 's' : ''}`}
@@ -911,7 +900,6 @@ const StudentDashboard = () => {
             <div className="dashboard-card">
               <h2>Compliance Status</h2>
               <div className="compliance-status compliant">
-                <div className="compliance-icon">✓</div>
                 <div>
                   <div className="compliance-title">No Violations</div>
                     <div className="compliance-details">You are currently compliant with all work hour compliance regulations.</div>
@@ -1197,11 +1185,11 @@ const StudentDashboard = () => {
                                         </span>
                                         {term.confirmedAt ? (
                                           <span className="confirmation-badge confirmed" style={{ marginLeft: '0.5rem' }}>
-                                            ✓ Confirmed
+                                            Confirmed
                                           </span>
                                         ) : (
                                           <span className="confirmation-badge pending" style={{ marginLeft: '0.5rem' }}>
-                                            ⚠️ Not Confirmed
+                                            Not Confirmed
                                           </span>
                                         )}
                                       </div>
@@ -1258,11 +1246,11 @@ const StudentDashboard = () => {
                                         </span>
                                         {term.confirmedAt ? (
                                           <span className="confirmation-badge confirmed" style={{ marginLeft: '0.5rem' }}>
-                                            ✓ Confirmed
+                                            Confirmed
                                           </span>
                                         ) : (
                                           <span className="confirmation-badge pending" style={{ marginLeft: '0.5rem' }}>
-                                            ⚠️ Not Confirmed
+                                            Not Confirmed
                                           </span>
                                         )}
                                       </div>
@@ -1333,9 +1321,6 @@ const StudentDashboard = () => {
                           className={`full-time-period-card ${isCurrent ? 'current' : isPast ? 'past' : 'upcoming'}`}
                         >
                           <div className="full-time-period-header">
-                            <div className="full-time-period-icon">
-                              {isCurrent ? '✓' : '📅'}
-                            </div>
                             <div className="full-time-period-content">
                               <div className="full-time-period-dates">
                                 {formatDate(period.startDate)} - {formatDate(period.endDate)}
@@ -1355,7 +1340,7 @@ const StudentDashboard = () => {
                             </div>
                           </div>
                           <div className="full-time-period-message">
-                            <strong>✓ Full-time work allowed</strong> - No weekly hour limit during this period
+                            <strong>Full-time work allowed</strong> - No weekly hour limit during this period
                           </div>
                         </div>
                       )
@@ -1417,7 +1402,6 @@ const StudentDashboard = () => {
                   <h3>Compliance Rules</h3>
                   <div className="profile-rules">
                     <div className="rule-card">
-                      <div className="rule-icon">📚</div>
                       <div className="rule-content">
                         <div className="rule-title">During Term Time</div>
                         <div className="rule-description">Maximum 20 hours per week allowed</div>
@@ -1425,7 +1409,6 @@ const StudentDashboard = () => {
                       <div className="rule-hours">20h/week</div>
                     </div>
                     <div className="rule-card">
-                      <div className="rule-icon">🏖️</div>
                       <div className="rule-content">
                         <div className="rule-title">Outside Term Time (Holidays)</div>
                         <div className="rule-description">Full-time work allowed (no weekly limit)</div>
@@ -1604,7 +1587,7 @@ const AuditTrailTab = ({ profile, onExport }) => {
               disabled={exporting}
               title="Export as JSON file - Machine-readable format"
             >
-              {exporting ? 'Exporting...' : '📥 Export JSON'}
+              {exporting ? 'Exporting...' : 'Export JSON'}
             </button>
           </div>
         </div>
@@ -1653,7 +1636,7 @@ const AuditTrailTab = ({ profile, onExport }) => {
                           <div className="declaration-academic-year">{decl.term.academicYear}</div>
                         </div>
                         {decl.confirmedAt ? (
-                          <span className="badge badge-success">✓ Confirmed</span>
+                          <span className="badge badge-success">Confirmed</span>
                         ) : (
                           <span className="badge badge-warning">Pending Confirmation</span>
                         )}
@@ -1707,7 +1690,7 @@ const AuditTrailTab = ({ profile, onExport }) => {
                           <div className="acknowledgement-employer">Employer ID: {ack.employerId}</div>
                           <div className="acknowledgement-date">Acknowledged: {formatDate(ack.acknowledgedAt)}</div>
                         </div>
-                        <span className="badge badge-success">✓ Acknowledged</span>
+                        <span className="badge badge-success">Acknowledged</span>
                       </div>
                       {ack.acknowledgementText && (
                         <div className="acknowledgement-text">

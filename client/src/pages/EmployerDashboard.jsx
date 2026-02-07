@@ -160,7 +160,7 @@ const EmployerDashboard = () => {
       )}
 
       {/* Dashboard Header */}
-      <div className="dashboard-header">
+      <div className="dashboard-page-header">
         <div>
           <h1>Employer Dashboard</h1>
           <p className="dashboard-subtitle">RTW Compliance Audit - Evidence & Audit Assurance</p>

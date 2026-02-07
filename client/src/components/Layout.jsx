@@ -22,15 +22,21 @@ const Layout = ({ children }) => {
 
   return (
     <div className="layout">
-      <header className="header">
-        <div className="header-content">
-          <h1 className="logo">RTW Compliance Audit</h1>
-          <div className="header-actions">
+      <header className="dashboard-header">
+        <div className="dashboard-header-content">
+          <div className="dashboard-logo">
+            <div className="logo-icon">
+              <div className="logo-icon-inner"></div>
+            </div>
+            <span className="logo-text">RTW Compliance Audit</span>
+          </div>
+          <div className="dashboard-header-spacer"></div>
+          <div className="dashboard-header-actions">
             <div className="user-info">
               <span className="user-email">{user?.email}</span>
               <span className="user-role">{getRoleDisplay(user?.role)}</span>
             </div>
-            <button onClick={handleLogout} className="btn btn-secondary">
+            <button onClick={handleLogout} className="btn-logout">
               Logout
             </button>
           </div>
