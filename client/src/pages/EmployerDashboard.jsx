@@ -163,7 +163,7 @@ const EmployerDashboard = () => {
       <div className="dashboard-header">
         <div>
           <h1>Employer Dashboard</h1>
-          <p className="dashboard-subtitle">Right-to-Work Compliance Evidence & Audit Assurance</p>
+          <p className="dashboard-subtitle">RTW Compliance Audit - Evidence & Audit Assurance</p>
         </div>
         <div className="dashboard-stats-quick">
           <div className="stat-box">

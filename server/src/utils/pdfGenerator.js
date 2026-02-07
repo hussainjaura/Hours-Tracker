@@ -115,7 +115,7 @@ export async function generateStudentAuditPackPDF(auditPack) {
       let y = 50;
       
       // Cover Page
-      y = addHeader(doc, 'Right to Work Compliance', 'Student Audit Pack');
+      y = addHeader(doc, 'RTW Compliance Audit', 'Student Audit Pack');
       
       y += 20;
       doc.fontSize(14)
@@ -423,7 +423,7 @@ export async function generateRelationshipAuditPackPDF(auditPack) {
       let y = 50;
       
       // Cover Page
-      y = addHeader(doc, 'Right to Work Compliance', 'Employer-Student Relationship Audit Pack');
+      y = addHeader(doc, 'RTW Compliance Audit', 'Employer-Student Relationship Audit Pack');
       
       y += 20;
       doc.fontSize(14)

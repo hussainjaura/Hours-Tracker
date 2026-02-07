@@ -24,7 +24,7 @@ const Layout = ({ children }) => {
     <div className="layout">
       <header className="header">
         <div className="header-content">
-          <h1 className="logo">Right to Work Compliance</h1>
+          <h1 className="logo">RTW Compliance Audit</h1>
           <div className="header-actions">
             <div className="user-info">
               <span className="user-email">{user?.email}</span>
