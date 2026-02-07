@@ -42,14 +42,13 @@ const Landing = () => {
       <section className="hero-section">
         <div className="hero-content">
           <h1 className="hero-title">
-            Stop Guessing Student Work Hours.
-            <span className="hero-title-accent"> Protect Your Business from £60,000 Fines.</span>
+            Stop Guessing Student Work Hours
           </h1>
-          <p className="hero-description">
-            An automated compliance audit trail that tracks term times, logs declarations, and protects your Statutory Excuse. Built around student declarations and employer due diligence to create audit-ready compliance records.
+          <p className="hero-subtitle">
+            Protect your business from £60,000 Right-to-Work fines
           </p>
-          <p className="hero-supporting-text">
-            This platform helps international students and employers manage weekly working limits by combining student-declared academic status, automated calculations, and clear audit trails. The system supports compliance — it does not replace legal responsibility.
+          <p className="hero-description">
+            Automated compliance audit trails for student workers — built on student declarations, employer acknowledgements, and immutable records that support your Statutory Excuse.
           </p>
           <div className="hero-cta">
             {!isAuthenticated ? (
