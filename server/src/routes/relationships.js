@@ -237,7 +237,42 @@ router.get(
         orderBy: { linkedAt: "desc" },
       });
 
-      res.json(relationships);
+      // Fetch employer profiles for all unique employer IDs
+      const employerIds = [...new Set(relationships.map(req => req.employerId))];
+      const employerProfiles = await prisma.employer.findMany({
+        where: {
+          userId: { in: employerIds },
+        },
+        include: {
+          user: {
+            select: {
+              email: true,
+            },
+          },
+        },
+      });
+
+      // Create a map for quick lookup
+      const employerMap = new Map();
+      employerProfiles.forEach(emp => {
+        employerMap.set(emp.userId, emp);
+      });
+
+      // Add employer profile information to requests
+      const requestsWithEmployers = relationships.map(req => {
+        const employerProfile = employerMap.get(req.employerId);
+        return {
+          ...req,
+          employer: employerProfile ? {
+            fullName: employerProfile.fullName,
+            organisationName: employerProfile.organisationName,
+            workEmail: employerProfile.workEmail || employerProfile.user?.email,
+            role: employerProfile.role,
+          } : null,
+        };
+      });
+
+      res.json(requestsWithEmployers);
     } catch (error) {
       console.error("GET RELATIONSHIP REQUESTS ERROR:", error);
       res.status(500).json({ error: "Internal server error" });
@@ -277,7 +312,42 @@ router.get(
         orderBy: { linkedAt: "desc" },
       });
 
-      res.json(relationships);
+      // Fetch employer profiles for all unique employer IDs
+      const employerIds = [...new Set(relationships.map(rel => rel.employerId))];
+      const employerProfiles = await prisma.employer.findMany({
+        where: {
+          userId: { in: employerIds },
+        },
+        include: {
+          user: {
+            select: {
+              email: true,
+            },
+          },
+        },
+      });
+
+      // Create a map for quick lookup
+      const employerMap = new Map();
+      employerProfiles.forEach(emp => {
+        employerMap.set(emp.userId, emp);
+      });
+
+      // Add employer profile information to relationships
+      const relationshipsWithEmployers = relationships.map(rel => {
+        const employerProfile = employerMap.get(rel.employerId);
+        return {
+          ...rel,
+          employer: employerProfile ? {
+            fullName: employerProfile.fullName,
+            organisationName: employerProfile.organisationName,
+            workEmail: employerProfile.workEmail || employerProfile.user?.email,
+            role: employerProfile.role,
+          } : null,
+        };
+      });
+
+      res.json(relationshipsWithEmployers);
     } catch (error) {
       console.error("GET MY EMPLOYERS ERROR:", error);
       res.status(500).json({ error: "Internal server error" });

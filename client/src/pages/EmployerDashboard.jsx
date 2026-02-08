@@ -182,7 +182,7 @@ const EmployerDashboard = () => {
       <div className="dashboard-page-header">
         <div>
           <h1>Employer Dashboard</h1>
-          <p className="dashboard-subtitle">RTW Compliance Audit - Evidence & Audit Assurance</p>
+          <p className="dashboard-subtitle">ISC Audit — International Student Compliance Audit - Evidence & Audit Assurance</p>
         </div>
         <div className="dashboard-stats-quick">
           <div className="stat-box">
@@ -303,6 +303,9 @@ const EmployerDashboard = () => {
                         <div className="student-header">
                           <div>
                             <div className="student-id">University ID: {rel.student.universityId}</div>
+                            <div className="student-university">
+                              <strong>{rel.student.universityName || 'Unknown University'}</strong>
+                            </div>
                             <div className="student-email">
                               {rel.student.user?.email || 'N/A'}
                             </div>
@@ -538,6 +541,7 @@ const EmployerDashboard = () => {
                         <div>
                           <h3>University ID: {student.universityId}</h3>
                           <div className="student-info">
+                            <div><strong>University:</strong> {student.universityName || 'Unknown University'}</div>
                             <div><strong>Visa Type:</strong> {student.visaType}</div>
                             <div><strong>Course End Date:</strong> {formatDate(student.courseEndDate)}</div>
                             {rel.acknowledgedAt ? (
@@ -750,6 +754,9 @@ const EmployerDashboard = () => {
                     <div className="student-header">
                       <div>
                         <div className="student-id">University ID: {rel.student.universityId}</div>
+                        <div className="student-university">
+                          <strong>{rel.student.universityName || 'Unknown University'}</strong>
+                        </div>
                         <div className="student-email">
                           {rel.student.user?.email || 'N/A'}
                         </div>
@@ -924,6 +931,10 @@ const EmployerDashboard = () => {
                   <div className="profile-item">
                     <span className="profile-label">University ID:</span>
                     <span className="profile-value">{searchedStudent.universityId}</span>
+                  </div>
+                  <div className="profile-item">
+                    <span className="profile-label">University:</span>
+                    <span className="profile-value">{searchedStudent.universityName || 'Unknown University'}</span>
                   </div>
                   <div className="profile-item">
                     <span className="profile-label">Visa Type:</span>
@@ -1188,6 +1199,10 @@ const EmployerAuditTrailTab = ({ students }) => {
                       <div className="audit-identity-item">
                         <div className="identity-label">Student University ID</div>
                         <div className="identity-value">{selectedAuditTrail.student?.universityId || 'N/A'}</div>
+                      </div>
+                      <div className="audit-identity-item">
+                        <div className="identity-label">University</div>
+                        <div className="identity-value">{selectedAuditTrail.student?.universityName || 'Unknown University'}</div>
                       </div>
                       <div className="audit-identity-item">
                         <div className="identity-label">Visa Type</div>

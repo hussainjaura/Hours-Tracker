@@ -90,6 +90,9 @@ router.get(
           const rel = relationships.find(r => r.acknowledgedBy === ack.acknowledgedBy);
           return {
             employerId: ack.employerId,
+            organisationName: ack.organisationName || 'Unknown Organisation',
+            employerName: ack.employerName || 'Unknown',
+            workEmail: ack.workEmail || 'N/A',
             acknowledgedAt: ack.acknowledgedAt,
             acknowledgedBy: ack.acknowledgedBy,
             acknowledgementText: ack.acknowledgementLogs[0]?.acknowledgementText ||

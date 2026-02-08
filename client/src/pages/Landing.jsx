@@ -12,9 +12,9 @@ const Landing = () => {
         <div className="landing-header-content">
           <div className="landing-logo">
             <div className="logo-icon">
-              <div className="logo-icon-inner"></div>
+              <div className="logo-icon-inner">ISC.</div>
             </div>
-            <span className="logo-text">RTW Compliance Audit</span>
+            <span className="logo-text">ISC Audit</span>
           </div>
           <nav className="landing-nav-center">
             <a href="#how-it-works" className="nav-link">How It Works</a>
@@ -519,7 +519,7 @@ const Landing = () => {
         <div className="container">
           <h2 className="section-title">How Employers Can Improve Compliance</h2>
           <p className="section-subtitle">
-            With the Home Office tightening enforcement, businesses need to take a proactive approach. Here's how RTW Compliance Audit helps you stay compliant.
+            With the Home Office tightening enforcement, businesses need to take a proactive approach. Here's how ISC Audit — International Student Compliance Audit helps you stay compliant.
           </p>
           
           <div className="solutions-grid">
@@ -676,7 +676,7 @@ const Landing = () => {
       {/* Additional Capabilities Section */}
       <section className="capabilities-section">
         <div className="container">
-          <h2 className="section-title">Do even more with RTW Compliance Audit</h2>
+          <h2 className="section-title">Do even more with ISC Audit — International Student Compliance Audit</h2>
           <p className="section-subtitle">
             Connect with your workflow and customize your setup to match your unique compliance needs. Our platform helps teams discover efficient ways of working, saving time and reducing risk without compromising compliance.
           </p>
@@ -713,7 +713,7 @@ const Landing = () => {
           
           <div className="faq-grid">
             <div className="faq-item">
-              <h3 className="faq-question">What can I get out of using RTW Compliance Audit?</h3>
+              <h3 className="faq-question">What can I get out of using ISC Audit — International Student Compliance Audit?</h3>
               <p className="faq-answer">
                 Our platform provides comprehensive compliance evidence for student employees and employers. Students can declare their academic terms and create audit trails, while employers can verify eligibility and document due diligence. Both parties benefit from clear compliance rules and complete audit records.
               </p>
@@ -748,7 +748,7 @@ const Landing = () => {
             </div>
 
             <div className="faq-item">
-              <h3 className="faq-question">Do I have to pay to use RTW Compliance Audit?</h3>
+              <h3 className="faq-question">Do I have to pay to use ISC Audit — International Student Compliance Audit?</h3>
               <p className="faq-answer">
                 Currently, our platform is free to use. Students and employers can create accounts, manage relationships, and export audit trails at no cost. This helps ensure compliance is accessible to everyone who needs it.
               </p>
@@ -788,7 +788,7 @@ const Landing = () => {
         <div className="container">
           <div className="footer-content">
             <div className="footer-section">
-              <h4 className="footer-title">RTW Compliance Audit</h4>
+              <h4 className="footer-title">ISC Audit — International Student Compliance Audit</h4>
               <p className="footer-text">
                 Compliance assurance and audit evidence for student employees. Built for students and employers to manage right-to-work compliance together.
               </p>
@@ -835,11 +835,11 @@ const Landing = () => {
           <div className="footer-bottom">
             <div className="footer-disclaimer">
               <p className="disclaimer-text">
-                <strong>Important Disclaimer:</strong> This platform supports compliance by recording student declarations and confirmations. It does not provide legal advice or determine immigration status. Responsibility remains with the student and employer.
+                <strong>Important Disclaimer:</strong> International Student Compliance Audit (operating as "ISC Audit") supports compliance by recording student declarations and confirmations. It does not provide legal advice or determine immigration status. Responsibility remains with the student and employer.
               </p>
             </div>
             <div className="footer-copyright">
-              <p>&copy; 2024 RTW Compliance Audit. All rights reserved.</p>
+              <p>&copy; 2024 ISC Audit — International Student Compliance Audit. All rights reserved.</p>
             </div>
           </div>
         </div>

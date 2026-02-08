@@ -26,9 +26,9 @@ const Layout = ({ children }) => {
         <div className="dashboard-header-content">
           <div className="dashboard-logo">
             <div className="logo-icon">
-              <div className="logo-icon-inner"></div>
+              <div className="logo-icon-inner">ISC.</div>
             </div>
-            <span className="logo-text">RTW Compliance Audit</span>
+            <span className="logo-text">ISC Audit</span>
           </div>
           <div className="dashboard-header-spacer"></div>
           <div className="dashboard-header-actions">

@@ -115,7 +115,7 @@ export async function generateStudentAuditPackPDF(auditPack) {
       let y = 50;
       
       // Cover Page
-      y = addHeader(doc, 'RTW Compliance Audit', 'Student Audit Pack');
+      y = addHeader(doc, 'ISC Audit — International Student Compliance Audit', 'Student Audit Pack');
       
       y += 20;
       doc.fontSize(14)
@@ -217,7 +217,14 @@ export async function generateStudentAuditPackPDF(auditPack) {
           y += 10;
           doc.fontSize(12)
              .fillColor('#1f2937')
-             .text(`Employer: ${ack.employerId}`, 50, y, { bold: true });
+             .text(`Organisation: ${ack.organisationName || 'Unknown Organisation'}`, 50, y, { bold: true });
+          
+          if (ack.employerName) {
+            y += 15;
+            doc.fontSize(10)
+               .fillColor('#6b7280')
+               .text(`Manager: ${ack.employerName}${ack.workEmail ? ` (${ack.workEmail})` : ''}`, 50, y);
+          }
           
           y += 20;
           y = addKeyValue(doc, y, 'Acknowledged At', formatDate(ack.acknowledgedAt));
@@ -423,7 +430,7 @@ export async function generateRelationshipAuditPackPDF(auditPack) {
       let y = 50;
       
       // Cover Page
-      y = addHeader(doc, 'RTW Compliance Audit', 'Employer-Student Relationship Audit Pack');
+      y = addHeader(doc, 'ISC Audit — International Student Compliance Audit', 'Employer-Student Relationship Audit Pack');
       
       y += 20;
       doc.fontSize(14)

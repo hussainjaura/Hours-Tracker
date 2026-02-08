@@ -19,6 +19,7 @@ const Register = () => {
   
   // Student profile fields
   const [universityId, setUniversityId] = useState('')
+  const [universityName, setUniversityName] = useState('')
   const [visaType, setVisaType] = useState('Student Visa (Tier 4)')
   const [courseEndDate, setCourseEndDate] = useState('')
   const [maxWeeklyHours, setMaxWeeklyHours] = useState('')
@@ -61,6 +62,10 @@ const Register = () => {
     if (role === 'STUDENT') {
       if (!universityId.trim()) {
         setError('University ID is required')
+        return
+      }
+      if (!universityName.trim()) {
+        setError('University name is required')
         return
       }
       if (!visaType) {
@@ -114,6 +119,7 @@ const Register = () => {
     if (role === 'STUDENT') {
       registrationData.studentProfile = {
         universityId: universityId.trim(),
+        universityName: universityName.trim(),
         visaType: visaType,
         courseEndDate: courseEndDate,
         maxWeeklyHours: maxWeeklyHours && maxWeeklyHours.trim() !== '' ? parseFloat(maxWeeklyHours) : undefined,
@@ -247,6 +253,24 @@ const Register = () => {
                 />
                 <small className="form-hint">
                   This is your unique student identifier at your university
+                </small>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="universityName">
+                  University Name *
+                </label>
+                <input
+                  id="universityName"
+                  type="text"
+                  className="form-input"
+                  value={universityName}
+                  onChange={(e) => setUniversityName(e.target.value)}
+                  required
+                  placeholder="e.g. University of Southampton"
+                />
+                <small className="form-hint">
+                  The name of your university
                 </small>
               </div>
 

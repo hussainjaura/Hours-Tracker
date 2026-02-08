@@ -72,8 +72,8 @@ router.post("/register",
       if (!studentProfile) {
         return res.status(400).json({ error: 'Student profile information is required' });
       }
-      if (!studentProfile.universityId || !studentProfile.visaType || !studentProfile.courseEndDate) {
-        return res.status(400).json({ error: 'All student profile fields are required: universityId, visaType, courseEndDate' });
+      if (!studentProfile.universityId || !studentProfile.universityName || !studentProfile.visaType || !studentProfile.courseEndDate) {
+        return res.status(400).json({ error: 'All student profile fields are required: universityName, universityId, visaType, courseEndDate' });
       }
       // Validate course end date is in the future
       const courseEndDate = new Date(studentProfile.courseEndDate);
@@ -108,6 +108,7 @@ router.post("/register",
           data: {
             userId: user.id,
             universityId: studentProfile.universityId.trim(),
+            universityName: studentProfile.universityName.trim(),
             visaType: studentProfile.visaType,
             courseEndDate: new Date(studentProfile.courseEndDate),
             maxWeeklyHours: studentProfile.maxWeeklyHours ? parseInt(studentProfile.maxWeeklyHours) : null,
@@ -125,6 +126,7 @@ router.post("/register",
             metadata: {
               userId: user.id,
               universityId: createdStudent.universityId,
+              universityName: createdStudent.universityName,
               visaType: createdStudent.visaType,
               courseEndDate: createdStudent.courseEndDate,
               maxWeeklyHours: createdStudent.maxWeeklyHours,

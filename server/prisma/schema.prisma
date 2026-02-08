@@ -39,6 +39,7 @@ model Student {
   id             Int      @id @default(autoincrement())
   userId         String   @unique
   universityId   String   @unique
+  universityName String
   visaType       String
   courseEndDate  DateTime
   maxWeeklyHours Int?

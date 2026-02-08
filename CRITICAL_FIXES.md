@@ -108,7 +108,7 @@ ENABLE_EMAIL_VERIFICATION=false
 VITE_API_URL=http://localhost:4000
 
 # App Name
-VITE_APP_NAME=RTW Compliance Audit
+VITE_APP_NAME=ISC Audit — International Student Compliance Audit
 ```
 
 ### 4. Update Package.json Scripts

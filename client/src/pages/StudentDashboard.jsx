@@ -930,7 +930,12 @@ const StudentDashboard = () => {
                   <div key={rel.id} className="employer-card">
                     <div className="employer-header">
                       <div>
-                        <div className="employer-id">Employer ID: {rel.employerId}</div>
+                        <div className="employer-name">
+                          <strong>{rel.employer?.organisationName || 'Unknown Organisation'}</strong>
+                        </div>
+                        <div className="employer-details">
+                          Manager: {rel.employer?.fullName || 'Unknown'} {rel.employer?.workEmail && `(${rel.employer.workEmail})`}
+                        </div>
                         <div className="employer-status">Status: {rel.status}</div>
                       </div>
                       <span className={`status-badge status-${rel.status.toLowerCase()}`}>
@@ -972,8 +977,12 @@ const StudentDashboard = () => {
                     </div>
                     <div className="request-info">
                       <div className="request-item">
-                        <span className="request-label">Employer ID:</span>
-                        <span className="request-value">{request.employerId}</span>
+                        <span className="request-label">Organisation:</span>
+                        <span className="request-value">{request.employer?.organisationName || 'Unknown Organisation'}</span>
+                      </div>
+                      <div className="request-item">
+                        <span className="request-label">Manager:</span>
+                        <span className="request-value">{request.employer?.fullName || 'Unknown'} {request.employer?.workEmail && `(${request.employer.workEmail})`}</span>
                       </div>
                     </div>
                     <div className="request-actions">
@@ -1379,6 +1388,10 @@ const StudentDashboard = () => {
                       <div className="profile-info-value">{profile.universityId}</div>
                     </div>
                     <div className="profile-info-item">
+                      <div className="profile-info-label">University Name</div>
+                      <div className="profile-info-value">{profile.universityName || 'N/A'}</div>
+                    </div>
+                    <div className="profile-info-item">
                       <div className="profile-info-label">Visa Type</div>
                       <div className="profile-info-value">{profile.visaType}</div>
                     </div>
@@ -1696,7 +1709,12 @@ const AuditTrailTab = ({ profile, onExport }) => {
                     <div key={idx} className="audit-acknowledgement-card">
                       <div className="acknowledgement-header">
                         <div>
-                          <div className="acknowledgement-employer">Employer ID: {ack.employerId}</div>
+                          <div className="acknowledgement-employer">
+                            <strong>{ack.organisationName || 'Unknown Organisation'}</strong>
+                          </div>
+                          <div className="acknowledgement-employer-details">
+                            Manager: {ack.employerName || 'Unknown'} {ack.workEmail && `(${ack.workEmail})`}
+                          </div>
                           <div className="acknowledgement-date">Acknowledged: {formatDate(ack.acknowledgedAt)}</div>
                         </div>
                         <span className="badge badge-success">Acknowledged</span>

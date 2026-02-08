@@ -303,7 +303,7 @@ export async function getStudentAuditTrail(prisma, studentId, universityId) {
     orderBy: { startDate: "asc" },
   });
 
-  // Get relationships with acknowledgements
+  // Get relationships with acknowledgements (include employer profile)
   const relationships = await prisma.studentEmployer.findMany({
     where: { studentId: student.id },
     include: {
@@ -315,6 +315,27 @@ export async function getStudentAuditTrail(prisma, studentId, universityId) {
         },
       },
     },
+  });
+
+  // Fetch employer profiles for all unique employer IDs
+  const employerIds = [...new Set(relationships.map(rel => rel.employerId))];
+  const employerProfiles = await prisma.employer.findMany({
+    where: {
+      userId: { in: employerIds },
+    },
+    include: {
+      user: {
+        select: {
+          email: true,
+        },
+      },
+    },
+  });
+
+  // Create a map for quick lookup
+  const employerMap = new Map();
+  employerProfiles.forEach(emp => {
+    employerMap.set(emp.userId, emp);
   });
 
   // Organize by layers
@@ -346,16 +367,22 @@ export async function getStudentAuditTrail(prisma, studentId, universityId) {
     // Layer 3: Employer Acknowledgements
     acknowledgements: relationships
       .filter(rel => rel.acknowledgedAt)
-      .map(rel => ({
-        employerId: rel.employerId,
-        acknowledgedAt: rel.acknowledgedAt,
-        acknowledgedBy: rel.acknowledgedBy,
-        acknowledgementLogs: auditLogs.filter(log =>
-          log.entityType === "StudentEmployer" &&
-          log.entityId === rel.id &&
-          log.action.includes("ACKNOWLEDGE")
-        ),
-      })),
+      .map(rel => {
+        const employerProfile = employerMap.get(rel.employerId);
+        return {
+          employerId: rel.employerId,
+          employerName: employerProfile?.fullName || 'Unknown',
+          organisationName: employerProfile?.organisationName || 'Unknown Organisation',
+          workEmail: employerProfile?.workEmail || employerProfile?.user?.email || 'N/A',
+          acknowledgedAt: rel.acknowledgedAt,
+          acknowledgedBy: rel.acknowledgedBy,
+          acknowledgementLogs: auditLogs.filter(log =>
+            log.entityType === "StudentEmployer" &&
+            log.entityId === rel.id &&
+            log.action.includes("ACKNOWLEDGE")
+          ),
+        };
+      }),
     // Layer 4: Compliance Rules
     complianceRules: auditLogs.filter(log =>
       log.action === "SYSTEM_GENERATE_COMPLIANCE_RULE" ||
