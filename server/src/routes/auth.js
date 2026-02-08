@@ -48,7 +48,48 @@ router.post("/register",
   ]),
   async (req, res) => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password, role, employerProfile, studentProfile } = req.body;
+
+    // Validate employer profile fields if role is EMPLOYER
+    if (role === 'EMPLOYER') {
+      if (!employerProfile) {
+        return res.status(400).json({ error: 'Employer profile information is required' });
+      }
+      if (!employerProfile.fullName || !employerProfile.workEmail || !employerProfile.role || !employerProfile.organisationName) {
+        return res.status(400).json({ error: 'All employer profile fields are required: fullName, workEmail, role, organisationName' });
+      }
+      // Validate role enum
+      const validRoles = ['MANAGER', 'HR', 'OWNER'];
+      if (!validRoles.includes(employerProfile.role.toUpperCase())) {
+        return res.status(400).json({ 
+          error: `Invalid employer role. Must be one of: ${validRoles.join(', ')}` 
+        });
+      }
+    }
+
+    // Validate student profile fields if role is STUDENT
+    if (role === 'STUDENT') {
+      if (!studentProfile) {
+        return res.status(400).json({ error: 'Student profile information is required' });
+      }
+      if (!studentProfile.universityId || !studentProfile.visaType || !studentProfile.courseEndDate) {
+        return res.status(400).json({ error: 'All student profile fields are required: universityId, visaType, courseEndDate' });
+      }
+      // Validate course end date is in the future
+      const courseEndDate = new Date(studentProfile.courseEndDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (courseEndDate <= today) {
+        return res.status(400).json({ error: 'Course end date must be in the future' });
+      }
+      // Validate maxWeeklyHours if provided
+      if (studentProfile.maxWeeklyHours != null) {
+        const hours = parseFloat(studentProfile.maxWeeklyHours);
+        if (isNaN(hours) || hours < 1 || hours > 168) {
+          return res.status(400).json({ error: 'Maximum weekly hours must be between 1 and 168' });
+        }
+      }
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -59,6 +100,99 @@ router.post("/register",
         role,
       },
     });
+
+    // Create student profile if role is STUDENT
+    if (role === 'STUDENT' && studentProfile) {
+      try {
+        const createdStudent = await prisma.student.create({
+          data: {
+            userId: user.id,
+            universityId: studentProfile.universityId.trim(),
+            visaType: studentProfile.visaType,
+            courseEndDate: new Date(studentProfile.courseEndDate),
+            maxWeeklyHours: studentProfile.maxWeeklyHours ? parseInt(studentProfile.maxWeeklyHours) : null,
+          },
+        });
+
+        // AUDIT LOG - Student profile creation
+        await prisma.auditLog.create({
+          data: {
+            action: "CREATE_STUDENT_PROFILE",
+            entityType: "Student",
+            entityId: createdStudent.id,
+            performedBy: user.id,
+            universityId: createdStudent.universityId,
+            metadata: {
+              userId: user.id,
+              universityId: createdStudent.universityId,
+              visaType: createdStudent.visaType,
+              courseEndDate: createdStudent.courseEndDate,
+              maxWeeklyHours: createdStudent.maxWeeklyHours,
+              createdDuringRegistration: true,
+            },
+          },
+        });
+      } catch (profileError) {
+        // If Student table doesn't exist yet (migration not run), continue without error
+        if (!profileError.message?.includes('model `Student`') && !profileError.message?.includes('does not exist')) {
+          console.error('Error creating student profile during registration:', profileError);
+          // Re-throw if it's a duplicate universityId error
+          if (profileError.code === 'P2002') {
+            return res.status(409).json({ error: 'A student with this university ID already exists' });
+          }
+          throw profileError;
+        }
+      }
+    }
+
+    // Create employer profile if role is EMPLOYER
+    if (role === 'EMPLOYER' && employerProfile) {
+      try {
+        // Get IP and user agent from request
+        const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        const userAgent = req.headers['user-agent'] || 'Unknown';
+
+        const createdEmployer = await prisma.employer.create({
+          data: {
+            userId: user.id,
+            fullName: employerProfile.fullName,
+            workEmail: employerProfile.workEmail,
+            role: employerProfile.role.toUpperCase(),
+            organisationName: employerProfile.organisationName,
+            lastLogin: new Date(),
+            lastLoginIp: ipAddress,
+            lastLoginUserAgent: userAgent,
+            acknowledgementIps: [ipAddress],
+          },
+        });
+
+        // AUDIT LOG - Employer profile creation
+        await prisma.auditLog.create({
+          data: {
+            action: "CREATE_EMPLOYER_PROFILE",
+            entityType: "Employer",
+            entityId: createdEmployer.id,
+            performedBy: user.id,
+            universityId: null,
+            ipAddress,
+            userAgent,
+            metadata: {
+              userId: user.id,
+              fullName: employerProfile.fullName,
+              workEmail: employerProfile.workEmail,
+              role: employerProfile.role.toUpperCase(),
+              organisationName: employerProfile.organisationName,
+              createdDuringRegistration: true,
+            },
+          },
+        });
+      } catch (profileError) {
+        // If Employer table doesn't exist yet (migration not run), continue without error
+        if (!profileError.message?.includes('model `Employer`') && !profileError.message?.includes('does not exist')) {
+          console.error('Error creating employer profile during registration:', profileError);
+        }
+      }
+    }
 
     // AUDIT LOG - User registration
     // Note: entityId is Int, but User.id is UUID, so we use 0 and store userId in metadata
@@ -175,7 +309,18 @@ router.post("/login",
   try {
     const { email, password } = req.body;
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    // Explicitly select only fields that exist (lastLogin may not exist until migration is run)
+    const user = await prisma.user.findUnique({ 
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        role: true,
+        createdAt: true,
+        // lastLogin: true, // Uncomment after migration
+      }
+    });
     if (!user) {
       // AUDIT LOG - Failed login (user not found)
       try {
@@ -258,6 +403,46 @@ router.post("/login",
       console.error("Failed to log login attempt:", logError);
     }
 
+    // Update last login time (if field exists - migration may not be run yet)
+    const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    try {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { lastLogin: new Date() },
+      });
+    } catch (err) {
+      // If lastLogin field doesn't exist yet (migration not run), continue without error
+      // This allows the app to work before migration is run
+      if (!err.message?.includes('Unknown argument `lastLogin`')) {
+        console.error('Error updating lastLogin:', err);
+      }
+    }
+
+    // Update employer last login if employer profile exists (if Employer table exists)
+    if (user.role === "EMPLOYER") {
+      try {
+        const employer = await prisma.employer.findUnique({
+          where: { userId: user.id },
+        });
+        if (employer) {
+          const userAgent = req.headers['user-agent'] || 'Unknown';
+          await prisma.employer.update({
+            where: { userId: user.id },
+            data: {
+              lastLogin: new Date(),
+              lastLoginIp: ipAddress,
+              lastLoginUserAgent: userAgent,
+            },
+          });
+        }
+      } catch (err) {
+        // If Employer table doesn't exist yet (migration not run), continue without error
+        if (!err.message?.includes('model `Employer`') && !err.message?.includes('does not exist')) {
+          console.error('Error updating employer lastLogin:', err);
+        }
+      }
+    }
+
     const token = signToken({ id: user.id, role: user.role });
 
     res.json({ 
@@ -273,6 +458,193 @@ router.post("/login",
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+/**
+ * POST /auth/forgot-password - Request password reset
+ */
+router.post(
+  "/forgot-password",
+  authRateLimiter,
+  validate([
+    { field: 'email', validator: 'email' }
+  ]),
+  async (req, res) => {
+    try {
+      const { email } = req.body;
+
+      // Explicitly select only fields that exist (lastLogin may not exist until migration is run)
+      const user = await prisma.user.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          email: true,
+          password: true,
+          role: true,
+          createdAt: true,
+          // lastLogin: true, // Uncomment after migration
+        }
+      });
+
+      // Don't reveal if user exists (security best practice)
+      if (!user) {
+        // Still return success to prevent email enumeration
+        return res.json({
+          success: true,
+          message: "If an account with that email exists, a password reset link has been sent.",
+        });
+      }
+
+      // Generate reset token
+      const crypto = await import('crypto');
+      const resetToken = crypto.default.randomBytes(32).toString('hex');
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 1); // Token expires in 1 hour
+
+      // Delete any existing reset tokens for this user
+      await prisma.passwordResetToken.deleteMany({
+        where: { userId: user.id },
+      });
+
+      // Create new reset token
+      await prisma.passwordResetToken.create({
+        data: {
+          userId: user.id,
+          token: resetToken,
+          expiresAt,
+        },
+      });
+
+      // Send reset email (mock for now)
+      const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/reset-password?token=${resetToken}`;
+      
+      console.log("=".repeat(60));
+      console.log("PASSWORD RESET EMAIL (Mock)");
+      console.log("=".repeat(60));
+      console.log(`To: ${email}`);
+      console.log(`Subject: Reset Your Password`);
+      console.log(`\nYou requested a password reset. Click the link below to reset your password:\n`);
+      console.log(resetUrl);
+      console.log("\nThis link will expire in 1 hour.");
+      console.log("If you didn't request this, please ignore this email.");
+      console.log("=".repeat(60));
+
+      // AUDIT LOG
+      const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+      await prisma.auditLog.create({
+        data: {
+          action: "PASSWORD_RESET_REQUESTED",
+          entityType: "User",
+          entityId: 0,
+          performedBy: user.id,
+          universityId: null,
+          ipAddress,
+          metadata: {
+            userId: user.id,
+            email: user.email,
+            success: true,
+          },
+        },
+      });
+
+      res.json({
+        success: true,
+        message: "If an account with that email exists, a password reset link has been sent.",
+      });
+    } catch (error) {
+      console.error("FORGOT PASSWORD ERROR:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+/**
+ * POST /auth/reset-password - Reset password with token
+ */
+router.post(
+  "/reset-password",
+  authRateLimiter,
+  validate([
+    { field: 'token', validator: 'required' },
+    { field: 'password', validator: 'password' }
+  ]),
+  async (req, res) => {
+    try {
+      const { token, password } = req.body;
+
+      // Find reset token
+      const resetToken = await prisma.passwordResetToken.findUnique({
+        where: { token },
+        include: { user: true },
+      });
+
+      if (!resetToken) {
+        return res.status(400).json({ error: "Invalid or expired reset token" });
+      }
+
+      // Check if token is expired
+      if (new Date() > resetToken.expiresAt) {
+        await prisma.passwordResetToken.delete({
+          where: { id: resetToken.id },
+        });
+        return res.status(400).json({ error: "Reset token has expired" });
+      }
+
+      // Check if token has been used
+      if (resetToken.used) {
+        return res.status(400).json({ error: "This reset token has already been used" });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Update user password
+      await prisma.user.update({
+        where: { id: resetToken.userId },
+        data: { password: hashedPassword },
+      });
+
+      // Mark token as used
+      await prisma.passwordResetToken.update({
+        where: { id: resetToken.id },
+        data: { used: true },
+      });
+
+      // Delete all other reset tokens for this user
+      await prisma.passwordResetToken.deleteMany({
+        where: {
+          userId: resetToken.userId,
+          id: { not: resetToken.id },
+        },
+      });
+
+      // AUDIT LOG
+      const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+      await prisma.auditLog.create({
+        data: {
+          action: "PASSWORD_RESET_COMPLETED",
+          entityType: "User",
+          entityId: 0,
+          performedBy: resetToken.userId,
+          universityId: null,
+          ipAddress,
+          metadata: {
+            userId: resetToken.userId,
+            email: resetToken.user.email,
+            success: true,
+          },
+        },
+      });
+
+      res.json({
+        success: true,
+        message: "Password has been reset successfully. You can now log in with your new password.",
+      });
+    } catch (error) {
+      console.error("RESET PASSWORD ERROR:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
 
 // Email verification endpoint (optional)
 router.get("/verify-email", async (req, res) => {

@@ -31,75 +31,7 @@ router.get(
   }
 );
 
-/**
- * CREATE STUDENT PROFILE (ONCE)
- */
-router.post(
-  "/profile",
-  authenticate,
-  authorizeRoles("STUDENT"),
-  validate([
-    { field: 'universityId', validator: 'required' },
-    { field: 'visaType', validator: 'required' },
-    { field: 'courseEndDate', validator: 'date' }
-  ]),
-  async (req, res) => {
-    try {
-      const { universityId, visaType, maxWeeklyHours, courseEndDate } = req.body;
-      
-      // Validate maxWeeklyHours if provided
-      if (maxWeeklyHours != null) {
-        const hoursValidation = validatePositiveNumber(maxWeeklyHours, 'maxWeeklyHours', { min: 1, max: 168 }); // Max 168 hours per week
-        if (!hoursValidation.valid) {
-          return res.status(400).json({ error: hoursValidation.error });
-        }
-        req.body.maxWeeklyHours = hoursValidation.number;
-      }
-
-      // prevent duplicate profile
-      const existingStudent = await prisma.student.findUnique({
-        where: { userId: req.user.id },
-      });
-
-      if (existingStudent) {
-        return res.status(409).json({
-          error: "Student profile already exists",
-        });
-      }
-
-      const student = await prisma.student.create({
-        data: {
-          userId: req.user.id,
-          universityId,
-          visaType,
-          maxWeeklyHours: req.body.maxWeeklyHours || maxWeeklyHours, // optional
-          courseEndDate: courseEndDate,
-        },
-      });
-
-      // AUDIT LOG
-      await prisma.auditLog.create({
-        data: {
-          action: "CREATE_STUDENT_PROFILE",
-          entityType: "Student",
-          entityId: student.id,
-          performedBy: req.user.id,
-          universityId: student.universityId,
-          metadata: {
-            visaType: student.visaType,
-            courseEndDate: student.courseEndDate,
-            maxWeeklyHours: student.maxWeeklyHours,
-          },
-        },
-      });
-
-      res.status(201).json(student);
-    } catch (err) {
-      console.error("CREATE PROFILE ERROR:", err);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-);
+// Profile creation removed - profiles are now created during registration
 
 /**
  * EMPLOYER CHECK

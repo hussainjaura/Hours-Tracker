@@ -9,6 +9,8 @@ const EmployerDashboard = () => {
   const [students, setStudents] = useState([])
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('overview')
+  const [employerProfile, setEmployerProfile] = useState(null)
+  const [profileLoading, setProfileLoading] = useState(false)
   
   // Student search state
   const [searchUniversityId, setSearchUniversityId] = useState('')
@@ -24,6 +26,7 @@ const EmployerDashboard = () => {
 
   useEffect(() => {
     loadDashboardData()
+    loadEmployerProfile()
   }, [])
 
   const loadDashboardData = async () => {
@@ -43,6 +46,22 @@ const EmployerDashboard = () => {
       setError(err.message || 'Failed to load dashboard data')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadEmployerProfile = async () => {
+    try {
+      setProfileLoading(true)
+      const response = await employerAPI.getProfile()
+      setEmployerProfile(response.data)
+    } catch (err) {
+      // 404 means profile doesn't exist - this shouldn't happen if registration worked correctly
+      if (err.status !== 404 && err.response?.status !== 404) {
+        console.error('Error loading employer profile:', err)
+      }
+      setEmployerProfile(null)
+    } finally {
+      setProfileLoading(false)
     }
   }
 
@@ -229,7 +248,6 @@ const EmployerDashboard = () => {
           {/* Welcome Banner */}
           <div className="overview-banner banner-employer">
             <div className="banner-content">
-              <div className="banner-icon">👔</div>
               <div className="banner-text">
                 <h2>Compliance Assurance Dashboard</h2>
                 <p>Manage student compliance information and create audit-ready records for right-to-work compliance.</p>
@@ -244,28 +262,24 @@ const EmployerDashboard = () => {
           {/* Quick Stats Grid */}
           <div className="overview-stats-grid">
             <div className="overview-stat-card">
-              <div className="stat-card-icon">👥</div>
               <div className="stat-card-content">
                 <div className="stat-card-value">{students.length}</div>
                 <div className="stat-card-label">Total Students</div>
               </div>
             </div>
             <div className="overview-stat-card">
-              <div className="stat-card-icon">✓</div>
               <div className="stat-card-content">
                 <div className="stat-card-value">{activeStudents.length}</div>
                 <div className="stat-card-label">Active Relationships</div>
               </div>
             </div>
             <div className="overview-stat-card">
-              <div className="stat-card-icon">⏳</div>
               <div className="stat-card-content">
                 <div className="stat-card-value">{pendingRequests.length}</div>
                 <div className="stat-card-label">Pending Requests</div>
               </div>
             </div>
             <div className="overview-stat-card">
-              <div className="stat-card-icon">✓</div>
               <div className="stat-card-content">
                 <div className="stat-card-value">
                   {activeStudents.filter(s => s.acknowledgedAt).length}
@@ -300,11 +314,11 @@ const EmployerDashboard = () => {
                         </div>
                         {rel.acknowledgedAt ? (
                           <div className="acknowledgement-badge-small" style={{ marginTop: '0.5rem' }}>
-                            ✓ Acknowledged on {formatDate(rel.acknowledgedAt)}
+                            Acknowledged on {formatDate(rel.acknowledgedAt)}
                           </div>
                         ) : (
                           <div className="acknowledgement-badge-small pending" style={{ marginTop: '0.5rem' }}>
-                            ⚠️ Pending Acknowledgement
+                            Pending Acknowledgement
                           </div>
                         )}
                       </div>
@@ -331,7 +345,6 @@ const EmployerDashboard = () => {
                 <div className="dashboard-card alert-card">
                   <h3>Action Required</h3>
                   <div className="alert-content">
-                    <div className="alert-icon">🔔</div>
                     <div className="alert-text">
                       <strong>{pendingRequests.length} pending access request{pendingRequests.length > 1 ? 's' : ''}</strong>
                       <p>Waiting for student approval</p>
@@ -354,7 +367,6 @@ const EmployerDashboard = () => {
                 <h3>Compliance Overview</h3>
                 <div className="compliance-summary-box">
                   <div className="compliance-summary-item">
-                    <div className="summary-icon">📋</div>
                     <div className="summary-content">
                       <div className="summary-title">Your Role</div>
                       <div className="summary-description">
@@ -363,7 +375,6 @@ const EmployerDashboard = () => {
                     </div>
                   </div>
                   <div className="compliance-summary-item">
-                    <div className="summary-icon">✓</div>
                     <div className="summary-content">
                       <div className="summary-title">Acknowledged Students</div>
                       <div className="summary-description">
@@ -382,21 +393,18 @@ const EmployerDashboard = () => {
                     className="quick-action-btn"
                     onClick={() => setActiveTab('find-students')}
                   >
-                    <span className="action-icon">🔍</span>
                     <span className="action-text">Find Students</span>
                   </button>
                   <button
                     className="quick-action-btn"
                     onClick={() => setActiveTab('eligibility')}
                   >
-                    <span className="action-icon">✓</span>
                     <span className="action-text">Check Eligibility</span>
                   </button>
                   <button
                     className="quick-action-btn"
                     onClick={() => setActiveTab('compliance')}
                   >
-                    <span className="action-icon">📋</span>
                     <span className="action-text">View Compliance Rules</span>
                   </button>
                 </div>
@@ -407,19 +415,16 @@ const EmployerDashboard = () => {
                 <h3>Important Information</h3>
                 <div className="info-list">
                   <div className="info-item">
-                    <span className="info-icon">ℹ️</span>
                     <div className="info-content">
                       <strong>Compliance Evidence:</strong> This platform helps you create audit-ready records by acknowledging student-declared information.
                     </div>
                   </div>
                   <div className="info-item">
-                    <span className="info-icon">⚠️</span>
                     <div className="info-content">
                       <strong>Term Time Rules:</strong> During term time, students can work a maximum of 20 hours per week. During holidays, full-time work is allowed.
                     </div>
                   </div>
                   <div className="info-item">
-                    <span className="info-icon">✓</span>
                     <div className="info-content">
                       <strong>Acknowledgement:</strong> Acknowledging student declarations creates a timestamped audit trail for compliance purposes.
                     </div>
@@ -436,89 +441,78 @@ const EmployerDashboard = () => {
         <div className="dashboard-content">
           <div className="dashboard-card">
             <h2>My Profile</h2>
-            <p className="text-secondary">View your employer account information and compliance dashboard details.</p>
+            <p className="text-secondary">View and manage your employer profile information.</p>
             
-            {user ? (
+            {profileLoading ? (
+              <div className="dashboard-loading">
+                <div className="spinner"></div>
+                <p>Loading profile...</p>
+              </div>
+            ) : employerProfile ? (
               <div className="profile-details">
                 <div className="profile-section">
-                  <h3>Account Information</h3>
+                  <h3>Profile Information</h3>
                   <div className="profile-info-grid">
                     <div className="profile-info-item">
-                      <div className="profile-info-label">Email Address</div>
-                      <div className="profile-info-value">{user.email}</div>
+                      <div className="profile-info-label">Full Name</div>
+                      <div className="profile-info-value">{employerProfile.fullName}</div>
                     </div>
                     <div className="profile-info-item">
-                      <div className="profile-info-label">Account Type</div>
-                      <div className="profile-info-value">Employer</div>
+                      <div className="profile-info-label">Work Email</div>
+                      <div className="profile-info-value">{employerProfile.workEmail}</div>
                     </div>
-                    {user.createdAt && (
+                    <div className="profile-info-item">
+                      <div className="profile-info-label">Role</div>
+                      <div className="profile-info-value">{employerProfile.role}</div>
+                    </div>
+                    <div className="profile-info-item">
+                      <div className="profile-info-label">Organisation Name</div>
+                      <div className="profile-info-value">{employerProfile.organisationName}</div>
+                    </div>
+                    <div className="profile-info-item">
+                      <div className="profile-info-label">Account Created</div>
+                      <div className="profile-info-value">
+                        {employerProfile.user?.createdAt ? formatDate(employerProfile.user.createdAt) : formatDate(employerProfile.createdAt)}
+                      </div>
+                    </div>
+                    {employerProfile.lastLogin && (
                       <div className="profile-info-item">
-                        <div className="profile-info-label">Account Created</div>
-                        <div className="profile-info-value">{formatDate(user.createdAt)}</div>
+                        <div className="profile-info-label">Last Login</div>
+                        <div className="profile-info-value">{formatDate(employerProfile.lastLogin)}</div>
                       </div>
                     )}
-                  </div>
-                </div>
-
-                <div className="profile-section">
-                  <h3>Dashboard Statistics</h3>
-                  <div className="profile-stats-grid">
-                    <div className="profile-stat-card">
-                      <div className="profile-stat-icon">👥</div>
-                      <div className="profile-stat-content">
-                        <div className="profile-stat-value">{students.length}</div>
-                        <div className="profile-stat-label">Total Students</div>
+                    {employerProfile.lastLoginIp && (
+                      <div className="profile-info-item">
+                        <div className="profile-info-label">Last Login IP Address</div>
+                        <div className="profile-info-value">{employerProfile.lastLoginIp}</div>
                       </div>
-                    </div>
-                    <div className="profile-stat-card">
-                      <div className="profile-stat-icon">✓</div>
-                      <div className="profile-stat-content">
-                        <div className="profile-stat-value">{activeStudents.length}</div>
-                        <div className="profile-stat-label">Active Relationships</div>
-                      </div>
-                    </div>
-                    <div className="profile-stat-card">
-                      <div className="profile-stat-icon">⏳</div>
-                      <div className="profile-stat-content">
-                        <div className="profile-stat-value">{pendingRequests.length}</div>
-                        <div className="profile-stat-label">Pending Requests</div>
-                      </div>
-                    </div>
-                    <div className="profile-stat-card">
-                      <div className="profile-stat-icon">📋</div>
-                      <div className="profile-stat-content">
-                        <div className="profile-stat-value">
-                          {activeStudents.filter(s => s.acknowledgedAt).length}
+                    )}
+                    {employerProfile.lastLoginUserAgent && (
+                      <div className="profile-info-item">
+                        <div className="profile-info-label">Last Login User Agent</div>
+                        <div className="profile-info-value" style={{ fontSize: '0.875rem', wordBreak: 'break-word' }}>
+                          {employerProfile.lastLoginUserAgent}
                         </div>
-                        <div className="profile-stat-label">Acknowledged</div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="profile-section">
-                  <h3>Your Compliance Role</h3>
-                  <div className="role-description">
-                    <p>
-                      As an employer using this platform, you can:
-                    </p>
-                    <ul className="role-features">
-                      <li>✓ View student-declared academic term dates and compliance information</li>
-                      <li>✓ Acknowledge student declarations to create audit-ready compliance records</li>
-                      <li>✓ Check student eligibility and work hour compliance rules</li>
-                      <li>✓ Access compliance evidence for right-to-work verification</li>
-                    </ul>
-                    <p className="role-note">
-                      <strong>Important:</strong> This platform provides compliance evidence and audit trails. 
-                      It does not replace your legal responsibility to verify right-to-work status. 
-                      Always follow UK Home Office guidelines for right-to-work checks.
-                    </p>
+                    )}
+                    {employerProfile.acknowledgementIps && Array.isArray(employerProfile.acknowledgementIps) && employerProfile.acknowledgementIps.length > 0 && (
+                      <div className="profile-info-item" style={{ gridColumn: '1 / -1' }}>
+                        <div className="profile-info-label">IP Addresses for Acknowledgements</div>
+                        <div className="profile-info-value">
+                          <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
+                            {employerProfile.acknowledgementIps.map((ip, idx) => (
+                              <li key={idx}>{ip}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             ) : (
               <div className="empty-state">
-                <p className="text-secondary">Unable to load profile information.</p>
+                <p className="text-secondary">Profile not found. If you just registered, please refresh the page or contact support if the issue persists.</p>
               </div>
             )}
           </div>
@@ -548,11 +542,11 @@ const EmployerDashboard = () => {
                             <div><strong>Course End Date:</strong> {formatDate(student.courseEndDate)}</div>
                             {rel.acknowledgedAt ? (
                               <div className="acknowledgement-status acknowledged">
-                                ✓ Acknowledged on {formatDate(rel.acknowledgedAt)}
+                                Acknowledged on {formatDate(rel.acknowledgedAt)}
                               </div>
                             ) : (
                               <div className="acknowledgement-status pending">
-                                ⚠️ Pending Acknowledgement
+                                Pending Acknowledgement
                               </div>
                             )}
                           </div>
@@ -597,11 +591,11 @@ const EmployerDashboard = () => {
                                   </div>
                                   {term.confirmedAt ? (
                                     <span className="confirmation-badge confirmed">
-                                      ✓ Confirmed
+                                      Confirmed
                                     </span>
                                   ) : (
                                     <span className="confirmation-badge pending">
-                                      ⚠️ Not Confirmed
+                                      Not Confirmed
                                     </span>
                                   )}
                                 </div>
@@ -696,21 +690,21 @@ const EmployerDashboard = () => {
                   <div className={`eligibility-preview ${logHoursEligibilityCheck.inTermTime ? 'term-time-warning' : 'non-term-time'}`}>
                     {logHoursEligibilityCheck.inTermTime ? (
                       <div>
-                        <strong>⚠️ TERM TIME:</strong> Student is in {logHoursEligibilityCheck.activeTerm || 'term time'}. 
+                        <strong>TERM TIME:</strong> Student is in {logHoursEligibilityCheck.activeTerm || 'term time'}. 
                         Maximum 20 hours/week allowed. 
                         {logHoursForm.hours && (
                           <span>
                             {' '}Current: {logHoursEligibilityCheck.currentWeeklyHours}h, 
                             Adding: {parseFloat(logHoursForm.hours) || 0}h = {((logHoursEligibilityCheck.currentWeeklyHours || 0) + (parseFloat(logHoursForm.hours) || 0)).toFixed(1)}h total.
                             {((logHoursEligibilityCheck.currentWeeklyHours || 0) + (parseFloat(logHoursForm.hours) || 0)) > 20 && (
-                              <strong className="text-error"> ⚠️ This exceeds the 20-hour limit!</strong>
+                              <strong className="text-error"> This exceeds the 20-hour limit!</strong>
                             )}
                           </span>
                         )}
                       </div>
                     ) : (
                       <div>
-                        <strong>✓ Non-Term Time:</strong> Student can work full-time. No weekly limit.
+                        <strong>Non-Term Time:</strong> Student can work full-time. No weekly limit.
                       </div>
                     )}
                   </div>
@@ -821,9 +815,6 @@ const EmployerDashboard = () => {
               <div className="eligibility-result">
                 <h3>Compliance Information</h3>
                 <div className={`eligibility-status ${eligibilityResult.canWork !== false ? 'can-work' : 'cannot-work'}`}>
-                  <div className="eligibility-icon">
-                    {eligibilityResult.canWork !== false ? '✓' : '✗'}
-                  </div>
                   <div>
                     <div className="eligibility-title">
                       {eligibilityResult.canWork === false 
@@ -869,12 +860,12 @@ const EmployerDashboard = () => {
                   )}
                   {eligibilityResult.inTermTime && (
                     <div className="compliance-warning-box">
-                      <strong>⚠️ Compliance Rule:</strong> During term time, this student must not be scheduled for more than {eligibilityResult.allowedWeeklyHours} hours per week. This is a legal requirement for UK student visas.
+                      <strong>Compliance Rule:</strong> During term time, this student must not be scheduled for more than {eligibilityResult.allowedWeeklyHours} hours per week. This is a legal requirement for UK student visas.
                     </div>
                   )}
                   {!eligibilityResult.inTermTime && (
                     <div className="compliance-info-box">
-                      <strong>✓ Holiday Period:</strong> During holidays, this student can work full-time with no weekly hour limit.
+                      <strong>Holiday Period:</strong> During holidays, this student can work full-time with no weekly hour limit.
                     </div>
                   )}
                 </div>
@@ -1177,7 +1168,7 @@ const EmployerAuditTrailTab = ({ students }) => {
                         disabled={exporting}
                         title="Export as PDF document - Ready for Home Office submission"
                       >
-                        {exporting ? 'Exporting...' : '📄 Export PDF'}
+                        {exporting ? 'Exporting...' : 'Export PDF'}
                       </button>
                       <button
                         className="btn btn-secondary"
@@ -1185,7 +1176,7 @@ const EmployerAuditTrailTab = ({ students }) => {
                         disabled={exporting}
                         title="Export as JSON file - Machine-readable format"
                       >
-                        {exporting ? 'Exporting...' : '📥 Export JSON'}
+                        {exporting ? 'Exporting...' : 'Export JSON'}
                       </button>
                     </div>
                   </div>
@@ -1226,7 +1217,7 @@ const EmployerAuditTrailTab = ({ students }) => {
                                 <div className="declaration-academic-year">{decl.term.academicYear}</div>
                               </div>
                               {decl.confirmedAt ? (
-                                <span className="badge badge-success">✓ Confirmed</span>
+                                <span className="badge badge-success">Confirmed</span>
                               ) : (
                                 <span className="badge badge-warning">Pending</span>
                               )}
@@ -1270,7 +1261,7 @@ const EmployerAuditTrailTab = ({ students }) => {
                       <div className="audit-acknowledgement-card">
                         <div className="acknowledgement-header">
                           <div>
-                            <div className="acknowledgement-status">✓ Acknowledged</div>
+                            <div className="acknowledgement-status">Acknowledged</div>
                             <div className="acknowledgement-date">
                               Date: {formatDate(selectedAuditTrail.employerAcknowledgement.acknowledgedAt)}
                             </div>

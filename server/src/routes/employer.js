@@ -7,6 +7,44 @@ import { logComplianceRule } from "../utils/auditLogger.js";
 
 const router = express.Router();
 
+/**
+ * GET /employer/profile - Get employer profile
+ */
+router.get(
+  "/profile",
+  authenticate,
+  authorizeRoles("EMPLOYER"),
+  async (req, res) => {
+    try {
+      const employer = await prisma.employer.findUnique({
+        where: { userId: req.user.id },
+        include: {
+          user: {
+            select: {
+              email: true,
+              createdAt: true,
+              lastLogin: true,
+            },
+          },
+        },
+      });
+
+      if (!employer) {
+        return res.status(404).json({ error: "Profile not found. Please create your profile first." });
+      }
+
+      res.json(employer);
+    } catch (error) {
+      console.error("GET EMPLOYER PROFILE ERROR:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// Profile creation removed - profiles are now created during registration
+
+// Profile update removed - profiles are created during registration and cannot be changed
+
 router.post(
   "/check-eligibility",
   authenticate,

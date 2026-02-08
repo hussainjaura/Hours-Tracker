@@ -64,10 +64,10 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  const register = async (email, password, role) => {
+  const register = async (registrationData) => {
     try {
       setError(null)
-      const response = await authAPI.register(email, password, role)
+      const response = await authAPI.register(registrationData)
       const { token, user: userData } = response.data
       
       localStorage.setItem('token', token)

@@ -126,11 +126,11 @@
   padding: 2rem;
   border: 1px solid #e5e7eb;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .dashboard-card:hover {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.2s ease;
 }
 
 .dashboard-card h2 {
@@ -2707,12 +2707,12 @@
   border: 1px solid #e5e7eb;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all var(--transition-base);
 }
 
 .relationship-item:hover {
   border-color: #1f2937;
   background: rgba(139, 92, 246, 0.05);
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .relationship-item.active {

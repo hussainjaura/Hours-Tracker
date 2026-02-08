@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { studentAPI } from '../services/api'
-import CreateProfileForm from '../components/CreateProfileForm'
 import './Dashboard.css'
 
 const StudentDashboard = () => {
@@ -535,9 +534,19 @@ const StudentDashboard = () => {
     )
   }
 
-  // Show profile creation if no profile exists
+  // Show error if no profile exists (should be created during registration)
   if (!profile) {
-    return <CreateProfileForm onSuccess={loadDashboardData} />
+    return (
+      <div className="dashboard-container">
+        <div className="dashboard-error" style={{ margin: '2rem' }}>
+          <h2>Profile Not Found</h2>
+          <p>Your student profile was not found. If you just registered, please refresh the page or contact support if the issue persists.</p>
+          <p className="text-secondary" style={{ marginTop: '1rem' }}>
+            Note: Student profiles are created during registration. If you see this message, there may have been an issue during account creation.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -1454,7 +1463,7 @@ const StudentDashboard = () => {
               </div>
             ) : (
               <div className="empty-state">
-                <p className="text-secondary">No profile found. Please create your profile first.</p>
+                <p className="text-secondary">Profile information not available. If you just registered, please refresh the page.</p>
               </div>
             )}
           </div>

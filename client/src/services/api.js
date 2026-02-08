@@ -69,9 +69,11 @@ api.interceptors.response.use(
 // Auth endpoints
 export const authAPI = {
   login: (email, password) => api.post('/auth/login', { email, password }),
-  register: (email, password, role) => api.post('/auth/register', { email, password, role }),
+  register: (registrationData) => api.post('/auth/register', registrationData),
   getMe: () => api.get('/auth/me'),
   verifyEmail: (token) => api.get(`/auth/verify-email?token=${token}`),
+  forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
+  resetPassword: (token, password) => api.post('/auth/reset-password', { token, password }),
 }
 
 // Student endpoints
@@ -108,6 +110,8 @@ export const employerAPI = {
   getRequests: () => api.get('/relationships/requests'),
   searchStudent: (universityId) => api.get(`/students/${universityId}`),
   acknowledgeStudent: (relationshipId) => api.put(`/relationships/${relationshipId}/acknowledge`),
+  // Profile endpoints
+  getProfile: () => api.get('/employer/profile'),
   // Audit trail endpoints
   getRelationshipAuditTrail: (relationshipId) => api.get(`/audit/relationship/${relationshipId}`),
   getAllRelationshipAuditTrails: () => api.get('/audit/my-relationships'),

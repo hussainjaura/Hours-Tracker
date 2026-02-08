@@ -19,8 +19,11 @@ model User {
   password  String
   role      Role
   createdAt DateTime @default(now())
+  lastLogin DateTime? // Track last login time
 
-  student Student?
+  student            Student?
+  employer           Employer?
+  passwordResetTokens PasswordResetToken[]
 }
 
 model University {
@@ -96,6 +99,50 @@ enum RelationshipStatus {
   PENDING
   ACTIVE
   INACTIVE
+}
+
+enum EmployerRole {
+  MANAGER
+  HR
+  OWNER
+}
+
+model Employer {
+  id              Int          @id @default(autoincrement())
+  userId          String       @unique
+  fullName        String
+  workEmail       String
+  role            EmployerRole
+  organisationName String
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  // Login tracking
+  lastLogin       DateTime?
+  lastLoginIp     String?
+  lastLoginUserAgent String?
+  
+  // IP addresses for acknowledgements (stored as JSON array)
+  acknowledgementIps Json? // Array of IP addresses used for acknowledgements
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
 }
 
 model StudentEmployer {
