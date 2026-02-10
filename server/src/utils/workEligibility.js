@@ -26,7 +26,17 @@ export async function getWorkEligibility(prisma, student, requestedHours = null)
   });
 
   const inTermTime = !!activeTerm;
-  const allowedWeeklyHours = inTermTime ? 20 : 40;
+  
+  // Determine allowed hours based on course level
+  let allowedWeeklyHours = 40; // Default to full-time (holidays)
+  if (inTermTime) {
+    // BELOW_DEGREE = 10 hours, DEGREE_OR_ABOVE or null = 20 hours (default)
+    if (activeTerm.courseLevel === 'BELOW_DEGREE') {
+      allowedWeeklyHours = 10;
+    } else {
+      allowedWeeklyHours = 20; // DEGREE_OR_ABOVE or null/undefined
+    }
+  }
 
   // 3️⃣ Compliance rules - no hour tracking, just rules
   let canWork = true;

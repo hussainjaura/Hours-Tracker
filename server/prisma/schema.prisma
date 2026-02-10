@@ -39,7 +39,7 @@ model Student {
   id             Int      @id @default(autoincrement())
   userId         String   @unique
   universityId   String   @unique
-  universityName String
+  universityName String?  // Made nullable to handle existing records
   visaType       String
   courseEndDate  DateTime
   maxWeeklyHours Int?
@@ -65,9 +65,15 @@ model TermTemplate {
   @@index([universityId])
 }
 
+enum CourseLevel {
+  BELOW_DEGREE      // 10 hours/week during term-time
+  DEGREE_OR_ABOVE   // 20 hours/week during term-time
+}
+
 model Term {
   id           Int      @id @default(autoincrement())
   studentId    Int
+  courseLevel  CourseLevel? // Course level determines work hour limits
   name         String // "AUTUMN", "SPRING", "SUMMER"
   academicYear String? // e.g., "2025/26", "2026/27" (optional for backward compatibility)
   startDate    DateTime

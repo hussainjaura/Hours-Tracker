@@ -1,7 +1,7 @@
 import express from "express";
 import prisma from "../prisma.js";
 import { authenticate, authorizeRoles } from "../middleware/auth.js";
-import { validate, validateDateRangeFields, validateDate, validateDateRange, validateAcademicYear } from "../middleware/validation.js";
+import { validate, validateDateRangeFields, validateDate, validateDateRange, validateAcademicYear, validateTermDatesAgainstAcademicYear } from "../middleware/validation.js";
 import {
   logTermDeclaration,
   logChangeHistory,
@@ -26,7 +26,7 @@ router.post(
   validateDateRangeFields('startDate', 'endDate'),
   async (req, res) => {
     try {
-      const { name, startDate, endDate, academicYear } = req.body;
+      const { name, startDate, endDate, academicYear, courseLevel } = req.body;
 
       // Validate academic year (required)
       if (!academicYear) {
@@ -50,6 +50,22 @@ router.post(
         });
       }
       req.body.academicYear = academicYearValidation.academicYear;
+
+      // Validate that term dates fall within the academic year
+      const dateValidation = validateTermDatesAgainstAcademicYear(
+        req.body.academicYear,
+        startDate,
+        endDate
+      );
+      if (!dateValidation.valid) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: dateValidation.error,
+            code: "TERM_DATES_OUTSIDE_ACADEMIC_YEAR",
+          },
+        });
+      }
 
       const student = await prisma.student.findUnique({
         where: { userId: req.user.id },
@@ -122,6 +138,7 @@ router.post(
       const term = await prisma.term.create({
         data: {
           studentId: student.id,
+          courseLevel: courseLevel || 'DEGREE_OR_ABOVE', // Default to 20 hours for most degrees
           name: name.toUpperCase(),
           academicYear: req.body.academicYear,
           startDate,
@@ -151,7 +168,7 @@ router.put(
   authorizeRoles("STUDENT"),
   async (req, res) => {
     const termId = Number(req.params.termId);
-    const { name, startDate, endDate, academicYear } = req.body;
+    const { name, startDate, endDate, academicYear, courseLevel } = req.body;
 
     if (!name && !startDate && !endDate) {
       return res.status(400).json({
@@ -228,6 +245,27 @@ router.put(
         validatedAcademicYear = academicYearValidation.academicYear;
       }
 
+      // 2.4️⃣ Validate that term dates fall within the academic year (if dates or academic year are being updated)
+      if ((startDate || endDate || academicYear !== undefined) && validatedAcademicYear) {
+        const finalStartDate = startDate ? new Date(startDate) : term.startDate;
+        const finalEndDate = endDate ? new Date(endDate) : term.endDate;
+        
+        const dateValidation = validateTermDatesAgainstAcademicYear(
+          validatedAcademicYear,
+          finalStartDate,
+          finalEndDate
+        );
+        if (!dateValidation.valid) {
+          return res.status(400).json({
+            success: false,
+            error: {
+              message: dateValidation.error,
+              code: "TERM_DATES_OUTSIDE_ACADEMIC_YEAR",
+            },
+          });
+        }
+      }
+
       // 2.5️⃣ Check for duplicate term in same academic year if academic year is being updated
       if (academicYear !== undefined && validatedAcademicYear) {
         const otherTerms = await prisma.term.findMany({
@@ -259,6 +297,7 @@ router.put(
       const oldData = {
         name: term.name,
         academicYear: term.academicYear,
+        courseLevel: term.courseLevel,
         startDate: term.startDate,
         endDate: term.endDate,
       };
@@ -271,7 +310,7 @@ router.put(
         // Get all other terms (excluding the one being updated)
         const otherTerms = await prisma.term.findMany({
           where: {
-            studentId: student.id,
+            studentId: term.studentId,
             id: { not: termId },
           },
         });
@@ -312,6 +351,7 @@ router.put(
       const updateData = {
         ...(name && { name: name.toUpperCase() }),
         ...(academicYear !== undefined && { academicYear: validatedAcademicYear }),
+        ...(courseLevel !== undefined && { courseLevel: courseLevel || null }),
         ...(req.body.startDate && { startDate: req.body.startDate }),
         ...(req.body.endDate && { endDate: req.body.endDate }),
       };
@@ -331,6 +371,7 @@ router.put(
       const newData = {
         name: updatedTerm.name,
         academicYear: updatedTerm.academicYear,
+        courseLevel: updatedTerm.courseLevel,
         startDate: updatedTerm.startDate,
         endDate: updatedTerm.endDate,
       };
@@ -629,6 +670,22 @@ router.post(
         });
       }
       const validatedAcademicYear = academicYearValidation.academicYear;
+
+      // 4.4️⃣ Validate that term dates fall within the academic year
+      const dateValidation = validateTermDatesAgainstAcademicYear(
+        validatedAcademicYear,
+        finalStartDate,
+        finalEndDate
+      );
+      if (!dateValidation.valid) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: dateValidation.error,
+            code: "TERM_DATES_OUTSIDE_ACADEMIC_YEAR",
+          },
+        });
+      }
 
       // 4.5️⃣ Check for duplicate term in the same academic year
       // Get all existing terms for this student

@@ -115,33 +115,56 @@ router.post("/register",
           },
         });
 
-        // AUDIT LOG - Student profile creation
-        await prisma.auditLog.create({
-          data: {
-            action: "CREATE_STUDENT_PROFILE",
-            entityType: "Student",
-            entityId: createdStudent.id,
-            performedBy: user.id,
-            universityId: createdStudent.universityId,
-            metadata: {
-              userId: user.id,
+        // AUDIT LOG - Student profile creation (wrap in try-catch to not fail registration if audit fails)
+        try {
+          await prisma.auditLog.create({
+            data: {
+              action: "CREATE_STUDENT_PROFILE",
+              entityType: "Student",
+              entityId: createdStudent.id,
+              performedBy: user.id,
               universityId: createdStudent.universityId,
-              universityName: createdStudent.universityName,
-              visaType: createdStudent.visaType,
-              courseEndDate: createdStudent.courseEndDate,
-              maxWeeklyHours: createdStudent.maxWeeklyHours,
-              createdDuringRegistration: true,
+              metadata: {
+                userId: user.id,
+                universityId: createdStudent.universityId,
+                universityName: createdStudent.universityName,
+                visaType: createdStudent.visaType,
+                courseEndDate: createdStudent.courseEndDate,
+                maxWeeklyHours: createdStudent.maxWeeklyHours,
+                createdDuringRegistration: true,
+              },
             },
-          },
-        });
+          });
+        } catch (auditError) {
+          // Log audit error but don't fail registration
+          console.error('Error creating audit log for student profile:', auditError);
+        }
       } catch (profileError) {
         // If Student table doesn't exist yet (migration not run), continue without error
-        if (!profileError.message?.includes('model `Student`') && !profileError.message?.includes('does not exist')) {
+        if (profileError.message?.includes('model `Student`') || profileError.message?.includes('does not exist')) {
+          console.warn('Student table does not exist yet - migration may not have been run');
+          // Continue without creating profile
+        } else {
           console.error('Error creating student profile during registration:', profileError);
-          // Re-throw if it's a duplicate universityId error
+          console.error('Error details:', {
+            code: profileError.code,
+            message: profileError.message,
+            meta: profileError.meta,
+          });
+          
+          // Handle specific Prisma errors
           if (profileError.code === 'P2002') {
-            return res.status(409).json({ error: 'A student with this university ID already exists' });
+            // Unique constraint violation
+            const target = profileError.meta?.target || [];
+            if (target.includes('universityId')) {
+              return res.status(409).json({ error: 'A student with this university ID already exists' });
+            } else if (target.includes('userId')) {
+              return res.status(409).json({ error: 'A profile already exists for this user' });
+            }
+            return res.status(409).json({ error: 'A student profile with this information already exists' });
           }
+          
+          // Re-throw to be caught by outer catch block
           throw profileError;
         }
       }
@@ -294,7 +317,25 @@ router.post("/register",
     }
 
     console.error("REGISTER ERROR:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Error details:", {
+      code: error.code,
+      message: error.message,
+      meta: error.meta,
+      stack: error.stack,
+    });
+    
+    // Return more specific error messages for debugging
+    if (error.code === 'P2002') {
+      return res.status(409).json({ 
+        error: "Email already in use",
+        code: "EMAIL_ALREADY_EXISTS"
+      });
+    }
+    
+    res.status(500).json({ 
+      error: "Internal server error",
+      message: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 

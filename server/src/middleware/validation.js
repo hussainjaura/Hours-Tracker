@@ -131,6 +131,64 @@ export const validateAcademicYear = (academicYear) => {
 };
 
 /**
+ * Validates that term dates fall within the academic year range
+ * Academic year typically runs from September YYYY to August YYYY+1
+ * @param {string} academicYear - Academic year in format YYYY/YY (e.g., "2024/25")
+ * @param {Date} startDate - Term start date
+ * @param {Date} endDate - Term end date
+ * @returns {Object} Validation result with valid flag and optional error message
+ */
+export const validateTermDatesAgainstAcademicYear = (academicYear, startDate, endDate) => {
+  if (!academicYear || !startDate || !endDate) {
+    return { valid: false, error: 'Academic year, start date, and end date are required' };
+  }
+
+  // Parse academic year (e.g., "2024/25" -> startYear = 2024, endYear = 2025)
+  const academicYearRegex = /^(\d{2,4})\/(\d{2})$/;
+  const match = academicYear.trim().match(academicYearRegex);
+  
+  if (!match) {
+    return { valid: false, error: 'Invalid academic year format' };
+  }
+
+  let startYear = parseInt(match[1]);
+  const endYearShort = parseInt(match[2]);
+  
+  // Convert short year format to full year if needed
+  if (startYear < 100) {
+    // Assume 20XX for years 00-99
+    startYear = 2000 + startYear;
+  }
+  
+  // Calculate full end year
+  let endYear = startYear + 1;
+  
+  // Academic year typically runs from September 1st of start year to August 31st of end year
+  const academicYearStart = new Date(startYear, 8, 1); // September 1st (month 8 = September)
+  const academicYearEnd = new Date(endYear, 8, 0, 23, 59, 59, 999); // August 31st 23:59:59.999
+  
+  const termStart = new Date(startDate);
+  const termEnd = new Date(endDate);
+  
+  // Validate that term dates fall within academic year
+  if (termStart < academicYearStart) {
+    return { 
+      valid: false, 
+      error: `Term start date (${termStart.toLocaleDateString('en-GB')}) is before the academic year start (${academicYearStart.toLocaleDateString('en-GB')}). Academic year ${academicYear} runs from September ${startYear} to August ${endYear}.` 
+    };
+  }
+  
+  if (termEnd > academicYearEnd) {
+    return { 
+      valid: false, 
+      error: `Term end date (${termEnd.toLocaleDateString('en-GB')}) is after the academic year end (${academicYearEnd.toLocaleDateString('en-GB')}). Academic year ${academicYear} runs from September ${startYear} to August ${endYear}.` 
+    };
+  }
+  
+  return { valid: true };
+};
+
+/**
  * Validates university code format (uppercase alphanumeric, no spaces)
  */
 export const validateUniversityCode = (code) => {

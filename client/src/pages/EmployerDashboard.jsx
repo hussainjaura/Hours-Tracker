@@ -100,23 +100,39 @@ const EmployerDashboard = () => {
   }
 
   const handleRequestAccess = async (universityId) => {
+    if (!universityId || !universityId.trim()) {
+      setError('University ID is required')
+      return
+    }
+
     try {
-      await employerAPI.requestAccess(universityId)
+      setError('')
+      console.log('Requesting access for university ID:', universityId.trim())
+      const response = await employerAPI.requestAccess(universityId.trim())
+      console.log('Access request response:', response)
       alert('Access request sent! Waiting for student approval.')
       loadDashboardData()
+      // Clear search-related state (for Find Students tab)
       setSearchedStudent(null)
       setSearchUniversityId('')
+      // Clear eligibility result (for Eligibility tab)
+      setEligibilityResult(null)
+      setEligibilityCheck({ universityId: '' })
     } catch (err) {
+      console.error('Request access error:', err)
       // Handle 409 Conflict - relationship already exists
-      if (err.status === 409) {
+      if (err.status === 409 || err.response?.status === 409) {
         const relationship = err.relationship || err.response?.data?.relationship || err.response?.data?.error?.relationship
         const status = relationship?.status || 'existing'
         const message = `You already have a ${status.toLowerCase()} relationship with this student. Check your "My Students" tab.`
+        alert(message)
         setError(message)
         // Reload to show the existing relationship
         loadDashboardData()
       } else {
-        setError(err.message || 'Failed to request access')
+        const errorMessage = err.response?.data?.error?.message || err.response?.data?.message || err.message || 'Failed to request access'
+        alert(`Error: ${errorMessage}`)
+        setError(errorMessage)
       }
     }
   }
@@ -793,6 +809,12 @@ const EmployerDashboard = () => {
             <h2>Check Student Eligibility</h2>
             <p className="text-secondary">Check if a student can work and their current eligibility status.</p>
             
+            {error && (
+              <div className="error-message" style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#fee', border: '1px solid #fcc', borderRadius: '4px', color: '#c33' }}>
+                {error}
+              </div>
+            )}
+            
             <form onSubmit={handleCheckEligibility} className="eligibility-form">
               <div className="form-group">
                 <label className="form-label" htmlFor="eligibilityUniversityId">
@@ -880,7 +902,10 @@ const EmployerDashboard = () => {
                 {eligibilityResult.canWork !== false && (
                   <button
                     className="btn btn-secondary"
-                    onClick={() => handleRequestAccess(eligibilityCheck.universityId)}
+                    onClick={async (e) => {
+                      e.preventDefault()
+                      await handleRequestAccess(eligibilityCheck.universityId)
+                    }}
                   >
                     Request Access to This Student
                   </button>

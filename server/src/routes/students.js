@@ -71,6 +71,7 @@ router.get(
 
       res.json({
         universityId: student.universityId,
+        universityName: student.universityName,
         visaType: student.visaType,
         ...eligibility,
       });

@@ -18,6 +18,7 @@ const StudentDashboard = () => {
   const [showTermForm, setShowTermForm] = useState(false)
   const [editingTerm, setEditingTerm] = useState(null)
   const [termForm, setTermForm] = useState({
+    courseLevel: 'DEGREE_OR_ABOVE', // Default to 20 hours for most degrees
     name: '',
     academicYear: '',
     startDate: '',
@@ -167,6 +168,7 @@ const StudentDashboard = () => {
       }
       
       await studentAPI.createTerm({
+        courseLevel: termForm.courseLevel || 'DEGREE_OR_ABOVE',
         name: termForm.name.toUpperCase(),
         academicYear: termForm.academicYear,
         startDate: termForm.startDate,
@@ -174,7 +176,7 @@ const StudentDashboard = () => {
       })
       
       setShowTermForm(false)
-      setTermForm({ name: '', academicYear: '', startDate: '', endDate: '' })
+      setTermForm({ courseLevel: 'DEGREE_OR_ABOVE', name: '', academicYear: '', startDate: '', endDate: '' })
       loadDashboardData()
       alert('Term created successfully!')
     } catch (err) {
@@ -315,6 +317,7 @@ const StudentDashboard = () => {
       }
       
       const updateData = {}
+      if (termForm.courseLevel !== undefined) updateData.courseLevel = termForm.courseLevel || null
       if (termForm.name) updateData.name = termForm.name.toUpperCase()
       if (termForm.academicYear !== undefined) updateData.academicYear = termForm.academicYear
       if (termForm.startDate) updateData.startDate = termForm.startDate
@@ -324,7 +327,7 @@ const StudentDashboard = () => {
       
       setShowTermForm(false)
       setEditingTerm(null)
-      setTermForm({ name: '', academicYear: '', startDate: '', endDate: '' })
+      setTermForm({ courseLevel: '', name: '', academicYear: '', startDate: '', endDate: '' })
       loadDashboardData()
       alert('Term updated successfully!')
     } catch (err) {
@@ -373,6 +376,7 @@ const StudentDashboard = () => {
   const handleEditTerm = (term) => {
     setEditingTerm(term)
     setTermForm({
+      courseLevel: term.courseLevel || '',
       name: term.name,
       academicYear: term.academicYear || '',
       startDate: term.startDate.split('T')[0],
@@ -384,7 +388,7 @@ const StudentDashboard = () => {
   const handleCancelTermForm = () => {
     setShowTermForm(false)
     setEditingTerm(null)
-    setTermForm({ name: '', startDate: '', endDate: '' })
+    setTermForm({ courseLevel: '', name: '', academicYear: '', startDate: '', endDate: '' })
   }
 
   const getTermStatus = (term) => {
@@ -407,7 +411,18 @@ const StudentDashboard = () => {
     })
   }
 
-  // Get allowed hours based on term time status
+  // Get active term object if in term time
+  const getActiveTerm = () => {
+    const now = new Date()
+    const activeTerm = terms.find(term => {
+      const start = new Date(term.startDate)
+      const end = new Date(term.endDate)
+      return now >= start && now <= end
+    })
+    return activeTerm || null
+  }
+
+  // Get allowed hours based on term time status and course level
   const getAllowedHours = () => {
     // Check if course has ended
     if (profile?.courseEndDate) {
@@ -416,19 +431,25 @@ const StudentDashboard = () => {
         return 0
       }
     }
-    // 20 hours during term time, 40+ hours during holidays
-    return isInTermTime() ? 20 : 40
-  }
-
-  // Get active term name if in term time
-  const getActiveTerm = () => {
-    const now = new Date()
-    const activeTerm = terms.find(term => {
-      const start = new Date(term.startDate)
-      const end = new Date(term.endDate)
-      return now >= start && now <= end
-    })
-    return activeTerm ? activeTerm.name : null
+    
+    // If not in term time, full-time work allowed (40+ hours)
+    if (!isInTermTime()) {
+      return 40
+    }
+    
+    // Get active term to check course level
+    const activeTerm = getActiveTerm()
+    if (!activeTerm) {
+      return 20 // Default fallback
+    }
+    
+    // Check course level: BELOW_DEGREE = 10 hours, DEGREE_OR_ABOVE or null = 20 hours
+    if (activeTerm.courseLevel === 'BELOW_DEGREE') {
+      return 10
+    }
+    
+    // Default to 20 hours for DEGREE_OR_ABOVE or if courseLevel is null/undefined
+    return 20
   }
 
   const formatDate = (dateString) => {
@@ -635,12 +656,12 @@ const StudentDashboard = () => {
               <div className="banner-text">
                 <h2>
                   {isInTermTime() 
-                    ? `Currently in ${getActiveTerm() || 'Term Time'}` 
+                    ? `Currently in ${getActiveTerm()?.name || 'Term Time'}` 
                     : 'Currently on Holiday'}
                 </h2>
                 <p>
                   {isInTermTime()
-                    ? 'Maximum 20 hours per week allowed during term time'
+                    ? `Maximum ${getAllowedHours()} hours per week allowed during term time`
                     : 'Full-time work allowed - no weekly hour limit'}
                 </p>
               </div>
@@ -1024,7 +1045,7 @@ const StudentDashboard = () => {
                 className="btn btn-primary"
                 onClick={() => {
                   setEditingTerm(null)
-                  setTermForm({ name: '', startDate: '', endDate: '' })
+                  setTermForm({ courseLevel: 'DEGREE_OR_ABOVE', name: '', academicYear: '', startDate: '', endDate: '' })
                   setShowTermForm(true)
                 }}
               >
@@ -1037,6 +1058,24 @@ const StudentDashboard = () => {
               <div className="term-form-card">
                 <h3>{editingTerm ? 'Edit Term' : 'Create New Term'}</h3>
                 <form onSubmit={editingTerm ? handleUpdateTerm : handleCreateTerm} className="term-form">
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="courseLevel">
+                      Course Level *
+                    </label>
+                    <select
+                      id="courseLevel"
+                      className="form-input"
+                      value={termForm.courseLevel}
+                      onChange={(e) => setTermForm({ ...termForm, courseLevel: e.target.value })}
+                      required={!editingTerm}
+                    >
+                      <option value="">Select course level</option>
+                      <option value="BELOW_DEGREE">Below Degree Level (10 hours/week during term-time)</option>
+                      <option value="DEGREE_OR_ABOVE">Degree Level or Above (20 hours/week during term-time)</option>
+                    </select>
+                    <small className="form-hint">Select your course level to determine work hour limits during term-time</small>
+                  </div>
+
                   <div className="form-group">
                     <label className="form-label" htmlFor="termName">
                       Term Name *
@@ -1449,7 +1488,7 @@ const StudentDashboard = () => {
                         {isInTermTime() ? 'Term Time' : 'Holiday'}
                       </div>
                       {getActiveTerm() && (
-                        <div className="status-detail">Active Term: {getActiveTerm()}</div>
+                        <div className="status-detail">Active Term: {getActiveTerm().name}</div>
                       )}
                     </div>
                     <div className="status-card">
