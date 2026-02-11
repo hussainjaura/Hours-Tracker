@@ -1041,16 +1041,32 @@ const StudentDashboard = () => {
                 <h2>Academic Terms</h2>
                 <p className="text-secondary">Manage your academic terms to ensure accurate compliance calculations.</p>
               </div>
-              <button
-                className="btn btn-primary"
-                onClick={() => {
-                  setEditingTerm(null)
-                  setTermForm({ courseLevel: 'DEGREE_OR_ABOVE', name: '', academicYear: '', startDate: '', endDate: '' })
-                  setShowTermForm(true)
-                }}
-              >
-                + Add Term
-              </button>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                {terms.length > 0 && (
+                  <button
+                    className="btn btn-secondary"
+                    onClick={async () => {
+                      try {
+                        await studentAPI.downloadTermLetterPDF()
+                      } catch (err) {
+                        setError(err.response?.data?.error || 'Failed to download term letter')
+                      }
+                    }}
+                  >
+                    📄 Download Term Letter
+                  </button>
+                )}
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setEditingTerm(null)
+                    setTermForm({ courseLevel: 'DEGREE_OR_ABOVE', name: '', academicYear: '', startDate: '', endDate: '' })
+                    setShowTermForm(true)
+                  }}
+                >
+                  + Add Term
+                </button>
+              </div>
             </div>
 
             {/* Term Form */}

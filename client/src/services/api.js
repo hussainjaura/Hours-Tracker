@@ -95,6 +95,20 @@ export const studentAPI = {
   deleteAllTerms: () => api.delete('/terms/me'),
   getTemplates: () => api.get('/terms/templates/me'),
   createTermFromTemplate: (data) => api.post('/terms/from-template', data),
+  downloadTermLetterPDF: async () => {
+    const response = await api.get('/terms/letter/pdf', {
+      responseType: 'blob',
+    });
+    // response.data is already a Blob when responseType is 'blob'
+    const url = window.URL.createObjectURL(response.data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `term-letter-${new Date().toISOString().split('T')[0]}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
   // Audit trail endpoints
   getAuditTrail: () => api.get('/audit/my-audit-trail'),
   getAuditLogs: () => api.get('/audit/my-audit-logs'),
@@ -116,6 +130,21 @@ export const employerAPI = {
   getRelationshipAuditTrail: (relationshipId) => api.get(`/audit/relationship/${relationshipId}`),
   getAllRelationshipAuditTrails: () => api.get('/audit/my-relationships'),
   exportRelationshipAuditPack: (relationshipId, format = 'json') => api.get(`/audit-export/relationship/${relationshipId}?format=${format}`, { responseType: 'blob' }),
+  // Term letter download
+  downloadStudentTermLetter: async (universityId) => {
+    const response = await api.get(`/terms/letter/pdf/${universityId}`, {
+      responseType: 'blob',
+    });
+    // response.data is already a Blob when responseType is 'blob'
+    const url = window.URL.createObjectURL(response.data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `term-letter-${universityId}-${new Date().toISOString().split('T')[0]}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
 }
 
 // Admin endpoints (if needed later)

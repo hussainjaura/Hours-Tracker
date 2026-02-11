@@ -412,6 +412,262 @@ export async function generateStudentAuditPackPDF(auditPack) {
 }
 
 /**
+ * Generate Term Letter PDF for Students
+ * A professional letter that students can share with employers
+ */
+export async function generateTermLetterPDF(student, terms) {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({ margin: 50, size: 'A4' });
+      const buffers = [];
+      
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => {
+        const pdfBuffer = Buffer.concat(buffers);
+        resolve(pdfBuffer);
+      });
+      doc.on('error', reject);
+      
+      let y = 50;
+      
+      // Header
+      doc.fontSize(20)
+         .fillColor('#1f2937')
+         .text('ISC Audit — International Student Compliance Audit', 50, y, { align: 'center' });
+      
+      y += 30;
+      doc.fontSize(16)
+         .fillColor('#8b5cf6')
+         .text('Academic Term Dates Letter', 50, y, { align: 'center' });
+      
+      y += 40;
+      
+      // Date
+      const today = new Date();
+      doc.fontSize(10)
+         .fillColor('#6b7280')
+         .text(`Date: ${today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`, 50, y);
+      
+      y += 30;
+      
+      // Letter body
+      doc.fontSize(11)
+         .fillColor('#1f2937')
+         .text('To Whom It May Concern,', 50, y);
+      
+      y += 30;
+      
+      // Student information paragraph
+      const studentName = student.user?.email || 'Student';
+      const universityName = student.universityName || 'University';
+      const universityId = student.universityId || 'N/A';
+      
+      doc.fontSize(10)
+         .fillColor('#1f2937')
+         .text(
+           `This letter confirms the academic term dates for ${studentName} (University ID: ${universityId}) ` +
+           `studying at ${universityName}. The following term dates have been declared and confirmed:`,
+           50, y, {
+             width: 500,
+             lineGap: 5,
+             align: 'left'
+           }
+         );
+      
+      y += 50;
+      
+      // Terms table header
+      doc.fontSize(10)
+         .fillColor('#1f2937')
+         .text('Academic Term Dates:', 50, y, { bold: true });
+      
+      y += 25;
+      
+      // Group terms by academic year
+      const groupedTerms = {};
+      const noYearTerms = [];
+      
+      terms.forEach(term => {
+        if (term.academicYear) {
+          if (!groupedTerms[term.academicYear]) {
+            groupedTerms[term.academicYear] = [];
+          }
+          groupedTerms[term.academicYear].push(term);
+        } else {
+          noYearTerms.push(term);
+        }
+      });
+      
+      // Sort academic years (newest first)
+      const sortedYears = Object.keys(groupedTerms).sort((a, b) => {
+        const aYear = a.length > 5 ? parseInt(a.split('/')[0]) : 2000 + parseInt(a.split('/')[0]);
+        const bYear = b.length > 5 ? parseInt(b.split('/')[0]) : 2000 + parseInt(b.split('/')[0]);
+        return bYear - aYear;
+      });
+      
+      // Display terms grouped by academic year
+      sortedYears.forEach(year => {
+        if (y > 650) {
+          doc.addPage();
+          y = 50;
+        }
+        
+        doc.fontSize(10)
+           .fillColor('#8b5cf6')
+           .text(`Academic Year ${year}:`, 50, y, { bold: true });
+        
+        y += 20;
+        
+        groupedTerms[year]
+          .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+          .forEach(term => {
+            if (y > 700) {
+              doc.addPage();
+              y = 50;
+            }
+            
+            const startDate = new Date(term.startDate).toLocaleDateString('en-GB', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            });
+            const endDate = new Date(term.endDate).toLocaleDateString('en-GB', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            });
+            
+            doc.fontSize(9)
+               .fillColor('#1f2937')
+               .text(`• ${term.name} Term: ${startDate} to ${endDate}`, 70, y);
+            
+            y += 18;
+          });
+        
+        y += 10;
+      });
+      
+      // Display terms without academic year
+      if (noYearTerms.length > 0) {
+        if (y > 650) {
+          doc.addPage();
+          y = 50;
+        }
+        
+        doc.fontSize(10)
+           .fillColor('#8b5cf6')
+           .text('Other Terms:', 50, y, { bold: true });
+        
+        y += 20;
+        
+        noYearTerms
+          .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+          .forEach(term => {
+            if (y > 700) {
+              doc.addPage();
+              y = 50;
+            }
+            
+            const startDate = new Date(term.startDate).toLocaleDateString('en-GB', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            });
+            const endDate = new Date(term.endDate).toLocaleDateString('en-GB', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            });
+            
+            doc.fontSize(9)
+               .fillColor('#1f2937')
+               .text(`• ${term.name} Term: ${startDate} to ${endDate}`, 70, y);
+            
+            y += 18;
+          });
+      }
+      
+      y += 30;
+      
+      // Important notice
+      if (y > 650) {
+        doc.addPage();
+        y = 50;
+      }
+      
+      doc.fontSize(10)
+         .fillColor('#ef4444')
+         .text('Important Information for Employers:', 50, y, { bold: true });
+      
+      y += 20;
+      
+      doc.fontSize(9)
+         .fillColor('#1f2937')
+         .text(
+           'During term time, international students on a Student visa are legally restricted to working a maximum of ' +
+           '20 hours per week (or 10 hours per week for courses below degree level). Outside of term time, students ' +
+           'may work full-time. Please ensure that work schedules comply with these regulations.',
+           50, y, {
+             width: 500,
+             lineGap: 5,
+             align: 'left'
+           }
+         );
+      
+      y += 50;
+      
+      // Closing
+      doc.fontSize(10)
+         .fillColor('#1f2937')
+         .text('This letter is generated by ISC Audit and serves as documentation of the student\'s declared academic term dates.', 50, y, {
+           width: 500,
+           lineGap: 5,
+           align: 'left'
+         });
+      
+      y += 40;
+      
+      doc.fontSize(10)
+         .fillColor('#1f2937')
+         .text('Yours sincerely,', 50, y);
+      
+      y += 30;
+      
+      doc.fontSize(10)
+         .fillColor('#1f2937')
+         .text('ISC Audit System', 50, y);
+      
+      y += 20;
+      
+      doc.fontSize(9)
+         .fillColor('#6b7280')
+         .text('International Student Compliance Audit', 50, y);
+      
+      // Footer on all pages
+      const pageRange = doc.bufferedPageRange();
+      const startPage = pageRange.start;
+      const totalPages = pageRange.count;
+      for (let i = startPage; i < startPage + totalPages; i++) {
+        doc.switchToPage(i);
+        const pageNumber = i - startPage + 1;
+        doc.fontSize(8)
+           .fillColor('#9ca3af')
+           .text(
+             `Page ${pageNumber} of ${totalPages} | Generated ${today.toLocaleDateString('en-GB')}`,
+             50,
+             doc.page.height - 30,
+             { align: 'center', width: 500 }
+           );
+      }
+      
+      doc.end();
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+/**
  * Generate Employer Relationship Audit Pack PDF
  */
 export async function generateRelationshipAuditPackPDF(auditPack) {

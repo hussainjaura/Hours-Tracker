@@ -17,12 +17,6 @@ const EmployerDashboard = () => {
   const [searchedStudent, setSearchedStudent] = useState(null)
   const [searching, setSearching] = useState(false)
 
-  // Eligibility checker state
-  const [eligibilityCheck, setEligibilityCheck] = useState({
-    universityId: ''
-  })
-  const [eligibilityResult, setEligibilityResult] = useState(null)
-  const [checkingEligibility, setCheckingEligibility] = useState(false)
 
   useEffect(() => {
     loadDashboardData()
@@ -79,26 +73,6 @@ const EmployerDashboard = () => {
     }
   }
 
-  const handleCheckEligibility = async (e) => {
-    e.preventDefault()
-    try {
-      setCheckingEligibility(true)
-      setError('')
-      
-      const res = await employerAPI.checkEligibility(
-        eligibilityCheck.universityId,
-        null
-      )
-      
-      setEligibilityResult(res.data)
-    } catch (err) {
-      setError(err.message || 'Failed to check eligibility')
-      setEligibilityResult(null)
-    } finally {
-      setCheckingEligibility(false)
-    }
-  }
-
   const handleRequestAccess = async (universityId) => {
     if (!universityId || !universityId.trim()) {
       setError('University ID is required')
@@ -112,12 +86,9 @@ const EmployerDashboard = () => {
       console.log('Access request response:', response)
       alert('Access request sent! Waiting for student approval.')
       loadDashboardData()
-      // Clear search-related state (for Find Students tab)
+      // Clear search-related state
       setSearchedStudent(null)
       setSearchUniversityId('')
-      // Clear eligibility result (for Eligibility tab)
-      setEligibilityResult(null)
-      setEligibilityCheck({ universityId: '' })
     } catch (err) {
       console.error('Request access error:', err)
       // Handle 409 Conflict - relationship already exists
@@ -231,12 +202,6 @@ const EmployerDashboard = () => {
           onClick={() => setActiveTab('students')}
         >
           My Students
-        </button>
-        <button
-          className={activeTab === 'eligibility' ? 'tab-active' : ''}
-          onClick={() => setActiveTab('eligibility')}
-        >
-          Check Eligibility
         </button>
         <button
           className={activeTab === 'find-students' ? 'tab-active' : ''}
@@ -571,14 +536,30 @@ const EmployerDashboard = () => {
                             )}
                           </div>
                         </div>
-                        {!rel.acknowledgedAt && (
+                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                           <button
-                            className="btn btn-primary"
-                            onClick={() => handleAcknowledgeStudent(rel.id)}
+                            className="btn btn-secondary"
+                            onClick={async () => {
+                              try {
+                                await employerAPI.downloadStudentTermLetter(student.universityId)
+                              } catch (err) {
+                                const errorMessage = err.response?.data?.error || err.message || 'Failed to download term letter'
+                                alert(`Error: ${errorMessage}`)
+                                setError(errorMessage)
+                              }
+                            }}
                           >
-                            Acknowledge Declarations
+                            📄 Download Term Letter
                           </button>
-                        )}
+                          {!rel.acknowledgedAt && (
+                            <button
+                              className="btn btn-primary"
+                              onClick={() => handleAcknowledgeStudent(rel.id)}
+                            >
+                              Acknowledge Declarations
+                            </button>
+                          )}
+                        </div>
                       </div>
                       
                       <div className="compliance-rules">
@@ -802,120 +783,6 @@ const EmployerDashboard = () => {
         </div>
       )}
 
-      {/* Eligibility Checker Tab */}
-      {activeTab === 'eligibility' && (
-        <div className="dashboard-content">
-          <div className="dashboard-card">
-            <h2>Check Student Eligibility</h2>
-            <p className="text-secondary">Check if a student can work and their current eligibility status.</p>
-            
-            {error && (
-              <div className="error-message" style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#fee', border: '1px solid #fcc', borderRadius: '4px', color: '#c33' }}>
-                {error}
-              </div>
-            )}
-            
-            <form onSubmit={handleCheckEligibility} className="eligibility-form">
-              <div className="form-group">
-                <label className="form-label" htmlFor="eligibilityUniversityId">
-                  Student University ID *
-                </label>
-                <input
-                  id="eligibilityUniversityId"
-                  type="text"
-                  className="form-input"
-                  value={eligibilityCheck.universityId}
-                  onChange={(e) => setEligibilityCheck({ ...eligibilityCheck, universityId: e.target.value })}
-                  required
-                  placeholder="Enter student's university ID"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={checkingEligibility}
-              >
-                {checkingEligibility ? 'Checking...' : 'Check Eligibility'}
-              </button>
-            </form>
-
-            {eligibilityResult && (
-              <div className="eligibility-result">
-                <h3>Compliance Information</h3>
-                <div className={`eligibility-status ${eligibilityResult.canWork !== false ? 'can-work' : 'cannot-work'}`}>
-                  <div>
-                    <div className="eligibility-title">
-                      {eligibilityResult.canWork === false 
-                        ? 'Student Cannot Work' 
-                        : eligibilityResult.inTermTime 
-                          ? 'Student Can Work - Term Time Rules Apply'
-                          : 'Student Can Work - Holiday Period'}
-                    </div>
-                    {eligibilityResult.reason && (
-                      <div className="eligibility-reason">{eligibilityResult.reason}</div>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="eligibility-details">
-                  <div className="detail-item">
-                    <span className="detail-label">Weekly Hour Limit:</span>
-                    <span className="detail-value">
-                      {eligibilityResult.allowedWeeklyHours || 'N/A'}h
-                      {eligibilityResult.inTermTime && (
-                        <span className="detail-note"> (Term time limit)</span>
-                      )}
-                      {!eligibilityResult.inTermTime && (
-                        <span className="detail-note"> (Full-time allowed)</span>
-                      )}
-                    </span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-label">Current Period:</span>
-                    <span className="detail-value">
-                      {eligibilityResult.inTermTime ? 'Term Time' : 'Holiday'}
-                    </span>
-                  </div>
-                  {eligibilityResult.activeTerm && (
-                    <div className="detail-item">
-                      <span className="detail-label">Active Term:</span>
-                      <span className="detail-value">
-                        {typeof eligibilityResult.activeTerm === 'object' 
-                          ? eligibilityResult.activeTerm.name || eligibilityResult.activeTerm 
-                          : eligibilityResult.activeTerm}
-                      </span>
-                    </div>
-                  )}
-                  {eligibilityResult.inTermTime && (
-                    <div className="compliance-warning-box">
-                      <strong>Compliance Rule:</strong> During term time, this student must not be scheduled for more than {eligibilityResult.allowedWeeklyHours} hours per week. This is a legal requirement for UK student visas.
-                    </div>
-                  )}
-                  {!eligibilityResult.inTermTime && (
-                    <div className="compliance-info-box">
-                      <strong>Holiday Period:</strong> During holidays, this student can work full-time with no weekly hour limit.
-                    </div>
-                  )}
-                </div>
-
-                {eligibilityResult.canWork !== false && (
-                  <button
-                    className="btn btn-secondary"
-                    onClick={async (e) => {
-                      e.preventDefault()
-                      await handleRequestAccess(eligibilityCheck.universityId)
-                    }}
-                  >
-                    Request Access to This Student
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Find Students Tab */}
       {activeTab === 'find-students' && (
         <div className="dashboard-content">
@@ -965,44 +832,91 @@ const EmployerDashboard = () => {
                     <span className="profile-label">Visa Type:</span>
                     <span className="profile-value">{searchedStudent.visaType}</span>
                   </div>
-                  <div className="profile-item">
-                    <span className="profile-label">Can Work:</span>
-                    <span className={`profile-value ${searchedStudent.canWork ? 'text-success' : 'text-error'}`}>
-                      {searchedStudent.canWork ? 'Yes' : 'No'}
-                    </span>
-                  </div>
-                  {searchedStudent.reason && (
-                    <div className="profile-item">
-                      <span className="profile-label">Status:</span>
-                      <span className="profile-value">{searchedStudent.reason}</span>
+                </div>
+
+                {/* Eligibility Information Section */}
+                <div className="eligibility-result" style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid #e5e7eb' }}>
+                  <h3>Work Eligibility & Compliance Information</h3>
+                  <div className={`eligibility-status ${searchedStudent.canWork !== false ? 'can-work' : 'cannot-work'}`}>
+                    <div>
+                      <div className="eligibility-title">
+                        {searchedStudent.canWork === false 
+                          ? 'Student Cannot Work' 
+                          : searchedStudent.inTermTime 
+                            ? 'Student Can Work - Term Time Rules Apply'
+                            : 'Student Can Work - Holiday Period'}
+                      </div>
+                      {searchedStudent.reason && (
+                        <div className="eligibility-reason">{searchedStudent.reason}</div>
+                      )}
                     </div>
-                  )}
-                  <div className="profile-item">
-                    <span className="profile-label">Allowed Weekly Hours:</span>
-                    <span className="profile-value">{searchedStudent.allowedWeeklyHours || 'N/A'}h</span>
                   </div>
-                  <div className="profile-item">
-                    <span className="profile-label">In Term Time:</span>
-                    <span className="profile-value">{searchedStudent.inTermTime ? 'Yes' : 'No'}</span>
+                  
+                  <div className="eligibility-details">
+                    <div className="detail-item">
+                      <span className="detail-label">Weekly Hour Limit:</span>
+                      <span className="detail-value">
+                        {searchedStudent.allowedWeeklyHours || 'N/A'}h
+                        {searchedStudent.inTermTime && (
+                          <span className="detail-note"> (Term time limit)</span>
+                        )}
+                        {!searchedStudent.inTermTime && (
+                          <span className="detail-note"> (Full-time allowed)</span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="detail-item">
+                      <span className="detail-label">Current Period:</span>
+                      <span className="detail-value">
+                        {searchedStudent.inTermTime ? 'Term Time' : 'Holiday'}
+                      </span>
+                    </div>
+                    {searchedStudent.activeTerm && (
+                      <div className="detail-item">
+                        <span className="detail-label">Active Term:</span>
+                        <span className="detail-value">
+                          {typeof searchedStudent.activeTerm === 'object' 
+                            ? searchedStudent.activeTerm.name || searchedStudent.activeTerm 
+                            : searchedStudent.activeTerm}
+                        </span>
+                      </div>
+                    )}
+                    {searchedStudent.inTermTime && (
+                      <div className="compliance-warning-box">
+                        <strong>Compliance Rule:</strong> During term time, this student must not be scheduled for more than {searchedStudent.allowedWeeklyHours} hours per week. This is a legal requirement for UK student visas.
+                      </div>
+                    )}
+                    {!searchedStudent.inTermTime && (
+                      <div className="compliance-info-box">
+                        <strong>Holiday Period:</strong> During holidays, this student can work full-time with no weekly hour limit.
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="student-profile-actions">
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => handleRequestAccess(searchedStudent.universityId)}
-                  >
-                    Request Access
-                  </button>
+                <div className="student-profile-actions" style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
                   <button
                     className="btn btn-secondary"
-                    onClick={() => {
-                      setEligibilityCheck({ universityId: searchedStudent.universityId })
-                      setActiveTab('eligibility')
+                    onClick={async () => {
+                      try {
+                        await employerAPI.downloadStudentTermLetter(searchedStudent.universityId)
+                      } catch (err) {
+                        const errorMessage = err.response?.data?.error || err.message || 'Failed to download term letter'
+                        alert(`Error: ${errorMessage}`)
+                        setError(errorMessage)
+                      }
                     }}
                   >
-                    Check Eligibility
+                    📄 Download Term Letter
                   </button>
+                  {searchedStudent.canWork !== false && (
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => handleRequestAccess(searchedStudent.universityId)}
+                    >
+                      Request Access to This Student
+                    </button>
+                  )}
                 </div>
               </div>
             )}

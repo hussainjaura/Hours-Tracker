@@ -7,6 +7,7 @@ import {
   logChangeHistory,
   createComprehensiveAuditLog,
 } from "../utils/auditLogger.js";
+import { generateTermLetterPDF } from "../utils/pdfGenerator.js";
 
 const router = express.Router();
 
@@ -785,6 +786,126 @@ router.post(
     } catch (err) {
       console.error("CREATE TERM FROM TEMPLATE ERROR:", err);
       res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+/**
+ * GET /terms/letter/pdf - Download term letter PDF
+ */
+router.get(
+  "/letter/pdf",
+  authenticate,
+  authorizeRoles("STUDENT"),
+  async (req, res) => {
+    try {
+      // Get student with user info
+      const student = await prisma.student.findUnique({
+        where: { userId: req.user.id },
+        include: {
+          user: {
+            select: {
+              email: true,
+            },
+          },
+        },
+      });
+
+      if (!student) {
+        return res.status(404).json({ error: "Student profile not found" });
+      }
+
+      // Get all terms for this student
+      const terms = await prisma.term.findMany({
+        where: { studentId: student.id },
+        orderBy: [
+          { academicYear: 'desc' },
+          { startDate: 'asc' },
+        ],
+      });
+
+      if (terms.length === 0) {
+        return res.status(400).json({ 
+          error: "No terms found. Please add at least one term before generating the letter." 
+        });
+      }
+
+      // Generate PDF
+      const pdfBuffer = await generateTermLetterPDF(student, terms);
+
+      // Set response headers
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="term-letter-${student.universityId}-${new Date().toISOString().split('T')[0]}.pdf"`
+      );
+
+      // Send PDF
+      res.send(pdfBuffer);
+    } catch (err) {
+      console.error("GENERATE TERM LETTER PDF ERROR:", err);
+      res.status(500).json({ error: "Failed to generate term letter PDF" });
+    }
+  }
+);
+
+/**
+ * GET /terms/letter/pdf/:universityId - Download term letter PDF for a specific student (EMPLOYER)
+ */
+router.get(
+  "/letter/pdf/:universityId",
+  authenticate,
+  authorizeRoles("EMPLOYER"),
+  async (req, res) => {
+    try {
+      const { universityId } = req.params;
+
+      // Get student by university ID
+      const student = await prisma.student.findUnique({
+        where: { universityId },
+        include: {
+          user: {
+            select: {
+              email: true,
+            },
+          },
+        },
+      });
+
+      if (!student) {
+        return res.status(404).json({ error: "Student not found" });
+      }
+
+      // Get all terms for this student
+      const terms = await prisma.term.findMany({
+        where: { studentId: student.id },
+        orderBy: [
+          { academicYear: 'desc' },
+          { startDate: 'asc' },
+        ],
+      });
+
+      if (terms.length === 0) {
+        return res.status(400).json({ 
+          error: "No terms found for this student. The student has not declared any term dates yet." 
+        });
+      }
+
+      // Generate PDF
+      const pdfBuffer = await generateTermLetterPDF(student, terms);
+
+      // Set response headers
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="term-letter-${student.universityId}-${new Date().toISOString().split('T')[0]}.pdf"`
+      );
+
+      // Send PDF
+      res.send(pdfBuffer);
+    } catch (err) {
+      console.error("GENERATE TERM LETTER PDF ERROR:", err);
+      res.status(500).json({ error: "Failed to generate term letter PDF" });
     }
   }
 );
