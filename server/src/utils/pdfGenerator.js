@@ -483,11 +483,23 @@ export async function generateTermLetterPDF(student, terms) {
       
       y += 25;
       
+      // Filter to only include confirmed terms (safety check - should already be filtered at endpoint level)
+      const confirmedTerms = terms.filter(term => term.confirmedAt !== null && term.confirmedAt !== undefined);
+      
+      if (confirmedTerms.length === 0) {
+        // If no confirmed terms, add a message
+        doc.fontSize(10)
+           .fillColor('#6b7280')
+           .text('No confirmed term dates available.', 50, y);
+        doc.end();
+        return;
+      }
+      
       // Group terms by academic year
       const groupedTerms = {};
       const noYearTerms = [];
       
-      terms.forEach(term => {
+      confirmedTerms.forEach(term => {
         if (term.academicYear) {
           if (!groupedTerms[term.academicYear]) {
             groupedTerms[term.academicYear] = [];

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { studentAPI } from '../services/api'
 import './Dashboard.css'
 
@@ -6,7 +6,6 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState(null)
   const [complianceSummary, setComplianceSummary] = useState(null)
-  const [violations, setViolations] = useState([])
   const [employers, setEmployers] = useState([])
   const [pendingRequests, setPendingRequests] = useState([])
   const [terms, setTerms] = useState([])
@@ -20,15 +19,25 @@ const StudentDashboard = () => {
   const [termForm, setTermForm] = useState({
     courseLevel: 'DEGREE_OR_ABOVE', // Default to 20 hours for most degrees
     name: '',
+    customName: '', // For custom term names
     academicYear: '',
     startDate: '',
     endDate: ''
   })
+  const [isCustomTerm, setIsCustomTerm] = useState(false)
   const [submittingTerm, setSubmittingTerm] = useState(false)
+  
+  // Ref for scrolling to term form
+  const termFormRef = useRef(null)
 
   useEffect(() => {
     loadDashboardData()
   }, [])
+
+  // Scroll to top when tab changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [activeTab])
 
   const loadDashboardData = async () => {
     try {
@@ -37,7 +46,7 @@ const StudentDashboard = () => {
 
       // Load all data in parallel
       // Use Promise.allSettled to handle errors gracefully
-      const [profileRes, complianceRes, violationsRes, employersRes, requestsRes, termsRes, templatesRes] = await Promise.allSettled([
+      const [profileRes, complianceRes, employersRes, requestsRes, termsRes, templatesRes] = await Promise.allSettled([
         studentAPI.getProfile().catch((err) => {
           // 404 is expected if profile doesn't exist yet
           if (err.status === 404 || err.response?.status === 404) {
@@ -46,7 +55,6 @@ const StudentDashboard = () => {
           throw err
         }),
         studentAPI.getComplianceSummary().catch(() => null),
-        studentAPI.getViolations().catch(() => ({ data: { violations: [] } })),
         studentAPI.getEmployers().catch(() => ({ data: [] })),
         studentAPI.getRequests().catch(() => ({ data: [] })),
         studentAPI.getTerms().catch(() => ({ data: [] })),
@@ -66,11 +74,6 @@ const StudentDashboard = () => {
           context: data.context,
           violations: data.violations
         })
-      }
-
-      if (violationsRes.status === 'fulfilled') {
-        const data = violationsRes.value?.data || { violations: [] }
-        setViolations(data.violations || [])
       }
 
       if (employersRes.status === 'fulfilled') {
@@ -134,7 +137,16 @@ const StudentDashboard = () => {
       }
 
       // Frontend validation: Check for duplicate term in same academic year
-      const termName = termForm.name.toUpperCase()
+      const termName = isCustomTerm && termForm.customName 
+        ? termForm.customName.toUpperCase().trim()
+        : termForm.name.toUpperCase()
+      
+      if (!termName) {
+        setError('Term name is required')
+        setSubmittingTerm(false)
+        return
+      }
+      
       const newStart = new Date(termForm.startDate)
       const newEnd = new Date(termForm.endDate)
       
@@ -146,7 +158,7 @@ const StudentDashboard = () => {
       })
       
       if (duplicateTerm) {
-        setError(`You already have a ${termName} term in academic year ${termForm.academicYear}. Each term (Autumn, Spring, Summer) can only be created once per academic year.`)
+        setError(`You already have a ${termName} term in academic year ${termForm.academicYear}. Each term can only be created once per academic year.`)
         setSubmittingTerm(false)
         return
       }
@@ -169,14 +181,15 @@ const StudentDashboard = () => {
       
       await studentAPI.createTerm({
         courseLevel: termForm.courseLevel || 'DEGREE_OR_ABOVE',
-        name: termForm.name.toUpperCase(),
+        name: termName,
         academicYear: termForm.academicYear,
         startDate: termForm.startDate,
         endDate: termForm.endDate
       })
       
       setShowTermForm(false)
-      setTermForm({ courseLevel: 'DEGREE_OR_ABOVE', name: '', academicYear: '', startDate: '', endDate: '' })
+      setIsCustomTerm(false)
+      setTermForm({ courseLevel: 'DEGREE_OR_ABOVE', name: '', customName: '', academicYear: '', startDate: '', endDate: '' })
       loadDashboardData()
       alert('Term created successfully!')
     } catch (err) {
@@ -318,7 +331,11 @@ const StudentDashboard = () => {
       
       const updateData = {}
       if (termForm.courseLevel !== undefined) updateData.courseLevel = termForm.courseLevel || null
-      if (termForm.name) updateData.name = termForm.name.toUpperCase()
+      if (isCustomTerm && termForm.customName) {
+        updateData.name = termForm.customName.toUpperCase().trim()
+      } else if (termForm.name) {
+        updateData.name = termForm.name.toUpperCase()
+      }
       if (termForm.academicYear !== undefined) updateData.academicYear = termForm.academicYear
       if (termForm.startDate) updateData.startDate = termForm.startDate
       if (termForm.endDate) updateData.endDate = termForm.endDate
@@ -327,7 +344,8 @@ const StudentDashboard = () => {
       
       setShowTermForm(false)
       setEditingTerm(null)
-      setTermForm({ courseLevel: '', name: '', academicYear: '', startDate: '', endDate: '' })
+      setIsCustomTerm(false)
+      setTermForm({ courseLevel: '', name: '', customName: '', academicYear: '', startDate: '', endDate: '' })
       loadDashboardData()
       alert('Term updated successfully!')
     } catch (err) {
@@ -375,20 +393,34 @@ const StudentDashboard = () => {
 
   const handleEditTerm = (term) => {
     setEditingTerm(term)
+    // Check if term name is custom (not AUTUMN, SPRING, or SUMMER)
+    const standardTerms = ['AUTUMN', 'SPRING', 'SUMMER']
+    const isCustom = term.name && !standardTerms.includes(term.name.toUpperCase())
+    
+    setIsCustomTerm(isCustom)
     setTermForm({
       courseLevel: term.courseLevel || '',
-      name: term.name,
+      name: isCustom ? '' : term.name,
+      customName: isCustom ? term.name : '',
       academicYear: term.academicYear || '',
       startDate: term.startDate.split('T')[0],
       endDate: term.endDate.split('T')[0]
     })
     setShowTermForm(true)
+    
+    // Scroll to form after a brief delay to ensure it's rendered
+    setTimeout(() => {
+      if (termFormRef.current) {
+        termFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 100)
   }
 
   const handleCancelTermForm = () => {
     setShowTermForm(false)
     setEditingTerm(null)
-    setTermForm({ courseLevel: '', name: '', academicYear: '', startDate: '', endDate: '' })
+    setIsCustomTerm(false)
+    setTermForm({ courseLevel: '', name: '', customName: '', academicYear: '', startDate: '', endDate: '' })
   }
 
   const getTermStatus = (term) => {
@@ -594,10 +626,6 @@ const StudentDashboard = () => {
             <div className="stat-value">{isInTermTime() ? 'Term Time' : 'Holiday'}</div>
             <div className="stat-label">Current Status</div>
           </div>
-          <div className="stat-box">
-            <div className="stat-value">{violations.length}</div>
-            <div className="stat-label">Violations</div>
-          </div>
         </div>
       </div>
 
@@ -608,12 +636,6 @@ const StudentDashboard = () => {
           onClick={() => setActiveTab('overview')}
         >
           Overview
-        </button>
-        <button
-          className={activeTab === 'compliance' ? 'tab-active' : ''}
-          onClick={() => setActiveTab('compliance')}
-        >
-          Compliance
         </button>
         <button
           className={activeTab === 'employers' ? 'tab-active' : ''}
@@ -649,24 +671,79 @@ const StudentDashboard = () => {
 
       {/* Overview Tab */}
       {activeTab === 'overview' && (
-        <div className="dashboard-content">
+        <div className="dashboard-content" style={{ minHeight: '400px' }}>
+          {/* Pending Access Requests Alert - Prominent at top */}
+          {pendingRequests.length > 0 && (
+            <div 
+              className="dashboard-card alert-card" 
+              style={{ 
+                backgroundColor: '#fef3c7', 
+                border: '2px solid #f59e0b',
+                cursor: 'pointer',
+                marginBottom: '1.5rem'
+              }}
+              onClick={() => setActiveTab('requests')}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: '0 0 0.5rem 0', color: '#92400e' }}>
+                    ⚠️ Pending Access Requests
+                  </h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: '1.1rem', fontWeight: '600', color: '#92400e' }}>
+                      {pendingRequests.length} employer{pendingRequests.length > 1 ? 's' : ''} {pendingRequests.length > 1 ? 'are' : 'is'} requesting access to your profile
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: '#78350f' }}>
+                      Click here to review and respond →
+                    </div>
+                  </div>
+                  {pendingRequests.length > 0 && pendingRequests[0]?.employer && (
+                    <div style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#78350f' }}>
+                      <strong>Latest request from:</strong> {pendingRequests[0].employer.organisationName || 'Unknown Organisation'}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Welcome & Status Banner */}
-          <div className={`overview-banner ${isInTermTime() ? 'banner-term-time' : 'banner-holiday'}`}>
+          <div className={`overview-banner ${isInTermTime() ? 'banner-term-time' : 'banner-holiday'}`} style={{ display: 'block', visibility: 'visible' }}>
             <div className="banner-content">
               <div className="banner-text">
                 <h2>
-                  {isInTermTime() 
-                    ? `Currently in ${getActiveTerm()?.name || 'Term Time'}` 
-                    : 'Currently on Holiday'}
+                  {(() => {
+                    try {
+                      return isInTermTime() 
+                        ? `Currently in ${getActiveTerm()?.name || 'Term Time'}` 
+                        : 'Currently on Holiday'
+                    } catch (e) {
+                      return 'Welcome to Your Dashboard'
+                    }
+                  })()}
                 </h2>
                 <p>
-                  {isInTermTime()
-                    ? `Maximum ${getAllowedHours()} hours per week allowed during term time`
-                    : 'Full-time work allowed - no weekly hour limit'}
+                  {(() => {
+                    try {
+                      return isInTermTime()
+                        ? `Maximum ${getAllowedHours()} hours per week allowed during term time`
+                        : 'Full-time work allowed - no weekly hour limit'
+                    } catch (e) {
+                      return 'View your work eligibility and term information below'
+                    }
+                  })()}
                 </p>
               </div>
               <div className="banner-stat">
-                <div className="banner-stat-value">{getAllowedHours()}h</div>
+                <div className="banner-stat-value">
+                  {(() => {
+                    try {
+                      return `${getAllowedHours()}h`
+                    } catch (e) {
+                      return '20h'
+                    }
+                  })()}
+                </div>
                 <div className="banner-stat-label">Allowed/Week</div>
               </div>
             </div>
@@ -694,8 +771,8 @@ const StudentDashboard = () => {
             </div>
             <div className="overview-stat-card">
               <div className="stat-card-content">
-                <div className="stat-card-value">{violations.length}</div>
-                <div className="stat-card-label">Violations</div>
+                <div className="stat-card-value">{isInTermTime() ? 'Term Time' : 'Holiday'}</div>
+                <div className="stat-card-label">Current Status</div>
               </div>
             </div>
           </div>
@@ -782,6 +859,129 @@ const StudentDashboard = () => {
                   </div>
                 ) : null
               })()}
+
+              {/* Quick Actions */}
+              <div className="dashboard-card">
+                <h3>Quick Actions</h3>
+                <div className="quick-actions-list">
+                  <button
+                    className="quick-action-btn"
+                    onClick={() => {
+                      setActiveTab('terms')
+                      setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100)
+                    }}
+                  >
+                    <span className="action-text">Manage Terms</span>
+                  </button>
+                  <button
+                    className="quick-action-btn"
+                    onClick={() => {
+                      setActiveTab('requests')
+                      setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100)
+                    }}
+                  >
+                    <span className="action-text">Access Requests</span>
+                  </button>
+                  <button
+                    className="quick-action-btn"
+                    onClick={() => {
+                      setActiveTab('audit')
+                      setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100)
+                    }}
+                  >
+                    <span className="action-text">Audit Trail</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Access Requests */}
+              <div className="dashboard-card">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <h3>Access Requests</h3>
+                  {pendingRequests.length > 0 && (
+                    <button 
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => setActiveTab('requests')}
+                    >
+                      View All →
+                    </button>
+                  )}
+                </div>
+                {pendingRequests.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {pendingRequests.slice(0, 3).map((request) => (
+                      <div key={request.id} style={{ 
+                        padding: '1rem', 
+                        backgroundColor: '#fef3c7', 
+                        borderRadius: '8px',
+                        border: '1px solid #f59e0b',
+                        marginBottom: '0.5rem'
+                      }}>
+                        <div style={{ marginBottom: '0.75rem' }}>
+                          <div style={{ fontWeight: '600', fontSize: '0.95rem', marginBottom: '0.25rem', color: '#92400e' }}>
+                            {request.employer?.organisationName || 'Unknown Organisation'}
+                          </div>
+                          {request.employer?.fullName && (
+                            <div style={{ fontSize: '0.875rem', color: '#78350f' }}>
+                              {request.employer.fullName}
+                              {request.employer.role && ` • ${request.employer.role}`}
+                            </div>
+                          )}
+                          {request.employer?.workEmail && (
+                            <div style={{ fontSize: '0.875rem', color: '#78350f' }}>
+                              {request.employer.workEmail}
+                            </div>
+                          )}
+                          <div style={{ fontSize: '0.75rem', color: '#78350f', marginTop: '0.25rem' }}>
+                            Requested: {formatDate(request.linkedAt)}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <button
+                            className="btn btn-primary btn-sm"
+                            onClick={() => handleAcceptRequest(request.id)}
+                            style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+                          >
+                            Accept
+                          </button>
+                          <button
+                            className="btn btn-danger btn-sm"
+                            onClick={() => handleRejectRequest(request.id)}
+                            style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {pendingRequests.length > 3 && (
+                      <div 
+                        className="view-all-link" 
+                        onClick={() => setActiveTab('requests')} 
+                        style={{ marginTop: '0.5rem', textAlign: 'center', cursor: 'pointer', color: '#8b5cf6', fontWeight: '500' }}
+                      >
+                        View all {pendingRequests.length} requests →
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ 
+                    padding: '2rem', 
+                    textAlign: 'center', 
+                    backgroundColor: '#f9fafb', 
+                    borderRadius: '8px',
+                    border: '1px dashed #e5e7eb'
+                  }}>
+                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📭</div>
+                    <p style={{ color: '#6b7280', margin: 0, fontSize: '0.875rem' }}>
+                      No pending access requests
+                    </p>
+                    <p style={{ color: '#9ca3af', margin: '0.25rem 0 0 0', fontSize: '0.75rem' }}>
+                      Employers will appear here when they request access to your profile
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Right Column */}
@@ -831,25 +1031,65 @@ const StudentDashboard = () => {
                   <h3>Employer Relationships</h3>
                   <div className="employers-summary-list">
                     {employers.slice(0, 3).map(rel => (
-                      <div key={rel.id} className="employer-summary-item">
+                      <div key={rel.id} className="employer-summary-item" style={{ 
+                        padding: '1rem', 
+                        backgroundColor: '#f9fafb', 
+                        borderRadius: '8px',
+                        border: '1px solid #e5e7eb',
+                        marginBottom: '0.75rem'
+                      }}>
                         <div className="employer-summary-info">
-                          <div className="employer-summary-status">
-                            <span className={`status-badge-small status-${rel.status.toLowerCase()}`}>
-                              {rel.status}
-                            </span>
-                          </div>
-                          <div className="employer-summary-meta">
-                            {rel.acknowledgedAt ? (
-                              <span className="acknowledgement-badge-small">Acknowledged</span>
-                            ) : rel.status === 'ACTIVE' ? (
-                              <span className="acknowledgement-badge-small pending">Pending Acknowledgement</span>
-                            ) : null}
-                          </div>
+                          {rel.employer ? (
+                            <>
+                              <div style={{ marginBottom: '0.5rem' }}>
+                                <div style={{ fontWeight: '600', fontSize: '0.95rem', marginBottom: '0.25rem' }}>
+                                  {rel.employer.organisationName || 'Unknown Organisation'}
+                                </div>
+                                {rel.employer.fullName && (
+                                  <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                                    {rel.employer.fullName}
+                                    {rel.employer.role && ` • ${rel.employer.role}`}
+                                  </div>
+                                )}
+                                {rel.employer.workEmail && (
+                                  <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                                    {rel.employer.workEmail}
+                                  </div>
+                                )}
+                              </div>
+                              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                                <span className={`status-badge-small status-${rel.status.toLowerCase()}`}>
+                                  {rel.status}
+                                </span>
+                                {rel.acknowledgedAt ? (
+                                  <span className="acknowledgement-badge-small">Acknowledged</span>
+                                ) : rel.status === 'ACTIVE' ? (
+                                  <span className="acknowledgement-badge-small pending">Pending Acknowledgement</span>
+                                ) : null}
+                              </div>
+                            </>
+                          ) : (
+                            <div>
+                              <div style={{ fontWeight: '600', fontSize: '0.95rem', marginBottom: '0.5rem' }}>
+                                Employer
+                              </div>
+                              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                <span className={`status-badge-small status-${rel.status.toLowerCase()}`}>
+                                  {rel.status}
+                                </span>
+                                {rel.acknowledgedAt ? (
+                                  <span className="acknowledgement-badge-small">Acknowledged</span>
+                                ) : rel.status === 'ACTIVE' ? (
+                                  <span className="acknowledgement-badge-small pending">Pending Acknowledgement</span>
+                                ) : null}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
                     {employers.length > 3 && (
-                      <div className="view-all-link" onClick={() => setActiveTab('employers')}>
+                      <div className="view-all-link" onClick={() => setActiveTab('employers')} style={{ marginTop: '0.5rem' }}>
                         View all {employers.length} employers →
                       </div>
                     )}
@@ -857,86 +1097,57 @@ const StudentDashboard = () => {
                 </div>
               )}
 
-              {/* Pending Requests */}
-              {pendingRequests.length > 0 && (
-                <div className="dashboard-card alert-card">
-                  <h3>Action Required</h3>
-                  <div className="alert-content">
-                    <div className="alert-text">
-                      <strong>{pendingRequests.length} pending access request{pendingRequests.length > 1 ? 's' : ''}</strong>
-                      <p>Employers are waiting for your approval</p>
-                    </div>
-                    <button 
-                      className="btn btn-primary btn-sm"
-                      onClick={() => setActiveTab('requests')}
-                    >
-                      Review
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Compliance Status */}
+              {/* Work Eligibility & Rules */}
               <div className="dashboard-card">
-                <h3>Compliance Status</h3>
-                <div className={`compliance-status-overview ${violations.length === 0 ? 'compliant' : 'non-compliant'}`}>
+                <h3>Work Eligibility & Rules</h3>
+                <div className={`compliance-status-overview ${isInTermTime() ? 'term-time' : 'holiday'}`}>
                   <div className="compliance-text">
                     <div className="compliance-title-large">
-                      {violations.length === 0 ? 'All Compliant' : `${violations.length} Violation${violations.length > 1 ? 's' : ''}`}
+                      {(() => {
+                        if (profile?.courseEndDate && new Date(profile.courseEndDate) < new Date()) {
+                          return 'Cannot Work'
+                        }
+                        return isInTermTime() ? 'Can Work - Term Time' : 'Can Work - Holiday Period'
+                      })()}
                     </div>
                     <div className="compliance-description">
-                      {violations.length === 0
-                        ? 'You are compliant with all work hour regulations'
-                        : 'Review violations in the Compliance tab'}
+                      {(() => {
+                        if (profile?.courseEndDate && new Date(profile.courseEndDate) < new Date()) {
+                          return 'Your course has ended. You cannot work on a Student visa.'
+                        }
+                        return isInTermTime()
+                          ? `Maximum ${getAllowedHours()} hours per week allowed during term time`
+                          : 'Full-time work allowed - no weekly hour limit during holidays'
+                      })()}
                     </div>
                   </div>
+                </div>
+                
+                <div className="compliance-rules-section" style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #e5e7eb' }}>
+                  <h4 style={{ marginBottom: '1rem', fontSize: '0.95rem', fontWeight: '600' }}>Compliance Rules</h4>
+                  <div className="rules-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div className="rule-item" style={{ padding: '0.75rem', backgroundColor: '#f9fafb', borderRadius: '6px' }}>
+                      <strong>During Term Time:</strong> Maximum {getAllowedHours()} hours per week
+                      {getActiveTerm()?.courseLevel === 'BELOW_DEGREE' && ' (10 hours for courses below degree level)'}
+                      {(!getActiveTerm()?.courseLevel || getActiveTerm()?.courseLevel === 'DEGREE_OR_ABOVE') && ' (20 hours for degree level and above)'}
+                    </div>
+                    <div className="rule-item" style={{ padding: '0.75rem', backgroundColor: '#f9fafb', borderRadius: '6px' }}>
+                      <strong>Outside Term Time:</strong> Full-time allowed (no weekly limit)
+                    </div>
+                  </div>
+                  {terms.length === 0 && (
+                    <div style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: '#fef3c7', borderRadius: '6px', fontSize: '0.875rem' }}>
+                      <strong>Note:</strong> Add your term dates in the <button 
+                        className="btn-link" 
+                        onClick={() => setActiveTab('terms')}
+                        style={{ textDecoration: 'underline', background: 'none', border: 'none', color: '#8b5cf6', cursor: 'pointer', padding: 0 }}
+                      >Terms tab</button> to ensure accurate eligibility calculations.
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Compliance Tab */}
-      {activeTab === 'compliance' && (
-        <div className="dashboard-content">
-          {violations.length > 0 ? (
-            <div className="dashboard-card">
-              <h2>Compliance Violations</h2>
-              <div className="violations-list">
-                {violations.map((violation) => (
-                  <div key={violation.id} className="violation-card">
-                    <div className="violation-header">
-                      <div>
-                        <div className="violation-type">{violation.violationType.replace(/_/g, ' ')}</div>
-                        <div className={`violation-severity severity-${violation.severity.toLowerCase()}`}>
-                          {violation.severity}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="violation-details">
-                      <div>Week: {formatDate(violation.weekStart)} - {formatDate(violation.weekEnd)}</div>
-                      <div>Allowed: {formatHours(violation.allowedHours)}h | Actual: {formatHours(violation.actualHours)}h</div>
-                      <div>Excess: {formatHours(violation.excessHours)}h</div>
-                    </div>
-                    {violation.description && (
-                      <div className="violation-description">{violation.description}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="dashboard-card">
-              <h2>Compliance Status</h2>
-              <div className="compliance-status compliant">
-                <div>
-                  <div className="compliance-title">No Violations</div>
-                    <div className="compliance-details">You are currently compliant with all work hour compliance regulations.</div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
@@ -1060,8 +1271,16 @@ const StudentDashboard = () => {
                   className="btn btn-primary"
                   onClick={() => {
                     setEditingTerm(null)
-                    setTermForm({ courseLevel: 'DEGREE_OR_ABOVE', name: '', academicYear: '', startDate: '', endDate: '' })
+                    setIsCustomTerm(false)
+                    setTermForm({ courseLevel: 'DEGREE_OR_ABOVE', name: '', customName: '', academicYear: '', startDate: '', endDate: '' })
                     setShowTermForm(true)
+                    
+                    // Scroll to form after a brief delay to ensure it's rendered
+                    setTimeout(() => {
+                      if (termFormRef.current) {
+                        termFormRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                      }
+                    }, 100)
                   }}
                 >
                   + Add Term
@@ -1071,7 +1290,7 @@ const StudentDashboard = () => {
 
             {/* Term Form */}
             {showTermForm && (
-              <div className="term-form-card">
+              <div className="term-form-card" ref={termFormRef}>
                 <h3>{editingTerm ? 'Edit Term' : 'Create New Term'}</h3>
                 <form onSubmit={editingTerm ? handleUpdateTerm : handleCreateTerm} className="term-form">
                   <div className="form-group">
@@ -1099,16 +1318,43 @@ const StudentDashboard = () => {
                     <select
                       id="termName"
                       className="form-input"
-                      value={termForm.name}
-                      onChange={(e) => setTermForm({ ...termForm, name: e.target.value })}
+                      value={isCustomTerm ? 'CUSTOM' : termForm.name}
+                      onChange={(e) => {
+                        if (e.target.value === 'CUSTOM') {
+                          setIsCustomTerm(true)
+                          setTermForm({ ...termForm, name: '', customName: '' })
+                        } else {
+                          setIsCustomTerm(false)
+                          setTermForm({ ...termForm, name: e.target.value, customName: '' })
+                        }
+                      }}
                       required={!editingTerm}
                     >
                       <option value="">Select term</option>
                       <option value="AUTUMN">Autumn</option>
                       <option value="SPRING">Spring</option>
                       <option value="SUMMER">Summer</option>
+                      <option value="CUSTOM">Custom (Enter your own term name)</option>
                     </select>
-                    <small className="form-hint">Select the term name (Autumn, Spring, or Summer)</small>
+                    {isCustomTerm && (
+                      <div style={{ marginTop: '0.5rem' }}>
+                        <input
+                          type="text"
+                          className="form-input"
+                          value={termForm.customName}
+                          onChange={(e) => setTermForm({ ...termForm, customName: e.target.value })}
+                          placeholder="Enter custom term name (e.g., Michaelmas, Hilary, Trinity)"
+                          required={isCustomTerm && !editingTerm}
+                          style={{ marginTop: '0.5rem' }}
+                        />
+                        <small className="form-hint" style={{ display: 'block', marginTop: '0.25rem' }}>
+                          Enter your university's term name (e.g., Michaelmas, Hilary, Trinity, Lent, etc.)
+                        </small>
+                      </div>
+                    )}
+                    {!isCustomTerm && (
+                      <small className="form-hint">Select the term name (Autumn, Spring, Summer, or Custom)</small>
+                    )}
                   </div>
 
                   <div className="form-group">
@@ -1430,8 +1676,28 @@ const StudentDashboard = () => {
       {activeTab === 'profile' && (
         <div className="dashboard-content">
           <div className="dashboard-card">
-            <h2>My Profile</h2>
-            <p className="text-secondary">View your student profile information and compliance details.</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+              <div>
+                <h2>My Profile</h2>
+                <p className="text-secondary">View your student profile information and compliance details.</p>
+              </div>
+              {terms.length > 0 && (
+                <button
+                  className="btn btn-primary"
+                  onClick={async () => {
+                    try {
+                      await studentAPI.downloadTermLetterPDF()
+                    } catch (err) {
+                      const errorMessage = err.response?.data?.error || err.message || 'Failed to download term letter'
+                      alert(`Error: ${errorMessage}`)
+                      setError(errorMessage)
+                    }
+                  }}
+                >
+                  📄 Download Term Letter
+                </button>
+              )}
+            </div>
             
             {profile ? (
               <div className="profile-details">
@@ -1527,6 +1793,131 @@ const StudentDashboard = () => {
                       <span className="meta-value">{formatDate(profile.createdAt)}</span>
                     </div>
                   </div>
+                </div>
+
+                {/* Term Dates Section */}
+                <div className="profile-section" style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid #e5e7eb' }}>
+                  <h3>Academic Term Dates</h3>
+                  {terms.length > 0 ? (
+                    <div>
+                      {(() => {
+                        // Group terms by academic year
+                        const groupedTerms = {}
+                        const noYearTerms = []
+                        
+                        terms.forEach(term => {
+                          if (term.academicYear) {
+                            if (!groupedTerms[term.academicYear]) {
+                              groupedTerms[term.academicYear] = []
+                            }
+                            groupedTerms[term.academicYear].push(term)
+                          } else {
+                            noYearTerms.push(term)
+                          }
+                        })
+                        
+                        // Sort academic years (newest first)
+                        const sortedYears = Object.keys(groupedTerms).sort((a, b) => {
+                          const aYear = a.length > 5 ? parseInt(a.split('/')[0]) : 2000 + parseInt(a.split('/')[0])
+                          const bYear = b.length > 5 ? parseInt(b.split('/')[0]) : 2000 + parseInt(b.split('/')[0])
+                          return bYear - aYear
+                        })
+                        
+                        return (
+                          <>
+                            {sortedYears.map(year => (
+                              <div key={year} style={{ marginBottom: '1.5rem' }}>
+                                <h4 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem', color: '#6b7280' }}>
+                                  Academic Year {year}
+                                </h4>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                  {groupedTerms[year]
+                                    .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+                                    .map((term) => {
+                                      const status = getTermStatus(term)
+                                      return (
+                                        <div key={term.id} style={{ 
+                                          padding: '1rem', 
+                                          backgroundColor: '#f9fafb', 
+                                          borderRadius: '8px',
+                                          border: '1px solid #e5e7eb'
+                                        }}>
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                                            <div>
+                                              <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>{term.name} Term</div>
+                                              <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                                                {formatDate(term.startDate)} - {formatDate(term.endDate)}
+                                              </div>
+                                            </div>
+                                            <span className={`term-status-badge status-${status}`}>
+                                              {status.charAt(0).toUpperCase() + status.slice(1)}
+                                            </span>
+                                          </div>
+                                          {term.confirmedAt && (
+                                            <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '0.5rem' }}>
+                                              ✓ Confirmed on {formatDate(term.confirmedAt)}
+                                            </div>
+                                          )}
+                                        </div>
+                                      )
+                                    })}
+                                </div>
+                              </div>
+                            ))}
+                            {noYearTerms.length > 0 && (
+                              <div style={{ marginTop: '1.5rem' }}>
+                                <h4 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.75rem', color: '#6b7280' }}>
+                                  Other Terms
+                                </h4>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                  {noYearTerms
+                                    .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+                                    .map((term) => {
+                                      const status = getTermStatus(term)
+                                      return (
+                                        <div key={term.id} style={{ 
+                                          padding: '1rem', 
+                                          backgroundColor: '#f9fafb', 
+                                          borderRadius: '8px',
+                                          border: '1px solid #e5e7eb'
+                                        }}>
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                                            <div>
+                                              <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>{term.name} Term</div>
+                                              <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                                                {formatDate(term.startDate)} - {formatDate(term.endDate)}
+                                              </div>
+                                            </div>
+                                            <span className={`term-status-badge status-${status}`}>
+                                              {status.charAt(0).toUpperCase() + status.slice(1)}
+                                            </span>
+                                          </div>
+                                          {term.confirmedAt && (
+                                            <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '0.5rem' }}>
+                                              ✓ Confirmed on {formatDate(term.confirmedAt)}
+                                            </div>
+                                          )}
+                                        </div>
+                                      )
+                                    })}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )
+                      })()}
+                    </div>
+                  ) : (
+                    <div style={{ padding: '1.5rem', backgroundColor: '#f9fafb', borderRadius: '8px', textAlign: 'center' }}>
+                      <p className="text-secondary" style={{ marginBottom: '0.5rem' }}>No term dates added yet.</p>
+                      <button 
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => setActiveTab('terms')}
+                      >
+                        Add Term Dates
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
@@ -1789,50 +2180,9 @@ const AuditTrailTab = ({ profile, onExport }) => {
               )}
             </div>
 
-            {/* Layer 4: Compliance Rules */}
+            {/* Layer 4: Change History */}
             <div className="audit-section">
-              <h3>4. System-Generated Compliance Rules</h3>
-              {auditTrail.complianceRules && auditTrail.complianceRules.length > 0 ? (
-                <div className="audit-rules-list">
-                  {auditTrail.complianceRules.map((rule, idx) => (
-                    <div key={idx} className="audit-rule-card">
-                      <div className="rule-header">
-                        <div className="rule-action">{rule.action}</div>
-                        <div className="rule-date">{formatDate(rule.createdAt)}</div>
-                      </div>
-                      {rule.complianceRule && (
-                        <div className="rule-details">
-                          <div className="rule-detail-item">
-                            <span className="rule-detail-label">Rule Applied:</span>
-                            <span className="rule-detail-value">{rule.complianceRule.ruleApplied || 'N/A'}</span>
-                          </div>
-                          {rule.complianceRule.allowedWeeklyHours && (
-                            <div className="rule-detail-item">
-                              <span className="rule-detail-label">Allowed Hours:</span>
-                              <span className="rule-detail-value">{rule.complianceRule.allowedWeeklyHours}h/week</span>
-                            </div>
-                          )}
-                          {rule.complianceRule.inTermTime !== undefined && (
-                            <div className="rule-detail-item">
-                              <span className="rule-detail-label">Term Time Status:</span>
-                              <span className="rule-detail-value">{rule.complianceRule.inTermTime ? 'Term Time' : 'Holiday Period'}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty-state">
-                  <p className="text-secondary">No compliance rules generated yet.</p>
-                </div>
-              )}
-            </div>
-
-            {/* Layer 5: Change History */}
-            <div className="audit-section">
-              <h3>5. Change History</h3>
+              <h3>4. Change History</h3>
               {auditTrail.changeHistory && auditTrail.changeHistory.length > 0 ? (
                 <div className="audit-changes-list">
                   {auditTrail.changeHistory.map((change, idx) => (

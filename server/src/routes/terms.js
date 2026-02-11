@@ -815,9 +815,12 @@ router.get(
         return res.status(404).json({ error: "Student profile not found" });
       }
 
-      // Get all terms for this student
+      // Get all confirmed terms for this student
       const terms = await prisma.term.findMany({
-        where: { studentId: student.id },
+        where: { 
+          studentId: student.id,
+          confirmedAt: { not: null } // Only include confirmed terms
+        },
         orderBy: [
           { academicYear: 'desc' },
           { startDate: 'asc' },
@@ -826,7 +829,7 @@ router.get(
 
       if (terms.length === 0) {
         return res.status(400).json({ 
-          error: "No terms found. Please add at least one term before generating the letter." 
+          error: "No confirmed terms found. Please confirm at least one term before generating the letter." 
         });
       }
 
@@ -876,9 +879,12 @@ router.get(
         return res.status(404).json({ error: "Student not found" });
       }
 
-      // Get all terms for this student
+      // Get all confirmed terms for this student
       const terms = await prisma.term.findMany({
-        where: { studentId: student.id },
+        where: { 
+          studentId: student.id,
+          confirmedAt: { not: null } // Only include confirmed terms
+        },
         orderBy: [
           { academicYear: 'desc' },
           { startDate: 'asc' },
@@ -887,7 +893,7 @@ router.get(
 
       if (terms.length === 0) {
         return res.status(400).json({ 
-          error: "No terms found for this student. The student has not declared any term dates yet." 
+          error: "No confirmed terms found for this student. The student has not confirmed any term dates yet." 
         });
       }
 

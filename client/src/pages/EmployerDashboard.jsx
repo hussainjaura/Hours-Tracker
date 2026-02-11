@@ -381,9 +381,9 @@ const EmployerDashboard = () => {
                   </button>
                   <button
                     className="quick-action-btn"
-                    onClick={() => setActiveTab('eligibility')}
+                    onClick={() => setActiveTab('audit')}
                   >
-                    <span className="action-text">Check Eligibility</span>
+                    <span className="action-text">Audit Trail</span>
                   </button>
                   <button
                     className="quick-action-btn"
