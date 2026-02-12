@@ -72,8 +72,8 @@ router.post("/register",
       if (!studentProfile) {
         return res.status(400).json({ error: 'Student profile information is required' });
       }
-      if (!studentProfile.universityId || !studentProfile.universityName || !studentProfile.visaType || !studentProfile.courseEndDate) {
-        return res.status(400).json({ error: 'All student profile fields are required: universityName, universityId, visaType, courseEndDate' });
+      if (!studentProfile.fullName || !studentProfile.universityId || !studentProfile.universityName || !studentProfile.visaType || !studentProfile.courseEndDate) {
+        return res.status(400).json({ error: 'All student profile fields are required: fullName, universityId, universityName, visaType, courseEndDate' });
       }
       // Validate course end date is in the future
       const courseEndDate = new Date(studentProfile.courseEndDate);
@@ -107,6 +107,7 @@ router.post("/register",
         const createdStudent = await prisma.student.create({
           data: {
             userId: user.id,
+            fullName: studentProfile.fullName.trim(),
             universityId: studentProfile.universityId.trim(),
             universityName: studentProfile.universityName.trim(),
             visaType: studentProfile.visaType,
@@ -126,6 +127,7 @@ router.post("/register",
               universityId: createdStudent.universityId,
               metadata: {
                 userId: user.id,
+                fullName: createdStudent.fullName,
                 universityId: createdStudent.universityId,
                 universityName: createdStudent.universityName,
                 visaType: createdStudent.visaType,

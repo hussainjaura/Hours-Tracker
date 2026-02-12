@@ -283,6 +283,11 @@ const EmployerDashboard = () => {
                       <div key={rel.id} className="student-card">
                         <div className="student-header">
                           <div>
+                            {rel.student.fullName && (
+                              <div className="student-name">
+                                <strong>{rel.student.fullName}</strong>
+                              </div>
+                            )}
                             <div className="student-id">University ID: {rel.student.universityId}</div>
                             <div className="student-university">
                               <strong>{rel.student.universityName || 'Unknown University'}</strong>
@@ -520,7 +525,10 @@ const EmployerDashboard = () => {
                     <div key={rel.id} className="compliance-student-card">
                       <div className="compliance-student-header">
                         <div>
-                          <h3>University ID: {student.universityId}</h3>
+                          {student.fullName && (
+                            <h3>{student.fullName}</h3>
+                          )}
+                          <h3 style={{ marginTop: student.fullName ? '0.5rem' : 0 }}>University ID: {student.universityId}</h3>
                           <div className="student-info">
                             <div><strong>University:</strong> {student.universityName || 'Unknown University'}</div>
                             <div><strong>Visa Type:</strong> {student.visaType}</div>
@@ -747,16 +755,21 @@ const EmployerDashboard = () => {
             {students.length > 0 ? (
               <div className="students-list">
                 {students.map((rel) => (
-                  <div key={rel.id} className="student-card">
-                    <div className="student-header">
-                      <div>
-                        <div className="student-id">University ID: {rel.student.universityId}</div>
-                        <div className="student-university">
-                          <strong>{rel.student.universityName || 'Unknown University'}</strong>
-                        </div>
-                        <div className="student-email">
-                          {rel.student.user?.email || 'N/A'}
-                        </div>
+                      <div key={rel.id} className="student-card">
+                        <div className="student-header">
+                          <div>
+                            {rel.student.fullName && (
+                              <div className="student-name">
+                                <strong>{rel.student.fullName}</strong>
+                              </div>
+                            )}
+                            <div className="student-id">University ID: {rel.student.universityId}</div>
+                            <div className="student-university">
+                              <strong>{rel.student.universityName || 'Unknown University'}</strong>
+                            </div>
+                            <div className="student-email">
+                              {rel.student.user?.email || 'N/A'}
+                            </div>
                         <div className="student-meta">
                           Linked: {formatDate(rel.linkedAt)}
                         </div>
@@ -820,6 +833,12 @@ const EmployerDashboard = () => {
               <div className="searched-student-card">
                 <h3>Student Profile</h3>
                 <div className="student-profile-info">
+                  {searchedStudent.fullName && (
+                    <div className="profile-item">
+                      <span className="profile-label">Full Name:</span>
+                      <span className="profile-value">{searchedStudent.fullName}</span>
+                    </div>
+                  )}
                   <div className="profile-item">
                     <span className="profile-label">University ID:</span>
                     <span className="profile-value">{searchedStudent.universityId}</span>

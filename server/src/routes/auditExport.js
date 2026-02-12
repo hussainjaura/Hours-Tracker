@@ -68,7 +68,7 @@ router.get(
         
         // Layer 1: Identity & Context
         identity: {
-          studentName: student.user?.email || student.universityId,
+          studentName: student.fullName || student.user?.email || student.universityId,
           universityId: student.universityId,
           visaType: student.visaType,
           courseEndDate: student.courseEndDate,

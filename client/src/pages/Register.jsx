@@ -11,8 +11,10 @@ const Register = () => {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   
-  // Employer profile fields
+  // Shared profile fields (used by both employer and student)
   const [fullName, setFullName] = useState('')
+  
+  // Employer profile fields
   const [workEmail, setWorkEmail] = useState('')
   const [employerRole, setEmployerRole] = useState('MANAGER')
   const [organisationName, setOrganisationName] = useState('')
@@ -60,6 +62,10 @@ const Register = () => {
 
     // Validate student profile fields if role is STUDENT
     if (role === 'STUDENT') {
+      if (!fullName.trim()) {
+        setError('Full name is required')
+        return
+      }
       if (!universityId.trim()) {
         setError('University ID is required')
         return
@@ -118,6 +124,7 @@ const Register = () => {
     // Add student profile data if role is STUDENT
     if (role === 'STUDENT') {
       registrationData.studentProfile = {
+        fullName: fullName.trim(),
         universityId: universityId.trim(),
         universityName: universityName.trim(),
         visaType: visaType,
@@ -238,6 +245,24 @@ const Register = () => {
           {/* Student Profile Fields */}
           {role === 'STUDENT' && (
             <>
+              <div className="form-group">
+                <label className="form-label" htmlFor="fullName">
+                  Full Name *
+                </label>
+                <input
+                  id="fullName"
+                  type="text"
+                  className="form-input"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                  placeholder="John Smith"
+                />
+                <small className="form-hint">
+                  Your full name as it appears on official documents
+                </small>
+              </div>
+
               <div className="form-group">
                 <label className="form-label" htmlFor="universityId">
                   University ID *

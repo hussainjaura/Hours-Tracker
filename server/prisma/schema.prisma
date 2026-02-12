@@ -38,6 +38,7 @@ model University {
 model Student {
   id             Int      @id @default(autoincrement())
   userId         String   @unique
+  fullName       String
   universityId   String   @unique
   universityName String?  // Made nullable to handle existing records
   visaType       String

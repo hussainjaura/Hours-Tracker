@@ -70,6 +70,7 @@ router.get(
       });
 
       res.json({
+        fullName: student.fullName,
         universityId: student.universityId,
         universityName: student.universityName,
         visaType: student.visaType,

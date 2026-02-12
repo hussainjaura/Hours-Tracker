@@ -615,7 +615,9 @@ const StudentDashboard = () => {
       <div className="dashboard-page-header">
         <div>
           <h1>Student Dashboard</h1>
-          <p className="dashboard-subtitle">University ID: {profile.universityId}</p>
+          <p className="dashboard-subtitle">
+            {profile.fullName && `${profile.fullName} • `}University ID: {profile.universityId}
+          </p>
         </div>
         <div className="dashboard-stats-quick">
           <div className="stat-box">
@@ -991,6 +993,12 @@ const StudentDashboard = () => {
                 <div className="dashboard-card">
                   <h3>Profile Summary</h3>
                   <div className="profile-summary-list">
+                    {profile.fullName && (
+                      <div className="profile-summary-item">
+                        <span className="summary-item-label">Name</span>
+                        <span className="summary-item-value">{profile.fullName}</span>
+                      </div>
+                    )}
                     <div className="profile-summary-item">
                       <span className="summary-item-label">University ID</span>
                       <span className="summary-item-value">{profile.universityId}</span>
@@ -1704,6 +1712,12 @@ const StudentDashboard = () => {
                 <div className="profile-section">
                   <h3>Personal Information</h3>
                   <div className="profile-info-grid">
+                    {profile.fullName && (
+                      <div className="profile-info-item">
+                        <div className="profile-info-label">Full Name</div>
+                        <div className="profile-info-value">{profile.fullName}</div>
+                      </div>
+                    )}
                     <div className="profile-info-item">
                       <div className="profile-info-label">University ID</div>
                       <div className="profile-info-value">{profile.universityId}</div>
@@ -2074,7 +2088,7 @@ const AuditTrailTab = ({ profile, onExport }) => {
               <div className="audit-identity-grid">
                 <div className="audit-identity-item">
                   <div className="identity-label">Student Name</div>
-                  <div className="identity-value">{auditTrail.identity?.studentName || profile?.universityId || 'N/A'}</div>
+                  <div className="identity-value">{auditTrail.identity?.studentName || profile?.fullName || profile?.universityId || 'N/A'}</div>
                 </div>
                 <div className="audit-identity-item">
                   <div className="identity-label">University ID</div>
