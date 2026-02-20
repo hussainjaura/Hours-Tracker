@@ -71,13 +71,6 @@ const Landing = () => {
                   </Link>
                 )}
               </div>
-              <div className="hero-app-info">
-                <p className="app-availability">The platform is available now</p>
-                <div className="app-store-icons">
-                  <div className="app-icon-placeholder">App Store</div>
-                  <div className="app-icon-placeholder">Google Play</div>
-                </div>
-              </div>
             </div>
           </div>
           <div className="hero-right">
@@ -347,8 +340,9 @@ const Landing = () => {
       </section>
 
       {/* Feature Showcase Section */}
-      <section className="feature-showcase-section">
+      <section id="features" className="feature-showcase-section">
         <div className="container">
+          <h2 className="section-title">Features</h2>
           <div className="feature-showcase-grid">
             <div className="feature-showcase-item">
               <h3 className="feature-showcase-title">Term Declarations</h3>
@@ -647,7 +641,7 @@ const Landing = () => {
       </section>
 
       {/* Benefits Section */}
-      <section id="features" className="features-section">
+      <section id="key-benefits" className="features-section">
         <div className="container">
           <h2 className="section-title">Key Benefits</h2>
           <div className="benefits-grid">
