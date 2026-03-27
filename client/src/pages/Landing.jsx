@@ -109,9 +109,9 @@ const Landing = () => {
             <p className="value-proposition-tagline">
               WE TURN YOUR COMPLIANCE WORRIES INTO AUDIT-READY EVIDENCE
             </p>
-            <Link to="/register" className="btn-view-reviews">
+            <a href="#features" className="btn-view-reviews">
               View Features
-            </Link>
+            </a>
           </div>
           <div className="value-prop-right">
             <div className="value-prop-image-placeholder">
