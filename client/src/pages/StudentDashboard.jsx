@@ -12,6 +12,7 @@ const StudentDashboard = () => {
   const [templates, setTemplates] = useState([])
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('overview')
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   
   // Term form state
   const [showTermForm, setShowTermForm] = useState(false)
@@ -610,6 +611,80 @@ const StudentDashboard = () => {
           <button onClick={() => setError('')} className="error-close">×</button>
         </div>
       )}
+
+      {/* Mobile dashboard chrome (shown under 937×845) */}
+      <div className="mobile-dashboard-topbar">
+        <button
+          type="button"
+          className="mobile-dashboard-menu"
+          aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
+          onClick={() => setMobileNavOpen(v => !v)}
+        >
+          ☰
+        </button>
+        <div className="mobile-dashboard-brand">ISC Audit</div>
+        <div className="mobile-dashboard-badge" aria-hidden="true">ISC</div>
+      </div>
+
+      {mobileNavOpen && (
+        <div className="mobile-dashboard-nav">
+          <button
+            className={activeTab === 'overview' ? 'tab-active' : ''}
+            onClick={() => { setActiveTab('overview'); setMobileNavOpen(false) }}
+          >
+            Overview
+          </button>
+          <button
+            className={activeTab === 'employers' ? 'tab-active' : ''}
+            onClick={() => { setActiveTab('employers'); setMobileNavOpen(false) }}
+          >
+            Employers
+          </button>
+          <button
+            className={activeTab === 'requests' ? 'tab-active' : ''}
+            onClick={() => { setActiveTab('requests'); setMobileNavOpen(false) }}
+          >
+            Access Requests
+          </button>
+          <button
+            className={activeTab === 'terms' ? 'tab-active' : ''}
+            onClick={() => { setActiveTab('terms'); setMobileNavOpen(false) }}
+          >
+            Terms
+          </button>
+          <button
+            className={activeTab === 'profile' ? 'tab-active' : ''}
+            onClick={() => { setActiveTab('profile'); setMobileNavOpen(false) }}
+          >
+            Profile
+          </button>
+          <button
+            className={activeTab === 'audit' ? 'tab-active' : ''}
+            onClick={() => { setActiveTab('audit'); setMobileNavOpen(false) }}
+          >
+            Audit Trail
+          </button>
+        </div>
+      )}
+
+      <div className="mobile-dashboard-header">
+        <div>
+          <h1>Student Dashboard</h1>
+          <p className="dashboard-subtitle">
+            {profile.fullName && `${profile.fullName} • `}University ID: {profile.universityId}
+          </p>
+        </div>
+        <div className="mobile-dashboard-stats">
+          <div className="stat-box">
+            <div className="stat-value">{getAllowedHours()}</div>
+            <div className="stat-label">Allowed Hours/Week</div>
+          </div>
+          <div className="stat-box">
+            <div className="stat-value">{isInTermTime() ? 'Term Time' : 'Holiday'}</div>
+            <div className="stat-label">Current Status</div>
+          </div>
+        </div>
+      </div>
 
       {/* Dashboard Header */}
       <div className="dashboard-page-header">

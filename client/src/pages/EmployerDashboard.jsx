@@ -11,6 +11,7 @@ const EmployerDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview')
   const [employerProfile, setEmployerProfile] = useState(null)
   const [profileLoading, setProfileLoading] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   
   // Student search state
   const [searchUniversityId, setSearchUniversityId] = useState('')
@@ -164,6 +165,78 @@ const EmployerDashboard = () => {
           <button onClick={() => setError('')} className="error-close">×</button>
         </div>
       )}
+
+      {/* Mobile dashboard chrome (shown under 937×845) */}
+      <div className="mobile-dashboard-topbar">
+        <button
+          type="button"
+          className="mobile-dashboard-menu"
+          aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
+          onClick={() => setMobileNavOpen(v => !v)}
+        >
+          ☰
+        </button>
+        <div className="mobile-dashboard-brand">ISC Audit</div>
+        <div className="mobile-dashboard-badge" aria-hidden="true">ISC</div>
+      </div>
+
+      {mobileNavOpen && (
+        <div className="mobile-dashboard-nav">
+          <button
+            className={activeTab === 'overview' ? 'tab-active' : ''}
+            onClick={() => { setActiveTab('overview'); setMobileNavOpen(false) }}
+          >
+            Overview
+          </button>
+          <button
+            className={activeTab === 'compliance' ? 'tab-active' : ''}
+            onClick={() => { setActiveTab('compliance'); setMobileNavOpen(false) }}
+          >
+            Compliance Rules
+          </button>
+          <button
+            className={activeTab === 'students' ? 'tab-active' : ''}
+            onClick={() => { setActiveTab('students'); setMobileNavOpen(false) }}
+          >
+            My Students
+          </button>
+          <button
+            className={activeTab === 'find-students' ? 'tab-active' : ''}
+            onClick={() => { setActiveTab('find-students'); setMobileNavOpen(false) }}
+          >
+            Find Students
+          </button>
+          <button
+            className={activeTab === 'profile' ? 'tab-active' : ''}
+            onClick={() => { setActiveTab('profile'); setMobileNavOpen(false) }}
+          >
+            Profile
+          </button>
+          <button
+            className={activeTab === 'audit' ? 'tab-active' : ''}
+            onClick={() => { setActiveTab('audit'); setMobileNavOpen(false) }}
+          >
+            Audit Trail
+          </button>
+        </div>
+      )}
+
+      <div className="mobile-dashboard-header">
+        <div>
+          <h1>Employer Dashboard</h1>
+          <p className="dashboard-subtitle">ISC Audit — International Student Compliance Audit - Evidence & Audit Assurance</p>
+        </div>
+        <div className="mobile-dashboard-stats">
+          <div className="stat-box">
+            <div className="stat-value">{activeStudents.length}</div>
+            <div className="stat-label">Active Students</div>
+          </div>
+          <div className="stat-box">
+            <div className="stat-value">{pendingRequests.length}</div>
+            <div className="stat-label">Pending Requests</div>
+          </div>
+        </div>
+      </div>
 
       {/* Dashboard Header */}
       <div className="dashboard-page-header">
