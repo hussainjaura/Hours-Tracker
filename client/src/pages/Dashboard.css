@@ -2839,6 +2839,12 @@
     padding: 0.75rem 0.25rem 0.25rem;
   }
 
+  /* Avoid duplicating branding with the main header on mobile */
+  .mobile-dashboard-brand,
+  .mobile-dashboard-badge {
+    display: none;
+  }
+
   .mobile-dashboard-menu {
     width: 44px;
     height: 44px;
@@ -2876,14 +2882,92 @@
   }
 
   .mobile-dashboard-nav {
-    display: grid;
-    gap: 0.5rem;
-    padding: 0.75rem 0;
-    margin-bottom: 0.5rem;
+    display: none;
+  }
+
+  /* Side drawer */
+  .mobile-dashboard-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.42);
+    backdrop-filter: blur(2px);
+    z-index: 2000;
+    display: flex;
+  }
+
+  .mobile-dashboard-drawer {
+    width: min(84vw, 340px);
+    height: 100%;
+    background: #ffffff;
+    border-right: 1px solid #e5e7eb;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    transform: translateX(-102%);
+    animation: mobileDrawerIn 180ms ease-out forwards;
+    display: flex;
+    flex-direction: column;
+  }
+
+  @keyframes mobileDrawerIn {
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  .mobile-dashboard-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1rem 1rem 0.75rem;
     border-bottom: 1px solid #e5e7eb;
   }
 
-  .mobile-dashboard-nav button {
+  .mobile-dashboard-drawer-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: #111827;
+  }
+
+  .mobile-dashboard-drawer-title .brand-mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: #111827;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    user-select: none;
+  }
+
+  .mobile-dashboard-drawer-close {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    color: #111827;
+    font-size: 1.25rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .mobile-dashboard-drawer-nav {
+    padding: 0.85rem 1rem 1rem;
+    display: grid;
+    gap: 0.5rem;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-dashboard-drawer-nav button {
     width: 100%;
     text-align: left;
     padding: 0.9rem 1rem;
@@ -2895,7 +2979,7 @@
     cursor: pointer;
   }
 
-  .mobile-dashboard-nav button.tab-active {
+  .mobile-dashboard-drawer-nav button.tab-active {
     background: #111827;
     border-color: #111827;
     color: #ffffff;

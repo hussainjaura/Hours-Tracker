@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { employerAPI } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
+import { useNavigate } from 'react-router-dom'
 import './Dashboard.css'
 
 const EmployerDashboard = () => {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [students, setStudents] = useState([])
   const [error, setError] = useState('')
@@ -23,6 +25,16 @@ const EmployerDashboard = () => {
     loadDashboardData()
     loadEmployerProfile()
   }, [])
+
+  // Prevent background scroll when drawer is open
+  useEffect(() => {
+    if (!mobileNavOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [mobileNavOpen])
 
   const loadDashboardData = async () => {
     try {
@@ -58,6 +70,11 @@ const EmployerDashboard = () => {
     } finally {
       setProfileLoading(false)
     }
+  }
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
   }
 
   const handleAcknowledgeStudent = async (relationshipId) => {
@@ -181,43 +198,79 @@ const EmployerDashboard = () => {
       </div>
 
       {mobileNavOpen && (
-        <div className="mobile-dashboard-nav">
-          <button
-            className={activeTab === 'overview' ? 'tab-active' : ''}
-            onClick={() => { setActiveTab('overview'); setMobileNavOpen(false) }}
+        <div
+          className="mobile-dashboard-drawer-overlay"
+          role="presentation"
+          onClick={() => setMobileNavOpen(false)}
+        >
+          <aside
+            className="mobile-dashboard-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Dashboard navigation"
+            onClick={(e) => e.stopPropagation()}
           >
-            Overview
-          </button>
-          <button
-            className={activeTab === 'compliance' ? 'tab-active' : ''}
-            onClick={() => { setActiveTab('compliance'); setMobileNavOpen(false) }}
-          >
-            Compliance Rules
-          </button>
-          <button
-            className={activeTab === 'students' ? 'tab-active' : ''}
-            onClick={() => { setActiveTab('students'); setMobileNavOpen(false) }}
-          >
-            My Students
-          </button>
-          <button
-            className={activeTab === 'find-students' ? 'tab-active' : ''}
-            onClick={() => { setActiveTab('find-students'); setMobileNavOpen(false) }}
-          >
-            Find Students
-          </button>
-          <button
-            className={activeTab === 'profile' ? 'tab-active' : ''}
-            onClick={() => { setActiveTab('profile'); setMobileNavOpen(false) }}
-          >
-            Profile
-          </button>
-          <button
-            className={activeTab === 'audit' ? 'tab-active' : ''}
-            onClick={() => { setActiveTab('audit'); setMobileNavOpen(false) }}
-          >
-            Audit Trail
-          </button>
+            <div className="mobile-dashboard-drawer-header">
+              <div className="mobile-dashboard-drawer-title">
+                <span className="brand-mark" aria-hidden="true">ISC</span>
+                <span>Menu</span>
+              </div>
+              <button
+                type="button"
+                className="mobile-dashboard-drawer-close"
+                aria-label="Close menu"
+                onClick={() => setMobileNavOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mobile-dashboard-drawer-nav">
+              <button
+                className={activeTab === 'overview' ? 'tab-active' : ''}
+                onClick={() => { setActiveTab('overview'); setMobileNavOpen(false) }}
+              >
+                Overview
+              </button>
+              <button
+                className={activeTab === 'compliance' ? 'tab-active' : ''}
+                onClick={() => { setActiveTab('compliance'); setMobileNavOpen(false) }}
+              >
+                Compliance Rules
+              </button>
+              <button
+                className={activeTab === 'students' ? 'tab-active' : ''}
+                onClick={() => { setActiveTab('students'); setMobileNavOpen(false) }}
+              >
+                My Students
+              </button>
+              <button
+                className={activeTab === 'find-students' ? 'tab-active' : ''}
+                onClick={() => { setActiveTab('find-students'); setMobileNavOpen(false) }}
+              >
+                Find Students
+              </button>
+              <button
+                className={activeTab === 'profile' ? 'tab-active' : ''}
+                onClick={() => { setActiveTab('profile'); setMobileNavOpen(false) }}
+              >
+                Profile
+              </button>
+              <button
+                className={activeTab === 'audit' ? 'tab-active' : ''}
+                onClick={() => { setActiveTab('audit'); setMobileNavOpen(false) }}
+              >
+                Audit Trail
+              </button>
+
+              <button
+                onClick={() => { setMobileNavOpen(false); handleLogout() }}
+                style={{ marginTop: '0.5rem' }}
+              >
+                Logout
+              </button>
+            </div>
+          </aside>
         </div>
       )}
 
