@@ -3063,3 +3063,16 @@
     width: 100%;
   }
 }
+/* FOR EVEN SMALLER DEVICES */
+@media (max-width: 415px) {
+  .profile-info-grid, .profile-rules, .profile-status-grid{
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+
+  .rule-hours{
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1f2937;
+    flex-shrink: 0;
+  }
+}

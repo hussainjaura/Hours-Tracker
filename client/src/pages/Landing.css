@@ -1,7 +1,10 @@
+
 .landing-page {
   min-height: 100vh;
   background: var(--bg-secondary);
   scroll-behavior: smooth;
+  /* to prevent horizontal scroll */
+  overflow-x: hidden;
 }
 
 /* Header - Modern Design Matching Reference */
@@ -12,7 +15,7 @@
   top: 0;
   z-index: 100;
 }
-
+/* after the width is 770px then we are supposed to have a menu option alright for the landing page */
 .landing-header-content {
   max-width: 1400px;
   margin: 0 auto;
@@ -22,6 +25,32 @@
   align-items: center;
   gap: 3rem;
 }
+
+.mobile-landing-menu {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #111827;
+  font-size: 1.25rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  display: none;
+}
+
+/* now when it goes below 770px we are supposed to have a navigation menu bar that pops up open! */
+/* we are using primark website as an example! */
+@media (max-width: 768px) {
+  /* need to work on the dashboard menu first */
+  .mobile-landing-menu {
+  display: inline-flex;
+}
+}
+
 
 .landing-logo {
   display: flex;
@@ -68,6 +97,27 @@
   align-items: center;
   justify-content: center;
   gap: 2.5rem;
+}
+
+@media (max-width: 768px){
+
+  .landing-header-content{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+  }
+
+  .mobile-left{
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .landing-nav-center{
+    display: none;
+  }
 }
 
 .nav-link {
@@ -123,6 +173,57 @@
   gap: 0.5rem;
   border: none;
   cursor: pointer;
+  white-space: nowrap;
+}
+
+/* Between 995px and 768px - shrink everything gradually */
+@media (max-width: 995px) {
+    .landing-header-content {
+        padding: 1rem 1.5rem;  /* smaller padding */
+        gap: 1.5rem;           /* smaller gap */
+    }
+
+    /* shrink nav links */
+    .landing-nav-center {
+        gap: 1rem;
+        font-size: 0.8rem;
+    }
+
+    .nav-link{
+      font-size: small;
+    }
+
+    /* shrink logo text */
+    .landing-logo {
+        font-size: 1.2rem;
+    }
+
+    /* shrink login link */
+    .btn-login {
+        font-size: 0.8rem;
+    }
+
+    /* shrink start for free button */
+    .btn-start-free {
+        padding: 0.5rem 0.875rem;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+
+    .landing-nav-right {
+        gap: 0.75rem;
+    }
+}
+
+/* Below 768px - hide everything */
+@media (max-width: 768px) {
+    .landing-nav-center {
+        display: none;
+    }
+
+    .mobile-dashboard-menu {
+        display: inline-flex;
+    }
 }
 
 .btn-start-free:hover {
@@ -131,6 +232,7 @@
   box-shadow: 0 4px 12px rgba(31, 41, 55, 0.3);
 }
 
+
 .btn-arrow {
   font-size: 1rem;
   line-height: 1;
@@ -138,7 +240,7 @@
 
 /* Hero Section - Modern Design */
 .hero-section {
-  padding: 4rem 2rem 6rem;
+  padding: 3rem 2rem 3rem;
   background: #ffffff;
   position: relative;
   overflow: hidden;
@@ -381,7 +483,7 @@
 
 /* Value Proposition Section - Modern Design */
 .value-proposition-section {
-  padding: 6rem 2rem;
+  padding: 3rem 2rem;
   background: #fafafa;
 }
 
@@ -499,7 +601,7 @@
 
 /* Feature Showcase Section - Modern Design */
 .feature-showcase-section {
-  padding: 6rem 2rem;
+  padding: 3rem 2rem;
   background: #fafafa;
 }
 
@@ -557,7 +659,7 @@
 
 /* Capabilities Section - Modern Design */
 .capabilities-section {
-  padding: 6rem 2rem;
+  padding: 3rem 2rem;
   background: #ffffff;
 }
 
@@ -625,7 +727,7 @@
 
 /* FAQ Section - Modern Design */
 .faq-section {
-  padding: 6rem 2rem;
+  padding: 3rem 2rem;
   background: #fafafa;
 }
 
@@ -684,7 +786,7 @@
 
 /* How It Works Section - Modern Design */
 .features-section {
-  padding: 6rem 2rem;
+  padding: 3rem 2rem;
   background: #ffffff;
 }
 
@@ -800,7 +902,7 @@
 
 /* Confirmation Section - Modern Design */
 .confirmation-section {
-  padding: 6rem 2rem;
+  padding: 3rem 2rem;
   background: #fafafa;
 }
 
@@ -849,7 +951,7 @@
 
 /* What It Is Section - Modern Design */
 .what-it-is-section {
-  padding: 6rem 2rem;
+  padding: 3rem 2rem;
   background: #ffffff;
 }
 
@@ -1003,7 +1105,7 @@
 
 /* CTA Section - Modern Design */
 .cta-section {
-  padding: 6rem 2rem;
+  padding: 3rem 2rem;
   background: #ffffff;
   text-align: center;
 }
@@ -1043,7 +1145,7 @@
 .landing-footer {
   background: #ffffff;
   border-top: 1px solid #e5e7eb;
-  padding: 5rem 2rem 3rem;
+  padding: 2rem 2rem 3rem;
   margin-top: 4rem;
 }
 
@@ -1164,11 +1266,8 @@
   }
 }
 
+/* style for moderate size devices needs working first then do mobile phone sizes */
 @media (max-width: 768px) {
-  .hero-title {
-    font-size: 2.5rem;
-  }
-
   .hero-description {
     font-size: 1.125rem;
   }
@@ -1196,7 +1295,7 @@
   }
 
   .landing-logo {
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .section-title {
@@ -1278,7 +1377,7 @@
 
 /* Risks Section - Modern Design */
 .risks-section {
-  padding: 6rem 2rem;
+  padding: 3rem 2rem;
 }
 
 .risks-employers {
@@ -1363,7 +1462,7 @@
 
 /* Statutory Excuse Section - Modern Design */
 .statutory-excuse-section {
-  padding: 6rem 2rem;
+  padding: 3rem 2rem;
   background: #fafafa;
 }
 
@@ -1435,7 +1534,7 @@
 
 /* Proof of Fault Section - Modern Design */
 .proof-of-fault-section {
-  padding: 6rem 2rem;
+  padding: 3rem 2rem;
   background: #ffffff;
 }
 
@@ -1595,7 +1694,7 @@
 
 /* Statistics Section - Modern Design */
 .statistics-section {
-  padding: 6rem 2rem;
+  padding: 3rem 2rem;
   background: #ffffff;
 }
 
@@ -1692,7 +1791,7 @@
 
 /* Compliance Risks Section - What's at Stake - Modern Design */
 .compliance-risks-section {
-  padding: 6rem 2rem;
+  padding: 3rem 2rem;
   background: #ffffff;
 }
 
@@ -1780,7 +1879,7 @@
 
 /* Solutions Section - Modern Design */
 .solutions-section {
-  padding: 6rem 2rem;
+  padding: 3rem 2rem;
   background: #ffffff;
 }
 
@@ -1895,4 +1994,151 @@
 .solutions-cta-text strong {
   color: #1f2937;
   font-weight: 700;
+}
+
+/* change the section titles for all titles for smaller screens */
+@media (max-width: 768px) {
+  .statistics-section .section-title {
+    font-size: 2.5rem;
+  }
+
+  .compliance-risks-section .section-title{
+    font-size: 2.5rem;
+  }
+
+  .risks-section .section-title{
+    font-size: 2.5rem;
+  }
+
+  .statutory-excuse-section .section-title{
+    font-size: 2.5rem;
+  }
+
+  .feature-showcase-section .section-title{
+    font-size: 2.5rem;
+  }
+
+  .features-section .section-title{
+    font-size: 2.5rem;
+  }
+
+  .confirmation-section .section-title{
+    font-size: 2.5rem;
+  }
+  .what-it-is-section .section-title{
+    font-size: 2.5rem;
+  }
+
+  .solutions-section .section-title{
+    font-size: 2.5rem;
+  }
+  .proof-of-fault-section .section-title{
+    font-size: 2.5rem;
+  }
+
+  .capabilities-section .section-title{
+    font-size: 2.5rem;
+  }
+
+  .faq-section .section-title{
+    font-size: 2.5rem;
+  }
+
+}
+
+
+/* fix this section next for smaller screens the text overflows so adjust the sizes and width of all elements */
+/* Below 415px - shrink ALL text */
+/* And fix all the paddings for appropriate styling */
+@media (max-width: 415px) {
+
+  .statistics-grid{
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+
+  .stake-grid{
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+
+  .feature-showcase-grid{
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+
+  .solutions-grid{
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+
+  .feature-showcase-title{
+    word-wrap: break-word;
+  }
+
+  .hero-title{
+    font-size: 2.5rem;
+  }
+  .landing-header-content{
+    padding: 0.75rem 0.625rem;
+  }
+
+  .hero-section{
+    padding: 2rem 2rem;
+  }
+  
+  .value-proposition-section{
+    padding: 2rem 2rem;
+  }
+
+  .statistics-section{
+    padding: 2rem 2rem;
+  }
+
+  .compliance-risks-section{
+    padding: 2rem 2rem;
+  }
+
+  .risks-section{
+    padding: 2rem 2rem;
+  }
+
+  .statutory-excuse-section{
+    padding: 2rem 2rem;
+  }
+
+  .feature-showcase-section{
+    padding: 2rem;
+  }
+  .features-section{
+    padding: 2rem;
+  }
+
+  .confirmation-section{
+    padding: 2rem;
+  }
+  .solutions-section{
+    padding: 2rem;
+  }
+
+  .what-it-is-section{
+    padding: 2rem
+  }
+
+  .proof-of-fault-section{
+    padding: 2rem;
+  }
+
+  .capabilities-section{
+    padding: 2rem;
+  }
+
+  .faq-section{
+    padding: 2rem;
+  }
+  .cta-section{
+    padding: 2rem;
+  }
+
+  .landing-footer{
+    padding: 2rem 1.5rem 2rem;
+    margin-top: 0;
+  }
+
 }

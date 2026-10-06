@@ -1,20 +1,33 @@
 import { Link } from 'react-router-dom'
+import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
+import MenuButton from '../components/MenuButton'
 import './Landing.css'
 
 const Landing = () => {
   const { isAuthenticated } = useAuth()
+  const [menuOpen, setMenuOpen] = useState(false)
+  // for toggling and closing the menu button:
+  const toggleMenu = () => {
+    setMenuOpen(prev => !prev)
+  }
+
+  const closeMenu = () => setMenuOpen(false)
+
 
   return (
     <div className="landing-page">
       {/* Header Navigation */}
       <header className="landing-header">
         <div className="landing-header-content">
-          <div className="landing-logo">
-            <div className="logo-icon">
-              <div className="logo-icon-inner">ISC.</div>
+          <div className="mobile-left">
+            <MenuButton onToggle={toggleSlide} />
+            <div className="landing-logo">
+              <div className="logo-icon">
+                <div className="logo-icon-inner">ISC.</div>
+              </div>
+              <span className="logo-text">ISC Audit</span>
             </div>
-            <span className="logo-text">ISC Audit</span>
           </div>
           <nav className="landing-nav-center">
             <a href="#how-it-works" className="nav-link">How It Works</a>
