@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { employerAPI } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
+import { useMobileNav } from '../hooks/useMobileNav'
 import { useNavigate } from 'react-router-dom'
 import './Dashboard.css'
 
@@ -13,7 +14,7 @@ const EmployerDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview')
   const [employerProfile, setEmployerProfile] = useState(null)
   const [profileLoading, setProfileLoading] = useState(false)
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const { mobileNavOpen, setMobileNavOpen } = useMobileNav()
   
   // Student search state
   const [searchUniversityId, setSearchUniversityId] = useState('')
@@ -182,20 +183,6 @@ const EmployerDashboard = () => {
           <button onClick={() => setError('')} className="error-close">×</button>
         </div>
       )}
-
-      {/* Mobile dashboard chrome (shown under 937×845) */}
-      <div className="mobile-dashboard-topbar">
-        <button
-          type="button"
-          className="mobile-dashboard-menu"
-          aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
-          onClick={() => setMobileNavOpen(v => !v)}
-        >
-          ☰
-        </button>
-        <div className="mobile-dashboard-brand">ISC Audit</div>
-        <div className="mobile-dashboard-badge" aria-hidden="true">ISC</div>
-      </div>
 
       {mobileNavOpen && (
         <div

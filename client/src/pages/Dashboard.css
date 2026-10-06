@@ -10,7 +10,6 @@
 }
 
 /* Mobile-first dashboard chrome (hidden on desktop) */
-.mobile-dashboard-topbar,
 .mobile-dashboard-header,
 .mobile-dashboard-nav {
   display: none;
@@ -2829,56 +2828,6 @@
   .dashboard-page-header,
   .dashboard-tabs {
     display: none;
-  }
-
-  .mobile-dashboard-topbar {
-    display: grid;
-    grid-template-columns: 44px 1fr 44px;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 0.25rem 0.25rem;
-  }
-
-  /* Avoid duplicating branding with the main header on mobile */
-  .mobile-dashboard-brand,
-  .mobile-dashboard-badge {
-    display: none;
-  }
-
-  .mobile-dashboard-menu {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    background: #ffffff;
-    color: #111827;
-    font-size: 1.25rem;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-  }
-
-  .mobile-dashboard-brand {
-    text-align: center;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    color: #111827;
-    font-size: 1.25rem;
-  }
-
-  .mobile-dashboard-badge {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: #111827;
-    color: #ffffff;
-    font-weight: 800;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    user-select: none;
   }
 
   .mobile-dashboard-nav {

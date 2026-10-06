@@ -4,7 +4,7 @@
   background: var(--bg-secondary);
   scroll-behavior: smooth;
   /* to prevent horizontal scroll */
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Header - Modern Design Matching Reference */
@@ -50,7 +50,6 @@
   display: inline-flex;
 }
 }
-
 
 .landing-logo {
   display: flex;
@@ -119,6 +118,8 @@
     display: none;
   }
 }
+/* this adds some extra space on top of the header when you visit a link using navbar */
+section[id] { scroll-margin-top: 70px; }
 
 .nav-link {
   color: #1f2937;
@@ -224,6 +225,12 @@
     .mobile-dashboard-menu {
         display: inline-flex;
     }
+    /* decrease the size for smaller screens: */
+    .btn-start-free {
+        padding: 0.5rem 0.567rem;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
 }
 
 .btn-start-free:hover {
@@ -236,6 +243,12 @@
 .btn-arrow {
   font-size: 1rem;
   line-height: 1;
+}
+
+@media (max-width: 370px) {
+  .btn-arrow {
+    display: none;
+  }
 }
 
 /* Hero Section - Modern Design */
@@ -2141,4 +2154,93 @@
     margin-top: 0;
   }
 
+}
+
+
+
+/* STYLING FOR THE MENU BUTTON */
+/* Dark layer covering the whole screen */
+.landing-drawer-overlay {
+  position: fixed;          /* pinned to the screen, not the page */
+  inset: 0;                 /* top/right/bottom/left: 0 = full screen */
+  background: rgba(17, 24, 39, 0.42);
+  backdrop-filter: blur(2px);
+  z-index: 2000;            /* above the header (which is 100) */
+  display: flex;            /* panel sits on the left edge */
+}
+
+/* The white panel */
+.landing-drawer {
+  width: min(84vw, 340px);  /* 84% of the screen, but never wider than 340px */
+  height: 100%;
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);                     /* start off-screen left */
+  animation: landingDrawerIn 180ms ease-out forwards;
+}
+
+@keyframes landingDrawerIn {
+  to { transform: translateX(0); }                  /* slide into place */
+}
+
+.landing-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;  /* title left, × right */
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.landing-drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 900;
+  color: #111827;
+}
+
+.landing-drawer-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #111827;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.landing-drawer-close {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.landing-drawer-nav {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem;
+  overflow-y: auto;  /* scroll inside the panel if links don't fit */
+}
+
+.landing-drawer-nav a {
+  display: block;
+  padding: 0.9rem 1rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  color: #111827;
+  font-weight: 700;
+  text-decoration: none;  /* remove the link underline */
+}
+
+.landing-drawer-nav a:hover {
+  background: #111827;
+  color: #fff;
 }

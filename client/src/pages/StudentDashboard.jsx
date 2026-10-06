@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { studentAPI } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
+import { useMobileNav } from '../hooks/useMobileNav'
 import { useNavigate } from 'react-router-dom'
 import './Dashboard.css'
 
@@ -16,7 +17,7 @@ const StudentDashboard = () => {
   const [templates, setTemplates] = useState([])
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('overview')
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const { mobileNavOpen, setMobileNavOpen } = useMobileNav()
   
   // Term form state
   const [showTermForm, setShowTermForm] = useState(false)
@@ -630,20 +631,6 @@ const StudentDashboard = () => {
           <button onClick={() => setError('')} className="error-close">×</button>
         </div>
       )}
-
-      {/* Mobile dashboard chrome (shown under 937×845) */}
-      <div className="mobile-dashboard-topbar">
-        <button
-          type="button"
-          className="mobile-dashboard-menu"
-          aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
-          onClick={() => setMobileNavOpen(v => !v)}
-        >
-          ☰
-        </button>
-        <div className="mobile-dashboard-brand">ISC Audit</div>
-        <div className="mobile-dashboard-badge" aria-hidden="true">ISC</div>
-      </div>
 
       {mobileNavOpen && (
         <div

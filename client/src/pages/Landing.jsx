@@ -4,6 +4,15 @@ import { useAuth } from '../hooks/useAuth'
 import MenuButton from '../components/MenuButton'
 import './Landing.css'
 
+const navLinks = [
+  { href: '#how-it-works', label: 'How It Works' },
+  { href: '#statistics', label: 'Statistics' },
+  { href: '#compliance-risks', label: 'Compliance Risks' },
+  { href: '#solutions', label: 'Solutions' },
+  { href: '#features', label: 'Features' },
+  { href: '#faq', label: 'FAQs' },
+]
+
 const Landing = () => {
   const { isAuthenticated } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -21,7 +30,8 @@ const Landing = () => {
       <header className="landing-header">
         <div className="landing-header-content">
           <div className="mobile-left">
-            <MenuButton onToggle={toggleSlide} />
+            {/* Menu button */}
+            <MenuButton isOpen={menuOpen} onClose={closeMenu} links={navLinks} onToggle={toggleMenu}  />
             <div className="landing-logo">
               <div className="logo-icon">
                 <div className="logo-icon-inner">ISC.</div>
