@@ -458,7 +458,7 @@ export async function generateTermLetterPDF(student, terms) {
       y += 30;
       
       // Student information paragraph
-      const studentName = student.user?.email || 'Student';
+      const studentName = student.fullName || student.user?.email || 'Student';
       const universityName = student.universityName || 'University';
       const universityId = student.universityId || 'N/A';
       

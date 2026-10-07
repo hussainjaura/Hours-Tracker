@@ -142,3 +142,10 @@ Authorization: Bearer {{student_token}}
 - Verify date format: `YYYY-MM-DD`
 - Hours must be between 0 and 24
 
+
+## Demo accounts with names (created 7 Oct 2026, local dev DB only)
+
+Linked, acknowledged, with one confirmed Autumn 2026/27 term:
+
+- Student: `demo.student.889494@uni.ac.uk` / `DemoPass123!` (Aisha Khan, University ID `DEMO889494`)
+- Employer: `demo.employer.889494@company.com` / `DemoPass123!` (James Carter, Kahawa Coffee Ltd)

@@ -103,6 +103,11 @@ export async function logEmployerAcknowledgement(prisma, relationship, student, 
     orderBy: { startDate: "asc" },
   });
 
+  // Employer's own name and organisation, if they've filled in a profile
+  const employerProfile = await prisma.employer.findUnique({
+    where: { userId: employer.id },
+  });
+
   return await prisma.auditLog.create({
     data: {
       action: "EMPLOYER_ACKNOWLEDGE_DECLARATIONS",
@@ -112,10 +117,11 @@ export async function logEmployerAcknowledgement(prisma, relationship, student, 
       universityId: student.universityId,
       metadata: {
         // Layer 1: Identity
-        studentName: student.universityId,
-        employerName: employer.email,
+        studentName: student.fullName || student.universityId,
+        employerName: employerProfile?.fullName || employer.email,
+        organisationName: employerProfile?.organisationName || null,
         visaCategory: student.visaType,
-        universityName: student.universityId,
+        universityName: student.universityName || student.universityId,
         // Layer 3: Acknowledgement
         acknowledgedTerms: terms.map(t => ({
           name: t.name,
@@ -174,7 +180,7 @@ export async function logComplianceRule(prisma, student, ruleData, req = null) {
       universityId: student.universityId,
       metadata: {
         // Layer 1: Identity
-        studentName: student.universityId,
+        studentName: student.fullName || student.universityId,
         visaCategory: student.visaType,
         // Layer 4: Compliance Rule
         ruleDetails: complianceRule,
@@ -371,9 +377,10 @@ export async function getStudentAuditTrail(prisma, studentId, universityId) {
         const employerProfile = employerMap.get(rel.employerId);
         return {
           employerId: rel.employerId,
-          employerName: employerProfile?.fullName || 'Unknown',
+          // null when the employer has no profile yet; the UI shows a fallback
+          employerName: employerProfile?.fullName || null,
           organisationName: employerProfile?.organisationName || 'Unknown Organisation',
-          workEmail: employerProfile?.workEmail || employerProfile?.user?.email || 'N/A',
+          workEmail: employerProfile?.workEmail || employerProfile?.user?.email || null,
           acknowledgedAt: rel.acknowledgedAt,
           acknowledgedBy: rel.acknowledgedBy,
           acknowledgementLogs: auditLogs.filter(log =>
@@ -441,6 +448,8 @@ export async function getRelationshipAuditTrail(prisma, relationshipId) {
     },
     student: {
       universityId: relationship.student.universityId,
+      fullName: relationship.student.fullName || null,
+      universityName: relationship.student.universityName || null,
       visaType: relationship.student.visaType,
       courseEndDate: relationship.student.courseEndDate,
     },

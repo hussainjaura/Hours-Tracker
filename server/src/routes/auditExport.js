@@ -214,7 +214,7 @@ router.get(
         
         // Layer 1: Identity & Context
         identity: {
-          studentName: relationship.student.user?.email || relationship.student.universityId,
+          studentName: relationship.student.fullName || relationship.student.user?.email || relationship.student.universityId,
           studentUniversityId: relationship.student.universityId,
           employerId: relationship.employerId,
           visaType: relationship.student.visaType,

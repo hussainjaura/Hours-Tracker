@@ -228,6 +228,7 @@ router.get(
             return {
               relationshipId: rel.id,
               studentUniversityId: rel.student.universityId,
+              studentName: rel.student.fullName || null,
               status: rel.status,
               acknowledgedAt: rel.acknowledgedAt,
               auditTrail: trail,

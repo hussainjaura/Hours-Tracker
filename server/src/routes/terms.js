@@ -152,7 +152,7 @@ router.post(
         where: { id: req.user.id },
       });
 
-      // 🔥 AUDIT: Layer 2 - Term Declaration
+      // AUDIT: Layer 2 - Term Declaration
       await logTermDeclaration(prisma, term, student, user, null, req);
 
       res.status(201).json(term);

@@ -248,6 +248,7 @@ router.get(
           student: {
             select: {
               universityId: true,
+              fullName: true,
             },
           },
         },

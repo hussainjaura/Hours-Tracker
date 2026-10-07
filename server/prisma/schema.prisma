@@ -38,7 +38,7 @@ model University {
 model Student {
   id             Int      @id @default(autoincrement())
   userId         String   @unique
-  fullName       String
+  fullName       String?  // Nullable: accounts created before names were collected have none
   universityId   String   @unique
   universityName String?  // Made nullable to handle existing records
   visaType       String

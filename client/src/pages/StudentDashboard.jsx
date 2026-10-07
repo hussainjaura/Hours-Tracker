@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { studentAPI } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
 import { useMobileNav } from '../hooks/useMobileNav'
+import PersonName from '../components/PersonName'
 import { useNavigate } from 'react-router-dom'
 import './Dashboard.css'
 
@@ -819,6 +820,7 @@ const StudentDashboard = () => {
                   {pendingRequests.length > 0 && pendingRequests[0]?.employer && (
                     <div style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#78350f' }}>
                       <strong>Latest request from:</strong> {pendingRequests[0].employer.organisationName || 'Unknown Organisation'}
+                      {pendingRequests[0].employer.fullName && ` (${pendingRequests[0].employer.fullName})`}
                     </div>
                   )}
                 </div>
@@ -1290,9 +1292,10 @@ const StudentDashboard = () => {
                         <div className="employer-name">
                           <strong>{rel.employer?.organisationName || 'Unknown Organisation'}</strong>
                         </div>
-                        <div className="employer-details">
-                          Manager: {rel.employer?.fullName || 'Unknown'} {rel.employer?.workEmail && `(${rel.employer.workEmail})`}
-                        </div>
+                        <PersonName name={rel.employer?.fullName} role="Manager" />
+                        {rel.employer?.workEmail && (
+                          <div className="employer-details">{rel.employer.workEmail}</div>
+                        )}
                         <div className="employer-status">Status: {rel.status}</div>
                       </div>
                       <span className={`status-badge status-${rel.status.toLowerCase()}`}>
@@ -1339,7 +1342,7 @@ const StudentDashboard = () => {
                       </div>
                       <div className="request-item">
                         <span className="request-label">Manager:</span>
-                        <span className="request-value">{request.employer?.fullName || 'Unknown'} {request.employer?.workEmail && `(${request.employer.workEmail})`}</span>
+                        <span className="request-value">{request.employer?.fullName || 'Name not provided'} {request.employer?.workEmail && `(${request.employer.workEmail})`}</span>
                       </div>
                     </div>
                     <div className="request-actions">
@@ -2289,9 +2292,10 @@ const AuditTrailTab = ({ profile, onExport }) => {
                           <div className="acknowledgement-employer">
                             <strong>{ack.organisationName || 'Unknown Organisation'}</strong>
                           </div>
-                          <div className="acknowledgement-employer-details">
-                            Manager: {ack.employerName || 'Unknown'} {ack.workEmail && `(${ack.workEmail})`}
-                          </div>
+                          <PersonName name={ack.employerName} role="Manager" />
+                          {ack.workEmail && (
+                            <div className="acknowledgement-employer-details">{ack.workEmail}</div>
+                          )}
                           <div className="acknowledgement-date">Acknowledged: {formatDate(ack.acknowledgedAt)}</div>
                         </div>
                         <span className="badge badge-success">Acknowledged</span>

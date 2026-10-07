@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { employerAPI } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
 import { useMobileNav } from '../hooks/useMobileNav'
+import PersonName from '../components/PersonName'
 import { useNavigate } from 'react-router-dom'
 import './Dashboard.css'
 
@@ -396,12 +397,8 @@ const EmployerDashboard = () => {
                       <div key={rel.id} className="student-card">
                         <div className="student-header">
                           <div>
-                            {rel.student.fullName && (
-                              <div className="student-name">
-                                <strong>{rel.student.fullName}</strong>
-                              </div>
-                            )}
                             <div className="student-id">University ID: {rel.student.universityId}</div>
+                            <PersonName name={rel.student.fullName} />
                             <div className="student-university">
                               <strong>{rel.student.universityName || 'Unknown University'}</strong>
                             </div>
@@ -638,10 +635,8 @@ const EmployerDashboard = () => {
                     <div key={rel.id} className="compliance-student-card">
                       <div className="compliance-student-header">
                         <div>
-                          {student.fullName && (
-                            <h3>{student.fullName}</h3>
-                          )}
-                          <h3 style={{ marginTop: student.fullName ? '0.5rem' : 0 }}>University ID: {student.universityId}</h3>
+                          <h3>University ID: {student.universityId}</h3>
+                          <PersonName name={student.fullName} />
                           <div className="student-info">
                             <div><strong>University:</strong> {student.universityName || 'Unknown University'}</div>
                             <div><strong>Visa Type:</strong> {student.visaType}</div>
@@ -871,12 +866,8 @@ const EmployerDashboard = () => {
                       <div key={rel.id} className="student-card">
                         <div className="student-header">
                           <div>
-                            {rel.student.fullName && (
-                              <div className="student-name">
-                                <strong>{rel.student.fullName}</strong>
-                              </div>
-                            )}
                             <div className="student-id">University ID: {rel.student.universityId}</div>
+                            <PersonName name={rel.student.fullName} />
                             <div className="student-university">
                               <strong>{rel.student.universityName || 'Unknown University'}</strong>
                             </div>
@@ -946,15 +937,15 @@ const EmployerDashboard = () => {
               <div className="searched-student-card">
                 <h3>Student Profile</h3>
                 <div className="student-profile-info">
-                  {searchedStudent.fullName && (
-                    <div className="profile-item">
-                      <span className="profile-label">Full Name:</span>
-                      <span className="profile-value">{searchedStudent.fullName}</span>
-                    </div>
-                  )}
                   <div className="profile-item">
                     <span className="profile-label">University ID:</span>
                     <span className="profile-value">{searchedStudent.universityId}</span>
+                  </div>
+                  <div className="profile-item">
+                    <span className="profile-label">Full Name:</span>
+                    <span className={`profile-value${searchedStudent.fullName ? '' : ' text-secondary'}`}>
+                      {searchedStudent.fullName || 'Name not provided'}
+                    </span>
                   </div>
                   <div className="profile-item">
                     <span className="profile-label">University:</span>
@@ -1213,6 +1204,7 @@ const EmployerAuditTrailTab = ({ students }) => {
                       <div className="relationship-student-id">
                         {trail.studentUniversityId || 'N/A'}
                       </div>
+                      <PersonName name={trail.studentName || student?.student?.fullName} className="person-name-compact" />
                       <div className="relationship-status">
                         {trail.status === 'ACTIVE' && (
                           <span className="badge badge-success">Active</span>
@@ -1234,6 +1226,7 @@ const EmployerAuditTrailTab = ({ students }) => {
                   <div className="audit-trail-header">
                     <div>
                       <h3>Audit Trail for {selectedAuditTrail.student?.universityId || 'Student'}</h3>
+                      <PersonName name={selectedAuditTrail.student?.fullName} />
                       <p className="text-secondary">
                         Relationship ID: {selectedRelationship}
                       </p>
@@ -1270,6 +1263,10 @@ const EmployerAuditTrailTab = ({ students }) => {
                       <div className="audit-identity-item">
                         <div className="identity-label">Student University ID</div>
                         <div className="identity-value">{selectedAuditTrail.student?.universityId || 'N/A'}</div>
+                      </div>
+                      <div className="audit-identity-item">
+                        <div className="identity-label">Student Name</div>
+                        <div className="identity-value">{selectedAuditTrail.student?.fullName || 'Name not provided'}</div>
                       </div>
                       <div className="audit-identity-item">
                         <div className="identity-label">University</div>
