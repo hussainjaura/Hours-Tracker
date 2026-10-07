@@ -3012,16 +3012,161 @@
     width: 100%;
   }
 }
-/* FOR EVEN SMALLER DEVICES */
+/* =========================================================
+   SMALL PHONES (415px and below) - student & employer dashboards
+   Same colours and layout, just tighter text and spacing so
+   nothing overflows down to ~290px wide.
+   ========================================================= */
 @media (max-width: 415px) {
-  .profile-info-grid, .profile-rules, .profile-status-grid{
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+
+  /* ---------- Less nested padding ----------
+     Layout already pads .main-content, so the container
+     doesn't need its own side padding as well. */
+  .dashboard-container {
+    padding: 0.5rem 0;
   }
 
-  .rule-hours{
+  /* Long words, emails and IDs wrap instead of spilling out
+     (this property is inherited by everything inside) */
+  .dashboard-content,
+  .mobile-dashboard-header {
+    overflow-wrap: anywhere;
+  }
+
+  /* ...except the audit log table, which scrolls sideways instead.
+     Without this its column headings break one letter per line. */
+  .audit-logs-table {
+    overflow-wrap: normal;
+  }
+
+  /* ---------- Cards ---------- */
+  .dashboard-card,
+  .overview-banner,
+  .overview-stat-card,
+  .compliance-status-overview,
+  .employer-card,
+  .student-card,
+  .searched-student-card,
+  .compliance-student-card,
+  .request-card,
+  .info-card,
+  .alert-card,
+  .templates-section,
+  .template-card,
+  .term-card,
+  .term-form-card,
+  .term-info-card,
+  .current-term-card,
+  .rule-card,
+  .status-card,
+  .audit-declaration-card,
+  .audit-acknowledgement-card,
+  .audit-change-card,
+  .audit-rule-card,
+  .audit-disclaimer {
+    padding: 1rem;
+  }
+
+  .empty-state {
+    padding: 1.5rem 1rem;
+  }
+
+  /* ---------- Grids: one column that can shrink ----------
+     minmax(0, 1fr) lets a column get narrower than its
+     content's preferred width, so it never pushes off-screen. */
+  .profile-info-grid,
+  .profile-rules,
+  .profile-status-grid,
+  .templates-list,
+  .audit-identity-grid,
+  .mobile-dashboard-header {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* The small stat boxes stay two-up, but each column can shrink */
+  .mobile-dashboard-stats,
+  .overview-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .mobile-dashboard-stats .stat-box {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .mobile-dashboard-stats .stat-value {
+    font-size: 1.375rem;
+  }
+
+  .mobile-dashboard-stats .stat-label {
+    font-size: 0.6875rem;
+    letter-spacing: 0.02em;
+  }
+
+  /* ---------- Header rows: let the badge drop below the title ---------- */
+  .declaration-header,
+  .acknowledgement-header,
+  .change-header,
+  .rule-header,
+  .term-header,
+  .terms-header,
+  .template-header,
+  .current-term-header,
+  .term-info-header,
+  .full-time-period-header,
+  .employer-header,
+  .student-header,
+  .compliance-student-header,
+  .request-header,
+  .audit-header,
+  .audit-trail-header,
+  .declaration-meta,
+  .employer-meta,
+  .student-meta,
+  .request-meta,
+  .profile-meta,
+  .rule-card,
+  .dashboard-content h3 {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* ---------- Headings ---------- */
+  .mobile-dashboard-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .dashboard-content h2 {
+    font-size: 1.25rem;
+  }
+
+  .dashboard-content h3 {
+    font-size: 1.0625rem;
+  }
+
+  .banner-stat-value {
+    font-size: 1.5rem;
+  }
+
+  .stat-card-value,
+  .status-value {
+    font-size: 1.25rem;
+  }
+
+  .rule-hours {
     font-size: 1rem;
     font-weight: 700;
     color: #1f2937;
     flex-shrink: 0;
+  }
+
+  /* ---------- Body text and buttons ---------- */
+  .dashboard-content p {
+    font-size: 0.9375rem;
+  }
+
+  .dashboard-content .btn {
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
   }
 }

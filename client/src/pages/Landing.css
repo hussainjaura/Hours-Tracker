@@ -2060,103 +2060,219 @@ section[id] { scroll-margin-top: 70px; }
 }
 
 
-/* fix this section next for smaller screens the text overflows so adjust the sizes and width of all elements */
-/* Below 415px - shrink ALL text */
-/* And fix all the paddings for appropriate styling */
+/* =========================================================
+   SMALL PHONES (415px and below)
+   Same colours and layout, just tighter text and spacing so
+   nothing overflows down to ~290px wide.
+   ========================================================= */
 @media (max-width: 415px) {
 
-  .statistics-grid{
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  }
-
-  .stake-grid{
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  }
-
-  .feature-showcase-grid{
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  }
-
-  .solutions-grid{
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  }
-
-  .feature-showcase-title{
-    word-wrap: break-word;
-  }
-
-  .hero-title{
-    font-size: 2.5rem;
-  }
-  .landing-header-content{
+  /* ---------- Header ---------- */
+  .landing-header-content {
     padding: 0.75rem 0.625rem;
   }
 
-  .hero-section{
-    padding: 2rem 2rem;
-  }
-  
-  .value-proposition-section{
-    padding: 2rem 2rem;
+  .mobile-left {
+    gap: 0.5rem;
   }
 
-  .statistics-section{
-    padding: 2rem 2rem;
+  .mobile-landing-menu {
+    width: 38px;
+    height: 38px;
+    font-size: 1.1rem;
   }
 
-  .compliance-risks-section{
-    padding: 2rem 2rem;
+  .landing-header .logo-icon {
+    width: 32px;
+    height: 32px;
   }
 
-  .risks-section{
-    padding: 2rem 2rem;
+  .landing-header .logo-icon-inner {
+    font-size: 15px;
   }
 
-  .statutory-excuse-section{
-    padding: 2rem 2rem;
+  .landing-header .logo-text {
+    font-size: 1rem;
+    white-space: nowrap;
   }
 
-  .feature-showcase-section{
-    padding: 2rem;
-  }
-  .features-section{
-    padding: 2rem;
+  .landing-nav-right {
+    gap: 0.5rem;
+    flex-wrap: nowrap;
   }
 
-  .confirmation-section{
-    padding: 2rem;
-  }
-  .solutions-section{
-    padding: 2rem;
+  .nav-link-login {
+    font-size: 0.8125rem;
+    white-space: nowrap;
   }
 
-  .what-it-is-section{
-    padding: 2rem
+  .btn-start-free {
+    padding: 0.5rem 0.625rem;
+    font-size: 0.75rem;
   }
 
-  .proof-of-fault-section{
-    padding: 2rem;
+  /* ---------- Section spacing ---------- */
+  .hero-section,
+  .value-proposition-section,
+  .statistics-section,
+  .compliance-risks-section,
+  .risks-section,
+  .statutory-excuse-section,
+  .feature-showcase-section,
+  .features-section,
+  .confirmation-section,
+  .solutions-section,
+  .what-it-is-section,
+  .proof-of-fault-section,
+  .capabilities-section,
+  .faq-section,
+  .cta-section {
+    padding: 2rem 1rem;
   }
 
-  .capabilities-section{
-    padding: 2rem;
+  .hero-section {
+    min-height: auto;
   }
 
-  .faq-section{
-    padding: 2rem;
-  }
-  .cta-section{
-    padding: 2rem;
-  }
-
-  .landing-footer{
-    padding: 2rem 1.5rem 2rem;
+  .landing-footer {
+    padding: 2rem 1rem;
     margin-top: 0;
   }
 
+  .footer-bottom {
+    padding-top: 1.5rem;
+  }
+
+  /* ---------- Grids: one column that can shrink ----------
+     minmax(0, 1fr) lets a column get narrower than its longest
+     word, which is what was pushing some grids off-screen. */
+  .hero-container,
+  .value-prop-container,
+  .statistics-grid,
+  .stake-grid,
+  .risks-grid,
+  .statutory-features-grid,
+  .feature-showcase-grid,
+  .how-it-works-grid,
+  .what-it-is-grid,
+  .solutions-grid,
+  .proof-grid,
+  .benefits-grid,
+  .capabilities-grid,
+  .faq-grid,
+  .footer-content {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+  }
+
+  /* ---------- Cards: less padding ---------- */
+  .hero-content-box,
+  .statistic-card,
+  .stake-card,
+  .risk-card,
+  .statutory-feature,
+  .feature-showcase-item,
+  .how-it-works-card,
+  .confirmation-statement,
+  .what-it-is-card,
+  .solution-card,
+  .solutions-cta,
+  .proof-card,
+  .benefits-column,
+  .capability-card,
+  .faq-item {
+    padding: 1.25rem;
+  }
+
+  /* ---------- Headings ---------- */
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .hero-title-main,
+  .hero-title-accent {
+    font-size: 2rem;
+  }
+
+  /* .landing-page prefix beats the per-section title rules
+     like ".faq-section .section-title" */
+  .landing-page .section-title,
+  .landing-page .value-proposition-title {
+    font-size: 1.625rem;
+  }
+
+  .cta-title {
+    font-size: 1.5rem;
+  }
+
+  .stat-number {
+    font-size: 2.25rem;
+  }
+
+  .statistic-number {
+    font-size: 2.5rem;
+  }
+
+  .stake-amount {
+    font-size: 1.875rem;
+  }
+
+  .how-it-works-title,
+  .what-it-is-title,
+  .benefits-column-title {
+    font-size: 1.25rem;
+  }
+
+  .statistic-title,
+  .stake-title,
+  .risk-title,
+  .statutory-feature-title,
+  .feature-showcase-title,
+  .solution-title,
+  .proof-title,
+  .capability-title {
+    font-size: 1.125rem;
+  }
+
+  /* Long words wrap instead of spilling out of their box */
+  .landing-page h1,
+  .landing-page h2,
+  .landing-page h3 {
+    overflow-wrap: break-word;
+  }
+
+  /* ---------- Body text ---------- */
+  .landing-page p,
+  .landing-page li {
+    font-size: 0.9375rem;
+  }
+
+  /* Intro/lead paragraphs stay a touch bigger than card text */
+  .landing-page .hero-description,
+  .landing-page .section-subtitle,
+  .landing-page .confirmation-main-text,
+  .landing-page .placeholder-subtitle,
+  .landing-page .value-proposition-tagline,
+  .landing-page .cta-description {
+    font-size: 1rem;
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn-hero-primary,
+  .btn-hero-secondary,
+  .btn-view-reviews {
+    padding: 0.875rem 1.25rem;
+    font-size: 0.9375rem;
+  }
 }
 
-
+/* Very narrow phones: drop the "ISC Audit" text and keep the logo
+   badge, so the menu, logo and both buttons fit on one line. */
+@media (max-width: 340px) {
+  .landing-header .logo-text {
+    display: none;
+  }
+}
 
 /* STYLING FOR THE MENU BUTTON */
 /* Dark layer covering the whole screen */
