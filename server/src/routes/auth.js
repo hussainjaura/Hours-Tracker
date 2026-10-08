@@ -5,8 +5,10 @@ import prisma from "../prisma.js";
 import { signToken } from "../utils/jwt.js";
 import requireAuth from "../middleware/requireAuth.js";
 import { validate } from "../middleware/validation.js";
-import { authRateLimiter } from "../middleware/security.js";
+import { authRateLimiter, passwordResetRateLimiter } from "../middleware/security.js";
 import { AppError } from "../utils/errors.js";
+import { createHash } from "crypto";
+import { sendPasswordResetEmail } from "../utils/email.js";
 import { 
   generateVerificationToken, 
   sendVerificationEmail, 
@@ -15,6 +17,10 @@ import {
 } from "../utils/emailVerification.js";
 
 const router = express.Router();
+
+// Password reset tokens are stored hashed, like passwords. SHA-256 is enough
+// here (no bcrypt needed) because the token is 32 random bytes, not a guessable word.
+const hashResetToken = (token) => createHash("sha256").update(token).digest("hex");
 
 router.get("/me", requireAuth, async (req, res) => {
   try {
@@ -509,7 +515,7 @@ router.post("/login",
  */
 router.post(
   "/forgot-password",
-  authRateLimiter,
+  passwordResetRateLimiter,
   validate([
     { field: 'email', validator: 'email' }
   ]),
@@ -550,28 +556,28 @@ router.post(
         where: { userId: user.id },
       });
 
-      // Create new reset token
+      // Store only a hash of the token, so a leaked database can't be used
+      // to reset anyone's password
       await prisma.passwordResetToken.create({
         data: {
           userId: user.id,
-          token: resetToken,
+          token: hashResetToken(resetToken),
           expiresAt,
         },
       });
 
-      // Send reset email (mock for now)
-      const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/reset-password?token=${resetToken}`;
-      
-      console.log("=".repeat(60));
-      console.log("PASSWORD RESET EMAIL (Mock)");
-      console.log("=".repeat(60));
-      console.log(`To: ${email}`);
-      console.log(`Subject: Reset Your Password`);
-      console.log(`\nYou requested a password reset. Click the link below to reset your password:\n`);
-      console.log(resetUrl);
-      console.log("\nThis link will expire in 1 hour.");
-      console.log("If you didn't request this, please ignore this email.");
-      console.log("=".repeat(60));
+      // Email the link. The raw token only ever lives in this link; the
+      // database keeps a hash of it (see hashResetToken).
+      // FRONTEND_URL can list several origins for CORS, so use the first one.
+      const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:3000").split(",")[0].trim();
+      const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
+      try {
+        await sendPasswordResetEmail(user.email, resetUrl);
+      } catch (emailError) {
+        // Keep the response identical either way so it never reveals whether
+        // the email exists; just record the failure for the server owner.
+        console.error("PASSWORD RESET EMAIL FAILED:", emailError.message);
+      }
 
       // AUDIT LOG
       const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -616,9 +622,9 @@ router.post(
     try {
       const { token, password } = req.body;
 
-      // Find reset token
+      // Find reset token (the database stores its hash)
       const resetToken = await prisma.passwordResetToken.findUnique({
-        where: { token },
+        where: { token: hashResetToken(token) },
         include: { user: true },
       });
 

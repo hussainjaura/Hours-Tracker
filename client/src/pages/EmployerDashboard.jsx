@@ -867,13 +867,18 @@ const EmployerDashboard = () => {
                         <div className="student-header">
                           <div>
                             <div className="student-id">University ID: {rel.student.universityId}</div>
-                            <PersonName name={rel.student.fullName} />
-                            <div className="student-university">
-                              <strong>{rel.student.universityName || 'Unknown University'}</strong>
-                            </div>
-                            <div className="student-email">
-                              {rel.student.user?.email || 'N/A'}
-                            </div>
+                            {/* The API only shares details once the student accepts */}
+                            {rel.status === 'ACTIVE' && (
+                              <>
+                                <PersonName name={rel.student.fullName} />
+                                <div className="student-university">
+                                  <strong>{rel.student.universityName || 'Unknown University'}</strong>
+                                </div>
+                                <div className="student-email">
+                                  {rel.student.user?.email || 'N/A'}
+                                </div>
+                              </>
+                            )}
                         <div className="student-meta">
                           Linked: {formatDate(rel.linkedAt)}
                         </div>
@@ -933,7 +938,31 @@ const EmployerDashboard = () => {
               </div>
             </form>
 
-            {searchedStudent && (
+            {/* Before the student accepts, the API only confirms the ID exists */}
+            {searchedStudent && searchedStudent.accessStatus !== 'ACTIVE' && (
+              <div className="searched-student-card">
+                <h3>University ID: {searchedStudent.universityId}</h3>
+                <p className="text-secondary" style={{ marginTop: '0.5rem' }}>
+                  {searchedStudent.accessStatus === 'PENDING'
+                    ? 'Your access request is waiting for the student to accept it. Their details will appear here once they do.'
+                    : searchedStudent.accessStatus === 'NONE'
+                      ? "This student is registered. To protect their privacy, their name, visa and work eligibility are only shown after they accept your access request."
+                      : 'Your access to this student has ended. Ask the student to link with you again if you still employ them.'}
+                </p>
+                {searchedStudent.accessStatus === 'NONE' && (
+                  <div className="student-profile-actions" style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => handleRequestAccess(searchedStudent.universityId)}
+                    >
+                      Request Access to This Student
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {searchedStudent && searchedStudent.accessStatus === 'ACTIVE' && (
               <div className="searched-student-card">
                 <h3>Student Profile</h3>
                 <div className="student-profile-info">
@@ -1032,14 +1061,6 @@ const EmployerDashboard = () => {
                   >
                     📄 Download Term Letter
                   </button>
-                  {searchedStudent.canWork !== false && (
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => handleRequestAccess(searchedStudent.universityId)}
-                    >
-                      Request Access to This Student
-                    </button>
-                  )}
                 </div>
               </div>
             )}

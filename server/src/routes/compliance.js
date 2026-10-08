@@ -71,7 +71,8 @@ router.get(
           },
         });
 
-        if (!relationship) {
+        // Only an accepted (ACTIVE) link gives access; a pending request doesn't
+        if (!relationship || relationship.status !== "ACTIVE") {
           return res.status(403).json({
             error: "You don't have access to this student's data",
           });
@@ -284,7 +285,8 @@ router.get(
           },
         });
 
-        if (!relationship) {
+        // Only an accepted (ACTIVE) link gives access; a pending request doesn't
+        if (!relationship || relationship.status !== "ACTIVE") {
           return res.status(403).json({ error: "You don't have access to this student" });
         }
       }
@@ -424,7 +426,8 @@ router.get(
           },
         });
 
-        if (!relationship) {
+        // Only an accepted (ACTIVE) link gives access; a pending request doesn't
+        if (!relationship || relationship.status !== "ACTIVE") {
           return res.status(403).json({ error: "You don't have access to this student" });
         }
       }

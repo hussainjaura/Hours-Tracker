@@ -2,6 +2,7 @@ import express from "express";
 import prisma from "../prisma.js";
 import { authenticate, authorizeRoles } from "../middleware/auth.js";
 import { getWorkEligibility } from "../utils/workEligibility.js";
+import { findRelationship } from "../utils/access.js";
 import { validate, validateDate, validatePositiveNumber } from "../middleware/validation.js";
 
 const router = express.Router();
@@ -52,6 +53,16 @@ router.get(
         return res.status(404).json({ error: "Student not found" });
       }
 
+      // Until the student accepts this employer, only confirm the ID exists
+      // so the employer can send an access request. No personal details.
+      const relationship = await findRelationship(prisma, student.id, req.user.id);
+      if (relationship?.status !== "ACTIVE") {
+        return res.json({
+          universityId: student.universityId,
+          accessStatus: relationship?.status || "NONE",
+        });
+      }
+
       const eligibility = await getWorkEligibility(prisma, student);
 
       // AUDIT LOG - Track eligibility checks
@@ -70,6 +81,7 @@ router.get(
       });
 
       res.json({
+        accessStatus: "ACTIVE",
         fullName: student.fullName,
         universityId: student.universityId,
         universityName: student.universityName,

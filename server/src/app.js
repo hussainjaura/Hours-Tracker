@@ -21,6 +21,15 @@ import { rateLimiter, authRateLimiter, requestSizeLimiter, securityHeaders } fro
 
 const app = express();
 
+// Behind a hosting provider's load balancer (Render, Railway, Heroku...), every
+// request arrives from the proxy's IP. Setting TRUST_PROXY (usually to 1, the
+// number of proxies in front of the app) makes req.ip the visitor's real IP,
+// which rate limiting and audit logs rely on. Leave it unset when running locally.
+if (process.env.TRUST_PROXY) {
+  const hops = Number(process.env.TRUST_PROXY);
+  app.set("trust proxy", Number.isNaN(hops) ? process.env.TRUST_PROXY : hops);
+}
+
 // Security headers
 app.use(securityHeaders);
 

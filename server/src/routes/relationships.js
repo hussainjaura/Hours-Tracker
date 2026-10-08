@@ -132,7 +132,15 @@ router.get(
         orderBy: { linkedAt: "desc" },
       });
 
-      res.json(relationships);
+      // Only students who accepted this employer share their details.
+      // For pending requests the employer just sees the ID they asked for.
+      const visible = relationships.map((rel) =>
+        rel.status === "ACTIVE"
+          ? rel
+          : { ...rel, student: { universityId: rel.student.universityId } }
+      );
+
+      res.json(visible);
     } catch (error) {
       console.error("GET MY STUDENTS ERROR:", error);
       res.status(500).json({ error: "Internal server error" });

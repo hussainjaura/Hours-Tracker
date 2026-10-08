@@ -8,6 +8,7 @@ import {
   createComprehensiveAuditLog,
 } from "../utils/auditLogger.js";
 import { generateTermLetterPDF } from "../utils/pdfGenerator.js";
+import { hasActiveAccess } from "../utils/access.js";
 
 const router = express.Router();
 
@@ -877,6 +878,12 @@ router.get(
 
       if (!student) {
         return res.status(404).json({ error: "Student not found" });
+      }
+
+      if (!(await hasActiveAccess(prisma, student.id, req.user.id))) {
+        return res.status(403).json({
+          error: "The student must accept your access request before you can download their term letter",
+        });
       }
 
       // Get all confirmed terms for this student

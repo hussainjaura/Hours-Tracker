@@ -218,10 +218,12 @@ export const validateUniversityCode = (code) => {
 };
 
 /**
- * Validates role enum value
+ * Validates the role someone picks when signing up.
+ * ADMIN is deliberately not allowed: admin accounts can see and delete every
+ * student, so they must be created directly in the database, never via sign-up.
  */
 export const validateRole = (role) => {
-  const validRoles = ['STUDENT', 'EMPLOYER', 'ADMIN'];
+  const validRoles = ['STUDENT', 'EMPLOYER'];
   if (!validRoles.includes(role)) {
     return { 
       valid: false, 

@@ -4,6 +4,7 @@ import { authenticate, authorizeRoles } from "../middleware/auth.js";
 import { getWorkEligibility } from "../utils/workEligibility.js";
 import { validate, validatePositiveNumber } from "../middleware/validation.js";
 import { logComplianceRule } from "../utils/auditLogger.js";
+import { hasActiveAccess } from "../utils/access.js";
 
 const router = express.Router();
 
@@ -71,6 +72,12 @@ router.post(
 
       if (!student) {
         return res.status(404).json({ error: "Student not found" });
+      }
+
+      if (!(await hasActiveAccess(prisma, student.id, req.user.id))) {
+        return res.status(403).json({
+          error: "The student must accept your access request before you can check their eligibility",
+        });
       }
 
       const eligibility = await getWorkEligibility(prisma, student);
