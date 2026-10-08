@@ -401,47 +401,13 @@ section[id] { scroll-margin-top: 70px; }
   position: relative;
 }
 
-.hero-image-placeholder {
+/* Product mockup images (built from real app screenshots, see public/images/landing).
+   Each image already includes its device frame and soft shadow, so no border here. */
+.hero-app-image {
+  display: block;
   width: 100%;
-  max-width: 400px;
-  aspect-ratio: 9 / 16;
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  border-radius: 32px;
-  border: 8px solid #ffffff;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.hero-image-placeholder::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 40px;
-  background: #ffffff;
-  border-radius: 24px 24px 0 0;
-}
-
-.image-placeholder-content {
-  text-align: center;
-  z-index: 1;
-}
-
-.image-placeholder-content p {
-  font-size: 1.125rem;
-  color: #6b7280;
-  margin: 0.5rem 0;
-  font-weight: 500;
-}
-
-.placeholder-subtitle {
-  font-size: 0.875rem;
-  color: #9ca3af;
+  max-width: 480px;
+  height: auto;
 }
 
 .hero-wave-bg {
@@ -504,7 +470,8 @@ section[id] { scroll-margin-top: 70px; }
   max-width: 1400px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* wider right column so the dashboard image can be shown larger */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
   gap: 4rem;
   align-items: center;
 }
@@ -586,30 +553,11 @@ section[id] { scroll-margin-top: 70px; }
   position: relative;
 }
 
-.value-prop-image-placeholder {
+.value-prop-app-image {
+  display: block;
   width: 100%;
-  max-width: 500px;
-  aspect-ratio: 16 / 10;
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-  border-radius: 24px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.value-prop-image-placeholder::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 50px;
-  background: #ffffff;
-  border-radius: 24px 24px 0 0;
+  max-width: 760px;
+  height: auto;
 }
 
 /* Feature Showcase Section - Modern Design */
@@ -1277,6 +1225,13 @@ section[id] { scroll-margin-top: 70px; }
     grid-column: 1 / -1;
     max-width: 100%;
   }
+
+  /* Tablets: put the dashboard image under the text so it stays large
+     enough to read, instead of squeezing into half the width */
+  .value-prop-container {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
 }
 
 /* style for moderate size devices needs working first then do mobile phone sizes */
@@ -1353,8 +1308,8 @@ section[id] { scroll-margin-top: 70px; }
     order: -1;
   }
 
-  .hero-image-placeholder {
-    max-width: 300px;
+  .hero-app-image {
+    max-width: 360px;
   }
 
   .value-prop-container {
@@ -2251,10 +2206,14 @@ section[id] { scroll-margin-top: 70px; }
   .landing-page .hero-description,
   .landing-page .section-subtitle,
   .landing-page .confirmation-main-text,
-  .landing-page .placeholder-subtitle,
   .landing-page .value-proposition-tagline,
   .landing-page .cta-description {
     font-size: 1rem;
+  }
+
+  /* ---------- Product images ---------- */
+  .hero-app-image {
+    max-width: 300px;
   }
 
   /* ---------- Buttons ---------- */

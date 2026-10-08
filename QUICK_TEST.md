@@ -149,3 +149,9 @@ Linked, acknowledged, with one confirmed Autumn 2026/27 term:
 
 - Student: `demo.student.889494@uni.ac.uk` / `DemoPass123!` (Aisha Khan, University ID `DEMO889494`)
 - Employer: `demo.employer.889494@company.com` / `DemoPass123!` (James Carter, Kahawa Coffee Ltd)
+
+More demo data (added 8 Oct 2026, password `DemoPass123!` for all), used for the landing page screenshots:
+
+- Employer: `demo.harbour@company.com` (Priya Shah, Harbour Books Ltd), linked to Aisha
+- Students linked to James Carter: `demo.daniel@uni.ac.uk` (Daniel Okafor, `DEMO204118`), `demo.mei@uni.ac.uk` (Mei Lin, `DEMO317502`)
+- Every demo student has confirmed Autumn, Spring and Summer 2026/27 terms

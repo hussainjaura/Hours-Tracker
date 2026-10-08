@@ -97,12 +97,18 @@ const Landing = () => {
             </div>
           </div>
           <div className="hero-right">
-            <div className="hero-image-placeholder">
-              <div className="image-placeholder-content">
-                <p>Dashboard Screenshot</p>
-                <p className="placeholder-subtitle">Add your dashboard image here</p>
-              </div>
-            </div>
+            {/* srcSet lets the browser pick the smallest file that's still sharp
+                for the screen; sizes tells it how wide the image is shown. */}
+            <img
+              className="hero-app-image"
+              src="/images/landing/app-mobile-480.webp"
+              srcSet="/images/landing/app-mobile-300.webp 300w, /images/landing/app-mobile-360.webp 360w, /images/landing/app-mobile-480.webp 480w, /images/landing/app-mobile-600.webp 600w, /images/landing/app-mobile-720.webp 720w, /images/landing/app-mobile-960.webp 960w, /images/landing/app-mobile-1440.webp 1440w, /images/landing/app-mobile-4k.webp 2400w"
+              sizes="(max-width: 415px) 300px, (max-width: 1024px) 360px, 480px"
+              width="480"
+              height="911"
+              alt="ISC Audit student dashboard on a phone, showing the 20 hours per week term-time limit"
+              fetchPriority="high"
+            />
           </div>
         </div>
         <div className="hero-wave-bg"></div>
@@ -137,12 +143,16 @@ const Landing = () => {
             </a>
           </div>
           <div className="value-prop-right">
-            <div className="value-prop-image-placeholder">
-              <div className="image-placeholder-content">
-                <p>Platform Screenshot</p>
-                <p className="placeholder-subtitle">Add your platform image here</p>
-              </div>
-            </div>
+            <img
+              className="value-prop-app-image"
+              src="/images/landing/app-desktop-760.webp"
+              srcSet="/images/landing/app-desktop-760.webp 760w, /images/landing/app-desktop-1140.webp 1140w, /images/landing/app-desktop-1520.webp 1520w, /images/landing/app-desktop-2280.webp 2280w, /images/landing/app-desktop-4k.webp 3840w"
+              sizes="(max-width: 1024px) 92vw, 760px"
+              width="760"
+              height="556"
+              alt="ISC Audit employer dashboard in a browser, listing acknowledged student workers"
+              loading="lazy"
+            />
           </div>
         </div>
       </section>
