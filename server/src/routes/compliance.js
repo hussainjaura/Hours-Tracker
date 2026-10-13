@@ -20,16 +20,12 @@ import {
 
 const router = express.Router();
 
-/**
- * ============================================
- * WEEKLY HOUR SUMMARIES
- * ============================================
- */
 
-/**
- * GET /compliance/weekly-summary/:universityId
- * Get weekly hours summary for a student (ADMIN, EMPLOYER, or STUDENT for own)
- */
+// WEEKLY HOUR SUMMARIES:
+
+
+// GET /compliance/weekly-summary/:universityId
+// Get weekly hours summary for a student (ADMIN, EMPLOYER, or STUDENT for own):
 router.get(
   "/weekly-summary/:universityId",
   authenticate,
@@ -124,10 +120,9 @@ router.get(
   }
 );
 
-/**
- * GET /compliance/weekly-summary/me
- * Student views their own weekly summary
- */
+
+// GET /compliance/weekly-summary/me
+// Student views their own weekly summary:
 router.get(
   "/weekly-summary/me",
   authenticate,
@@ -182,16 +177,12 @@ router.get(
   }
 );
 
-/**
- * ============================================
- * COMPLIANCE VIOLATIONS
- * ============================================
- */
 
-/**
- * GET /compliance/violations
- * Get all violations (ADMIN only) or filtered by student/employer
- */
+// COMPLIANCE VIOLATIONS:
+
+
+// GET /compliance/violations
+// Get all violations (ADMIN only) or filtered by student/employer:
 router.get(
   "/violations",
   authenticate,
@@ -249,10 +240,9 @@ router.get(
   }
 );
 
-/**
- * GET /compliance/violations/student/:universityId
- * Get violations for a specific student
- */
+
+// GET /compliance/violations/student/:universityId
+// Get violations for a specific student:
 router.get(
   "/violations/student/:universityId",
   authenticate,
@@ -270,7 +260,7 @@ router.get(
         return res.status(404).json({ error: "Student not found" });
       }
 
-      // Authorization
+      // Authorization:
       if (req.user.role === "STUDENT" && student.userId !== req.user.id) {
         return res.status(403).json({ error: "You can only view your own violations" });
       }
@@ -285,7 +275,7 @@ router.get(
           },
         });
 
-        // Only an accepted (ACTIVE) link gives access; a pending request doesn't
+        // Only an accepted (ACTIVE) link gives access; a pending request doesn't:
         if (!relationship || relationship.status !== "ACTIVE") {
           return res.status(403).json({ error: "You don't have access to this student" });
         }
@@ -331,10 +321,9 @@ router.get(
   }
 );
 
-/**
- * GET /compliance/violations/me
- * Student views their own violations
- */
+
+// GET /compliance/violations/me
+// Student views their own violations:
 router.get(
   "/violations/me",
   authenticate,
@@ -377,16 +366,12 @@ router.get(
   }
 );
 
-/**
- * ============================================
- * STUDENT WORK HISTORY
- * ============================================
- */
 
-/**
- * GET /compliance/work-history/:universityId
- * Get comprehensive work history for a student
- */
+// STUDENT WORK HISTORY:
+
+
+// GET /compliance/work-history/:universityId
+// Get comprehensive work history for a student:
 router.get(
   "/work-history/:universityId",
   authenticate,
@@ -479,16 +464,11 @@ router.get(
   }
 );
 
-/**
- * ============================================
- * EMPLOYER ACTIVITY REPORTS
- * ============================================
- */
+//EMPLOYER ACTIVITY REPORTS:
 
-/**
- * GET /compliance/employer-activity/:employerId
- * Get activity report for an employer (ADMIN only)
- */
+
+// GET /compliance/employer-activity/:employerId
+// Get activity report for an employer (ADMIN only):
 router.get(
   "/employer-activity/:employerId",
   authenticate,
@@ -538,7 +518,7 @@ router.get(
         orderBy: { createdAt: "desc" },
       });
 
-      // Get violations caused by this employer
+      // Get violations caused by this employer:
       const violations = await prisma.complianceViolation.findMany({
         where: {
           employerId,
@@ -579,7 +559,7 @@ router.get(
         },
       });
 
-      // Calculate statistics
+      // Calculate statistics:
       const totalShifts = shifts.length;
       const confirmedShifts = shifts.filter((s) => s.status === "CONFIRMED").length;
       const pendingShifts = shifts.filter((s) => s.status === "PENDING").length;
@@ -656,10 +636,9 @@ router.get(
   }
 );
 
-/**
- * GET /compliance/employer-activity/me
- * Employer views their own activity report
- */
+
+// GET /compliance/employer-activity/me:
+// Employer views their own activity report:
 router.get(
   "/employer-activity/me",
   authenticate,
@@ -742,16 +721,12 @@ router.get(
   }
 );
 
-/**
- * ============================================
- * ADMIN COMPLIANCE DASHBOARD
- * ============================================
- */
 
-/**
- * GET /compliance/dashboard
- * Get compliance overview dashboard (ADMIN only)
- */
+// ADMIN COMPLIANCE DASHBOARD:
+
+
+// GET /compliance/dashboard
+// Get compliance overview dashboard (ADMIN only):
 router.get(
   "/dashboard",
   authenticate,
@@ -763,7 +738,7 @@ router.get(
       const start = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       const end = endDate ? new Date(endDate) : new Date();
 
-      // Get all violations in period
+      // Get all violations in period:
       const violations = await prisma.complianceViolation.findMany({
         where: {
           createdAt: {
@@ -785,7 +760,7 @@ router.get(
         orderBy: { createdAt: "desc" },
       });
 
-      // Get all students with violations
+      // Get all students with violations:
       const studentsWithViolations = await prisma.student.findMany({
         where: {
           violations: {
@@ -811,7 +786,7 @@ router.get(
         },
       });
 
-      // Get all employers with violations
+      // Get all employers with violations:
       const employersWithViolations = await prisma.user.findMany({
         where: {
           role: "EMPLOYER",
@@ -825,7 +800,7 @@ router.get(
         },
       });
 
-      // Calculate statistics
+      // Calculate statistics:
       const stats = {
         totalViolations: violations.length,
         byType: {},

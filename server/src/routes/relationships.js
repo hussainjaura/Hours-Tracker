@@ -5,15 +5,10 @@ import { logEmployerAcknowledgement } from "../utils/auditLogger.js";
 
 const router = express.Router();
 
-/**
- * ============================================
- * EMPLOYER ROUTES - Request Student Access
- * ============================================
- */
+// EMPLOYER ROUTES - Request Student Access:
 
-/**
- * POST /relationships/request - Employer requests access to a student
- */
+
+// POST /relationships/request - Employer requests access to a student:
 router.post(
   "/request",
   authenticate,
@@ -94,9 +89,7 @@ router.post(
   }
 );
 
-/**
- * GET /relationships/my-students - Employer views all their student relationships
- */
+// GET /relationships/my-students - Employer views all their student relationships:
 router.get(
   "/my-students",
   authenticate,
@@ -148,9 +141,7 @@ router.get(
   }
 );
 
-/**
- * DELETE /relationships/:relationshipId - Employer removes relationship
- */
+// DELETE /relationships/:relationshipId - Employer removes relationship:
 router.delete(
   "/:relationshipId",
   authenticate,
@@ -207,15 +198,10 @@ router.delete(
   }
 );
 
-/**
- * ============================================
- * STUDENT ROUTES - Manage Employer Access
- * ============================================
- */
+// STUDENT ROUTES - Manage Employer Access:
 
-/**
- * GET /relationships/requests - Student views pending access requests
- */
+
+// GET /relationships/requests - Student views pending access requests
 router.get(
   "/requests",
   authenticate,
@@ -288,9 +274,8 @@ router.get(
   }
 );
 
-/**
- * GET /relationships/my-employers - Student views all their employer relationships
- */
+
+// GET /relationships/my-employers - Student views all their employer relationships
 router.get(
   "/my-employers",
   authenticate,
@@ -363,9 +348,7 @@ router.get(
   }
 );
 
-/**
- * PUT /relationships/:relationshipId/accept - Student accepts employer access request
- */
+// PUT /relationships/:relationshipId/accept - Student accepts employer access request:
 router.put(
   "/:relationshipId/accept",
   authenticate,
@@ -438,9 +421,8 @@ router.put(
   }
 );
 
-/**
- * PUT /relationships/:relationshipId/reject - Student rejects employer access request
- */
+
+// PUT /relationships/:relationshipId/reject - Student rejects employer access request:
 router.put(
   "/:relationshipId/reject",
   authenticate,
@@ -503,9 +485,8 @@ router.put(
   }
 );
 
-/**
- * PUT /relationships/:relationshipId/deactivate - Student deactivates active relationship
- */
+
+// PUT /relationships/:relationshipId/deactivate - Student deactivates active relationship:
 router.put(
   "/:relationshipId/deactivate",
   authenticate,
@@ -572,9 +553,8 @@ router.put(
   }
 );
 
-/**
- * PUT /relationships/:relationshipId/acknowledge - Employer acknowledges student declarations
- */
+
+// PUT /relationships/:relationshipId/acknowledge - Employer acknowledges student declarations:
 router.put(
   "/:relationshipId/acknowledge",
   authenticate,
@@ -623,7 +603,7 @@ router.put(
         where: { id: req.user.id },
       });
 
-      // AUDIT LOG - Layer 3: Employer Acknowledgement
+      // AUDIT LOG - Layer 3: Employer Acknowledgement:
       await logEmployerAcknowledgement(
         prisma,
         updated,

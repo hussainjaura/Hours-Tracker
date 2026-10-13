@@ -1,7 +1,6 @@
-/**
- * Health Check Endpoint
- * Provides database connectivity, API status, and version information
- */
+
+// Health Check Endpoint
+// Provides database connectivity, API status, and version information:
 
 import express from "express";
 import prisma from "../prisma.js";
@@ -10,10 +9,9 @@ import { clearRateLimitStore } from "../middleware/security.js";
 
 const router = express.Router();
 
-/**
- * Health check endpoint
- * GET /health
- */
+
+// Health check endpoint
+// GET /health:
 router.get("/", async (req, res) => {
   const healthStatus = {
     status: "ok",
@@ -67,11 +65,9 @@ router.get("/", async (req, res) => {
   res.status(statusCode).json(healthStatus);
 });
 
-/**
- * Readiness probe endpoint
- * GET /health/ready
- * Returns 200 if the service is ready to accept traffic
- */
+// Readiness probe endpoint
+// GET /health/ready
+// Returns 200 if the service is ready to accept traffic:
 router.get("/ready", async (req, res) => {
   try {
     // Check database connectivity
@@ -89,11 +85,10 @@ router.get("/ready", async (req, res) => {
   }
 });
 
-/**
- * Liveness probe endpoint
- * GET /health/live
- * Returns 200 if the service is alive
- */
+
+// Liveness probe endpoint
+// GET /health/live
+// Returns 200 if the service is alive:
 router.get("/live", (req, res) => {
   res.status(200).json({
     status: "alive",
@@ -101,11 +96,10 @@ router.get("/live", (req, res) => {
   });
 });
 
-/**
- * Clear rate limit store (development only)
- * POST /health/clear-rate-limit
- * Clears the in-memory rate limit store
- */
+
+// Clear rate limit store (development only)
+// POST /health/clear-rate-limit
+// Clears the in-memory rate limit store:
 router.post("/clear-rate-limit", (req, res) => {
   // Only allow in development mode
   if (process.env.NODE_ENV === 'production') {

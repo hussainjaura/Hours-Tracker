@@ -8,15 +8,12 @@ import {
 
 const router = express.Router();
 
-/**
- * ============================================
- * ADMIN ROUTES - View All Audit Logs
- * ============================================
- */
 
-/**
- * GET /audit/audit-logs - Admin views all audit logs
- */
+// ADMIN ROUTES this views All Audit Logs:
+
+
+// GET /audit/audit-logs - Admin views all audit logs:
+
 router.get(
   "/audit-logs",
   authenticate,
@@ -51,9 +48,8 @@ router.get(
   }
 );
 
-/**
- * GET /audit/audit-logs/student/:universityId - Admin views audit logs for a specific student
- */
+
+// GET0 /audit/audit-logs/student/:universityId - Admin views audit logs for a specific student:
 router.get(
   "/audit-logs/student/:universityId",
   authenticate,
@@ -83,15 +79,12 @@ router.get(
   }
 );
 
-/**
- * ============================================
- * STUDENT ROUTES - View Own Audit Trail
- * ============================================
- */
 
-/**
- * GET /audit/my-audit-trail - Student views their own comprehensive audit trail
- */
+//  STUDENT ROUTES - View Own Audit Trail:
+
+
+
+// GET /audit/my-audit-trail - Student views their own comprehensive audit trail:
 router.get(
   "/my-audit-trail",
   authenticate,
@@ -120,9 +113,8 @@ router.get(
   }
 );
 
-/**
- * GET /audit/my-audit-logs - Student views their own audit logs
- */
+
+// GET /audit/my-audit-logs - Student views their own audit logs:
 router.get(
   "/my-audit-logs",
   authenticate,
@@ -150,15 +142,12 @@ router.get(
   }
 );
 
-/**
- * ============================================
- * EMPLOYER ROUTES - View Relationship Audit Trail
- * ============================================
- */
 
-/**
- * GET /audit/relationship/:relationshipId - Employer views audit trail for a specific student relationship
- */
+//  EMPLOYER ROUTES - View Relationship Audit Trail:
+
+
+
+// GET /audit/relationship/:relationshipId - Employer views audit trail for a specific student relationship:
 router.get(
   "/relationship/:relationshipId",
   authenticate,
@@ -179,7 +168,7 @@ router.get(
         return res.status(404).json({ error: "Relationship not found" });
       }
 
-      // Verify employer owns this relationship
+      // Verify employer owns this relationship:
       if (relationship.employerId !== req.user.id) {
         return res.status(403).json({
           error: "You can only view audit trails for your own relationships",
@@ -199,9 +188,8 @@ router.get(
   }
 );
 
-/**
- * GET /audit/my-relationships - Employer views audit trails for all their relationships
- */
+
+// GET /audit/my-relationships - Employer views audit trails for all their relationships:
 router.get(
   "/my-relationships",
   authenticate,

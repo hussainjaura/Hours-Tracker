@@ -1,8 +1,6 @@
-/**
- * Weekly Hours Calculation Utilities
- * 
- * Functions to calculate and track weekly work hours for compliance
- */
+
+// Weekly Hours Calculation Utilities
+// Functions to calculate and track weekly work hours for compliance:
 
 /**
  * Get the start of the week (Monday) for a given date

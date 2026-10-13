@@ -46,7 +46,7 @@ router.delete(
       return res.status(404).json({ error: "Term not found" });
     }
 
-    // 🔥 CREATE AUDIT LOG
+    // CREATE AUDIT LOG
     await prisma.auditLog.create({
       data: {
         action: "DELETE_TERM",
@@ -63,7 +63,7 @@ router.delete(
     });
 
 
-    // 🔥 DELETE TERM
+    // DELETE TERM
     await prisma.term.delete({
       where: { id: termId },
     });

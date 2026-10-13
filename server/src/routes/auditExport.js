@@ -18,7 +18,7 @@ import {
 const router = express.Router();
 
 /**
- * GET /audit-export/student - Student exports their own audit pack
+ * GET /audit-export/student - Student exports their own audit pack:
  */
 router.get(
   "/student",
@@ -158,9 +158,8 @@ router.get(
   }
 );
 
-/**
- * GET /audit-export/relationship/:relationshipId - Employer exports audit pack for a relationship
- */
+
+// GET /audit-export/relationship/:relationshipId - Employer exports audit pack for a relationship:
 router.get(
   "/relationship/:relationshipId",
   authenticate,
@@ -205,7 +204,7 @@ router.get(
         orderBy: { startDate: "asc" },
       });
 
-      // Build audit pack
+      // Build audit pack:
       const auditPack = {
         // Header
         exportDate: new Date().toISOString(),
@@ -287,7 +286,7 @@ router.get(
       const format = req.query.format || 'json';
       
       if (format === 'pdf') {
-        // Generate PDF
+        // Generate PDF:
         const pdfBuffer = await generateRelationshipAuditPackPDF(auditPack);
         
         res.setHeader("Content-Type", "application/pdf");

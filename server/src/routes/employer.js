@@ -8,9 +8,7 @@ import { hasActiveAccess } from "../utils/access.js";
 
 const router = express.Router();
 
-/**
- * GET /employer/profile - Get employer profile
- */
+// GET /employer/profile - Get employer profile:
 router.get(
   "/profile",
   authenticate,
@@ -44,7 +42,7 @@ router.get(
 
 // Profile creation removed - profiles are now created during registration
 
-// Profile update removed - profiles are created during registration and cannot be changed
+// Profile update removed - profiles are created during registration and cannot be changed:
 
 router.post(
   "/check-eligibility",

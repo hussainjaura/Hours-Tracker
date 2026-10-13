@@ -1,6 +1,4 @@
-/**
- * Password validation utilities
- */
+// Password validation utilities:
 
 import { AppError } from "./errors.js";
 
@@ -17,7 +15,7 @@ export const validatePasswordStrength = (password) => {
     };
   }
 
-  // Minimum length
+  // Minimum length:
   if (password.length < 8) {
     return {
       valid: false,
@@ -25,7 +23,7 @@ export const validatePasswordStrength = (password) => {
     };
   }
 
-  // Maximum length
+  // Maximum length:
   if (password.length > 128) {
     return {
       valid: false,
@@ -33,7 +31,7 @@ export const validatePasswordStrength = (password) => {
     };
   }
 
-  // At least one uppercase letter
+  // At least one uppercase letter:
   if (!/[A-Z]/.test(password)) {
     return {
       valid: false,
@@ -41,7 +39,7 @@ export const validatePasswordStrength = (password) => {
     };
   }
 
-  // At least one lowercase letter
+  // At least one lowercase letter:
   if (!/[a-z]/.test(password)) {
     return {
       valid: false,
@@ -49,7 +47,7 @@ export const validatePasswordStrength = (password) => {
     };
   }
 
-  // At least one number
+  // At least one number:
   if (!/[0-9]/.test(password)) {
     return {
       valid: false,
@@ -57,7 +55,7 @@ export const validatePasswordStrength = (password) => {
     };
   }
 
-  // At least one special character
+  // At least one special character:
   if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
     return {
       valid: false,
@@ -65,7 +63,7 @@ export const validatePasswordStrength = (password) => {
     };
   }
 
-  // Check for common weak passwords
+  // Check for common weak passwords:
   const commonPasswords = [
     "password",
     "password123",
@@ -83,9 +81,7 @@ export const validatePasswordStrength = (password) => {
   return { valid: true };
 };
 
-/**
- * Password validator for use in validation middleware
- */
+// Password validator for use in validation middleware:
 export const passwordValidator = (password, fieldName = "password") => {
   return validatePasswordStrength(password);
 };

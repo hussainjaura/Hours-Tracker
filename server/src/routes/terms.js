@@ -12,9 +12,7 @@ import { hasActiveAccess } from "../utils/access.js";
 
 const router = express.Router();
 
-/**
- * CREATE TERM
- */
+// CREATE TERM:
 router.post(
   "/",
   authenticate,
@@ -102,7 +100,7 @@ router.post(
         });
       }
 
-      // Check for date range overlaps with ANY existing term
+      // Check for date range overlaps with ANY existing term:
       const newStart = new Date(startDate);
       const newEnd = new Date(endDate);
       
@@ -111,7 +109,7 @@ router.post(
         const termEnd = new Date(term.endDate);
         
         // Check if date ranges overlap
-        // Two ranges overlap if: newStart <= termEnd && newEnd >= termStart
+        // Two ranges overlap if: newStart <= termEnd && newEnd >= termStart:
         return newStart <= termEnd && newEnd >= termStart;
       });
 
@@ -206,7 +204,7 @@ router.put(
         }
       }
 
-      // 1️⃣ Fetch term + ownership check
+      // Fetch term + ownership check
       const term = await prisma.term.findUnique({
         where: { id: termId },
         include: { student: true },
@@ -222,7 +220,7 @@ router.put(
         });
       }
 
-      // 2️⃣ Validate academic year if provided (must be valid if updating)
+      // Validate academic year if provided (must be valid if updating)
       let validatedAcademicYear = term.academicYear; // Keep existing if not updating
       if (academicYear !== undefined) {
         if (academicYear === null || academicYear === '') {
@@ -247,7 +245,7 @@ router.put(
         validatedAcademicYear = academicYearValidation.academicYear;
       }
 
-      // 2.4️⃣ Validate that term dates fall within the academic year (if dates or academic year are being updated)
+      // Validate that term dates fall within the academic year (if dates or academic year are being updated)
       if ((startDate || endDate || academicYear !== undefined) && validatedAcademicYear) {
         const finalStartDate = startDate ? new Date(startDate) : term.startDate;
         const finalEndDate = endDate ? new Date(endDate) : term.endDate;
@@ -268,7 +266,7 @@ router.put(
         }
       }
 
-      // 2.5️⃣ Check for duplicate term in same academic year if academic year is being updated
+      // Check for duplicate term in same academic year if academic year is being updated:
       if (academicYear !== undefined && validatedAcademicYear) {
         const otherTerms = await prisma.term.findMany({
           where: {
@@ -295,7 +293,7 @@ router.put(
         }
       }
 
-      // 2.6️⃣ Store old values for audit
+      // Store old values for audit
       const oldData = {
         name: term.name,
         academicYear: term.academicYear,
@@ -304,7 +302,7 @@ router.put(
         endDate: term.endDate,
       };
 
-      // 2.7️⃣ Check for overlapping terms if dates are being updated
+      // Check for overlapping terms if dates are being updated
       if (req.body.startDate || req.body.endDate) {
         const updatedStart = req.body.startDate ? new Date(req.body.startDate) : term.startDate;
         const updatedEnd = req.body.endDate ? new Date(req.body.endDate) : term.endDate;
@@ -348,8 +346,8 @@ router.put(
         }
       }
 
-      // 3️⃣ Update term
-      // If dates are being updated, clear confirmation (dates changed, needs re-confirmation)
+      // Update term
+      // If dates are being updated, clear confirmation (dates changed, needs re-confirmation):
       const updateData = {
         ...(name && { name: name.toUpperCase() }),
         ...(academicYear !== undefined && { academicYear: validatedAcademicYear }),
@@ -369,7 +367,7 @@ router.put(
         data: updateData,
       });
 
-      // 4️⃣ CREATE AUDIT LOG - Layer 5: Change History 🔥
+      // CREATE AUDIT LOG - Layer 5: Change History:
       const newData = {
         name: updatedTerm.name,
         academicYear: updatedTerm.academicYear,
@@ -422,9 +420,8 @@ router.get(
   }
 );
 
-/**
- * PUT /terms/:termId/confirm - Student confirms term dates (compliance requirement)
- */
+
+// PUT /terms/:termId/confirm - Student confirms term dates (compliance requirement):
 router.put(
   "/:termId/confirm",
   authenticate,
@@ -521,9 +518,7 @@ router.delete(
 );
 
 
-/**
- * DELETE ALL TERMS for logged-in student
- */
+// DELETE ALL TERMS for logged-in student:
 router.delete(
   "/me",
   authenticate,
@@ -556,16 +551,11 @@ router.delete(
   }
 );
 
-/**
- * ============================================
- * TERM TEMPLATE ROUTES (STUDENT)
- * ============================================
- */
+// TERM TEMPLATE ROUTES (STUDENT):
 
-/**
- * GET templates for student's university
- * GET /terms/templates/me
- */
+
+// GET templates for student's university
+// GET /terms/templates/me:
 router.get(
   "/templates/me",
   authenticate,
@@ -582,7 +572,7 @@ router.get(
         });
       }
 
-      // Find university by code (stored in student.universityId)
+      // Find university by code (stored in student.universityId):
       const university = await prisma.university.findUnique({
         where: { code: student.universityId },
         include: {
@@ -606,10 +596,9 @@ router.get(
   }
 );
 
-/**
- * CREATE term from template (with optional date edits)
- * POST /terms/from-template
- */
+
+// CREATE term from template (with optional date edits)
+// POST /terms/from-template:
 router.post(
   "/from-template",
   authenticate,
@@ -624,7 +613,7 @@ router.post(
         });
       }
 
-      // 1️⃣ Get student
+      // Get student
       const student = await prisma.student.findUnique({
         where: { userId: req.user.id },
       });
@@ -635,7 +624,7 @@ router.post(
         });
       }
 
-      // 2️⃣ Get template and verify it belongs to student's university
+      // Get template and verify it belongs to student's university
       const template = await prisma.termTemplate.findUnique({
         where: { id: Number(templateId) },
         include: {
@@ -649,18 +638,18 @@ router.post(
         });
       }
 
-      // 3️⃣ Verify template belongs to student's university
+      // Verify template belongs to student's university
       if (template.university.code !== student.universityId) {
         return res.status(403).json({
           error: "This template does not belong to your university",
         });
       }
 
-      // 4️⃣ Use provided dates or fall back to template dates
+      // Use provided dates or fall back to template dates
       const finalStartDate = startDate ? new Date(startDate) : template.startDate;
       const finalEndDate = endDate ? new Date(endDate) : template.endDate;
 
-      // Validate academic year (required)
+      // Validate academic year (required):
       const academicYearValidation = validateAcademicYear(academicYear);
       if (!academicYearValidation.valid) {
         return res.status(400).json({
@@ -673,7 +662,7 @@ router.post(
       }
       const validatedAcademicYear = academicYearValidation.academicYear;
 
-      // 4.4️⃣ Validate that term dates fall within the academic year
+      // Validate that term dates fall within the academic year:
       const dateValidation = validateTermDatesAgainstAcademicYear(
         validatedAcademicYear,
         finalStartDate,
@@ -689,7 +678,7 @@ router.post(
         });
       }
 
-      // 4.5️⃣ Check for duplicate term in the same academic year
+      // Check for duplicate term in the same academic year
       // Get all existing terms for this student
       const existingTerms = await prisma.term.findMany({
         where: {
@@ -697,7 +686,7 @@ router.post(
         },
       });
 
-      // Check for duplicate term in the same academic year (same term name)
+      // Check for duplicate term in the same academic year (same term name):
       const duplicateTerm = existingTerms.find(term => {
         if (term.name.toUpperCase() !== template.name.toUpperCase()) return false;
         if (!term.academicYear) return false; // Skip terms without academic year
@@ -715,7 +704,7 @@ router.post(
         });
       }
 
-      // Check for date range overlaps with ANY existing term
+      // Check for date range overlaps with ANY existing term:
       const newStart = new Date(finalStartDate);
       const newEnd = new Date(finalEndDate);
       
@@ -750,7 +739,7 @@ router.post(
         });
       }
 
-      // 5️⃣ Create term from template
+      // Create term from template:
       const term = await prisma.term.create({
         data: {
           studentId: student.id,
@@ -761,7 +750,7 @@ router.post(
         },
       });
 
-      // 6️⃣ AUDIT: CREATE TERM FROM TEMPLATE
+      // AUDIT: CREATE TERM FROM TEMPLATE
       await prisma.auditLog.create({
         data: {
           action: "CREATE_TERM_FROM_TEMPLATE",
@@ -791,9 +780,8 @@ router.post(
   }
 );
 
-/**
- * GET /terms/letter/pdf - Download term letter PDF
- */
+
+// GET /terms/letter/pdf - Download term letter PDF:
 router.get(
   "/letter/pdf",
   authenticate,
@@ -816,7 +804,7 @@ router.get(
         return res.status(404).json({ error: "Student profile not found" });
       }
 
-      // Get all confirmed terms for this student
+      // Get all confirmed terms for this student:
       const terms = await prisma.term.findMany({
         where: { 
           studentId: student.id,
@@ -834,7 +822,7 @@ router.get(
         });
       }
 
-      // Generate PDF
+      // Generate PDF:
       const pdfBuffer = await generateTermLetterPDF(student, terms);
 
       // Set response headers
@@ -844,7 +832,7 @@ router.get(
         `attachment; filename="term-letter-${student.universityId}-${new Date().toISOString().split('T')[0]}.pdf"`
       );
 
-      // Send PDF
+      // Send PDF:
       res.send(pdfBuffer);
     } catch (err) {
       console.error("GENERATE TERM LETTER PDF ERROR:", err);
@@ -853,9 +841,8 @@ router.get(
   }
 );
 
-/**
- * GET /terms/letter/pdf/:universityId - Download term letter PDF for a specific student (EMPLOYER)
- */
+
+// GET /terms/letter/pdf/:universityId - Download term letter PDF for a specific student (EMPLOYER):
 router.get(
   "/letter/pdf/:universityId",
   authenticate,
@@ -886,11 +873,12 @@ router.get(
         });
       }
 
-      // Get all confirmed terms for this student
+      // Get all confirmed terms for this student:
       const terms = await prisma.term.findMany({
         where: { 
           studentId: student.id,
-          confirmedAt: { not: null } // Only include confirmed terms
+          // Only include confirmed terms
+          confirmedAt: { not: null }
         },
         orderBy: [
           { academicYear: 'desc' },
@@ -904,7 +892,7 @@ router.get(
         });
       }
 
-      // Generate PDF
+      // Generate PDF:
       const pdfBuffer = await generateTermLetterPDF(student, terms);
 
       // Set response headers

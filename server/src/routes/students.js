@@ -7,9 +7,8 @@ import { validate, validateDate, validatePositiveNumber } from "../middleware/va
 
 const router = express.Router();
 
-/**
- * GET STUDENT PROFILE
- */
+
+// GET STUDENT PROFILE:
 router.get(
   "/profile",
   authenticate,
@@ -34,9 +33,7 @@ router.get(
 
 // Profile creation removed - profiles are now created during registration
 
-/**
- * EMPLOYER CHECK
- */
+// EMPLOYER CHECK:
 router.get(
   "/:universityId",
   authenticate,
@@ -65,7 +62,7 @@ router.get(
 
       const eligibility = await getWorkEligibility(prisma, student);
 
-      // AUDIT LOG - Track eligibility checks
+      // AUDIT LOG - Track eligibility checks:
       await prisma.auditLog.create({
         data: {
           action: "CHECK_ELIGIBILITY",

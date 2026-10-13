@@ -19,7 +19,7 @@ import {
 const router = express.Router();
 
 // Password reset tokens are stored hashed, like passwords. SHA-256 is enough
-// here (no bcrypt needed) because the token is 32 random bytes, not a guessable word.
+// here (no bcrypt needed) because the token is 32 random bytes, not a guessable word:
 const hashResetToken = (token) => createHash("sha256").update(token).digest("hex");
 
 router.get("/me", requireAuth, async (req, res) => {
@@ -44,7 +44,7 @@ router.get("/me", requireAuth, async (req, res) => {
 
 
 
-// REGISTER
+// REGISTER:
 router.post("/register", 
   authRateLimiter, // Stricter rate limiting for registration
   validate([
@@ -73,7 +73,7 @@ router.post("/register",
       }
     }
 
-    // Validate student profile fields if role is STUDENT
+    // Validate student profile fields if role is STUDENT:
     if (role === 'STUDENT') {
       if (!studentProfile) {
         return res.status(400).json({ error: 'Student profile information is required' });
@@ -88,7 +88,7 @@ router.post("/register",
       if (courseEndDate <= today) {
         return res.status(400).json({ error: 'Course end date must be in the future' });
       }
-      // Validate maxWeeklyHours if provided
+      // Validate maxWeeklyHours if provided:
       if (studentProfile.maxWeeklyHours != null) {
         const hours = parseFloat(studentProfile.maxWeeklyHours);
         if (isNaN(hours) || hours < 1 || hours > 168) {
@@ -107,7 +107,7 @@ router.post("/register",
       },
     });
 
-    // Create student profile if role is STUDENT
+    // Create student profile if role is STUDENT:
     if (role === 'STUDENT' && studentProfile) {
       try {
         const createdStudent = await prisma.student.create({
@@ -122,7 +122,7 @@ router.post("/register",
           },
         });
 
-        // AUDIT LOG - Student profile creation (wrap in try-catch to not fail registration if audit fails)
+        // AUDIT LOG - Student profile creation (wrap in try-catch to not fail registration if audit fails):
         try {
           await prisma.auditLog.create({
             data: {
@@ -144,11 +144,11 @@ router.post("/register",
             },
           });
         } catch (auditError) {
-          // Log audit error but don't fail registration
+          // Log audit error but don't fail registration:
           console.error('Error creating audit log for student profile:', auditError);
         }
       } catch (profileError) {
-        // If Student table doesn't exist yet (migration not run), continue without error
+        // If Student table doesn't exist yet (migration not run), continue without error:
         if (profileError.message?.includes('model `Student`') || profileError.message?.includes('does not exist')) {
           console.warn('Student table does not exist yet - migration may not have been run');
           // Continue without creating profile
@@ -510,9 +510,8 @@ router.post("/login",
   }
 });
 
-/**
- * POST /auth/forgot-password - Request password reset
- */
+
+// POST /auth/forgot-password - Request password reset:
 router.post(
   "/forgot-password",
   passwordResetRateLimiter,
@@ -523,7 +522,7 @@ router.post(
     try {
       const { email } = req.body;
 
-      // Explicitly select only fields that exist (lastLogin may not exist until migration is run)
+      // Explicitly select only fields that exist (lastLogin may not exist until migration is run):
       const user = await prisma.user.findUnique({
         where: { email },
         select: {
@@ -532,11 +531,10 @@ router.post(
           password: true,
           role: true,
           createdAt: true,
-          // lastLogin: true, // Uncomment after migration
         }
       });
 
-      // Don't reveal if user exists (security best practice)
+      // Don't reveal if user exists (security best practice):
       if (!user) {
         // Still return success to prevent email enumeration
         return res.json({
@@ -608,9 +606,8 @@ router.post(
   }
 );
 
-/**
- * POST /auth/reset-password - Reset password with token
- */
+
+// POST /auth/reset-password - Reset password with token:
 router.post(
   "/reset-password",
   authRateLimiter,
@@ -668,7 +665,7 @@ router.post(
         },
       });
 
-      // AUDIT LOG
+      // AUDIT LOG:
       const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
       await prisma.auditLog.create({
         data: {
@@ -697,7 +694,7 @@ router.post(
   }
 );
 
-// Email verification endpoint (optional)
+// Email verification endpoint (optional):
 router.get("/verify-email", async (req, res) => {
   try {
     const { token } = req.query;
@@ -709,7 +706,7 @@ router.get("/verify-email", async (req, res) => {
     const { email } = verifyToken(token);
 
     // Update user's email verification status (if you add this field to the schema)
-    // For now, we'll just return success
+    // For now, we'll just return success:
     res.json({
       success: true,
       message: "Email verified successfully",

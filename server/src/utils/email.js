@@ -58,9 +58,8 @@ export async function sendEmail({ to, subject, text, html }) {
   return { delivered: true };
 }
 
-/**
- * Escapes text for safe use inside the HTML email body.
- */
+
+// Escapes text for safe use inside the HTML email body:
 const escapeHtml = (value) =>
   String(value)
     .replace(/&/g, "&amp;")

@@ -5,9 +5,9 @@ import { validate, validateUniversityCode } from "../middleware/validation.js";
 
 const router = express.Router();
 
-/**
- * GET all students (ADMIN only)
- */
+
+// GET all students (ADMIN only):
+ 
 router.get(
   "/students",
   authenticate,
@@ -29,9 +29,7 @@ router.get(
 );
 
 
-/**
- * GET a single student by ID (ADMIN only)
- */
+// GET a single student by ID (ADMIN only):
 router.get(
   "/students/:id",
   authenticate,
@@ -66,9 +64,8 @@ router.get(
 
 
 
-/**
- * UPDATE any student (ADMIN only)
- */
+
+// UPDATE any student (ADMIN only):
 router.put(
   "/students/:id",
   authenticate,
@@ -125,9 +122,8 @@ router.put(
 );
 
 
-/**
- * DELETE a student (ADMIN only)
- */
+
+// DELETE a student (ADMIN only):
 router.delete(
   "/students/:id",
   authenticate,
@@ -144,15 +140,12 @@ router.delete(
   }
 );
 
-/**
- * ============================================
- * UNIVERSITY CRUD OPERATIONS (ADMIN only)
- * ============================================
- */
 
-/**
- * GET all universities
- */
+// UNIVERSITY CRUD OPERATIONS (ADMIN only):
+
+
+
+// GET all universities:
 router.get(
   "/universities",
   authenticate,
@@ -174,9 +167,8 @@ router.get(
   }
 );
 
-/**
- * GET a single university by ID
- */
+
+// GET a single university by ID:
 router.get(
   "/universities/:id",
   authenticate,
@@ -210,9 +202,8 @@ router.get(
   }
 );
 
-/**
- * CREATE a new university
- */
+
+// CREATE a new university:
 router.post(
   "/universities",
   authenticate,
@@ -228,11 +219,12 @@ router.post(
       const university = await prisma.university.create({
         data: {
           name,
-          code, // Already normalized by validation middleware
+          // Already normalized by validation middleware
+          code,
         },
       });
 
-      // AUDIT LOG
+      // AUDIT LOG:
       await prisma.auditLog.create({
         data: {
           action: "CREATE_UNIVERSITY",
@@ -259,9 +251,8 @@ router.post(
   }
 );
 
-/**
- * UPDATE a university
- */
+
+// UPDATE a university:
 router.put(
   "/universities/:id",
   authenticate,
@@ -299,14 +290,15 @@ router.put(
         data: updateData,
       });
 
-      // AUDIT LOG
+      // AUDIT LOG:
       await prisma.auditLog.create({
         data: {
           action: "UPDATE_UNIVERSITY",
           entityType: "University",
           entityId: updated.id,
           performedBy: req.user.id,
-          universityId: null, // University updates don't belong to a university
+          // University updates don't belong to a university:
+          universityId: null,
           metadata: {
             before: {
               name: oldUniversity.name,
@@ -332,9 +324,8 @@ router.put(
   }
 );
 
-/**
- * DELETE a university
- */
+
+// DELETE a university:
 router.delete(
   "/universities/:id",
   authenticate,
@@ -347,7 +338,7 @@ router.delete(
         return res.status(400).json({ error: "Invalid university ID" });
       }
 
-      // Get university data for audit before deletion
+      // Get university data for audit before deletion:
       const university = await prisma.university.findUnique({
         where: { id: universityId },
       });
@@ -356,14 +347,15 @@ router.delete(
         return res.status(404).json({ error: "University not found" });
       }
 
-      // AUDIT LOG (before deletion)
+      // AUDIT LOG (before deletion):
       await prisma.auditLog.create({
         data: {
           action: "DELETE_UNIVERSITY",
           entityType: "University",
           entityId: university.id,
           performedBy: req.user.id,
-          universityId: null, // University deletion doesn't belong to a university
+          // University deletion doesn't belong to a university
+          universityId: null,
           metadata: {
             name: university.name,
             code: university.code,

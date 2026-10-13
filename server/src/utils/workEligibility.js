@@ -5,7 +5,7 @@ export async function getWorkEligibility(prisma, student, requestedHours = null)
 
   const today = new Date();
 
-  // 1️⃣ Course finished → no work
+  // Course finished → no work
   if (student.courseEndDate && today > student.courseEndDate) {
     return {
       canWork: false,
@@ -16,7 +16,7 @@ export async function getWorkEligibility(prisma, student, requestedHours = null)
     };
   }
 
-  // 2️⃣ Find active term
+  // Find active term
   const activeTerm = await prisma.term.findFirst({
     where: {
       studentId: student.id,
@@ -38,7 +38,7 @@ export async function getWorkEligibility(prisma, student, requestedHours = null)
     }
   }
 
-  // 3️⃣ Compliance rules - no hour tracking, just rules
+  // Compliance rules - no hour tracking, just rules
   let canWork = true;
   let reason = inTermTime
     ? `In ${activeTerm?.name || 'term time'} - Maximum ${allowedWeeklyHours} hours per week allowed`

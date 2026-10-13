@@ -8,16 +8,12 @@ import { detectViolation, logViolation } from "../utils/compliance.js";
 
 const router = express.Router();
 
-/**
- * ============================================
- * EMPLOYER ROUTES - Log Work Hours
- * ============================================
- */
 
-/**
- * POST /work-shifts - Employer logs work hours for a student
- * Creates a PENDING shift that student must confirm
- */
+// EMPLOYER ROUTES - Log Work Hours:
+
+
+// POST /work-shifts - Employer logs work hours for a student
+// Creates a PENDING shift that student must confirm:
 router.post(
   "/",
   authenticate,
@@ -31,7 +27,7 @@ router.post(
     try {
       const { studentUniversityId, date, hours, description } = req.body;
 
-      // 1️⃣ Find student
+      // Find student
       const student = await prisma.student.findUnique({
         where: { universityId: studentUniversityId },
       });
@@ -40,7 +36,7 @@ router.post(
         return res.status(404).json({ error: "Student not found" });
       }
 
-      // 2️⃣ Verify employer-student relationship exists and is active
+      // Verify employer-student relationship exists and is active
       const relationship = await prisma.studentEmployer.findUnique({
         where: {
           studentId_employerId: {
@@ -56,7 +52,7 @@ router.post(
         });
       }
 
-      // 3️⃣ Check work eligibility and weekly limits
+      // Check work eligibility and weekly limits
       const eligibility = await getWorkEligibility(prisma, student, hours);
       
       if (!eligibility.canWork) {
@@ -66,7 +62,7 @@ router.post(
         });
       }
 
-      // 4️⃣ Check weekly limit
+      // Check weekly limit
       const limitCheck = await checkWeeklyLimit(
         prisma,
         student.id,
@@ -93,7 +89,7 @@ router.post(
         });
       }
 
-      // 5️⃣ Create work shift
+      // Create work shift
       const workShift = await prisma.workShift.create({
         data: {
           studentId: student.id,
@@ -105,7 +101,7 @@ router.post(
         },
       });
 
-      // 6️⃣ AUDIT LOG
+      // AUDIT LOG
       await prisma.auditLog.create({
         data: {
           action: "CREATE_WORK_SHIFT",
@@ -136,9 +132,8 @@ router.post(
   }
 );
 
-/**
- * GET /work-shifts/student/:universityId - Employer views shifts for a student
- */
+
+// GET /work-shifts/student/:universityId - Employer views shifts for a student:
 router.get(
   "/student/:universityId",
   authenticate,
@@ -166,7 +161,7 @@ router.get(
         },
       });
 
-      // Only an accepted (ACTIVE) link gives access; a pending request doesn't
+      // Only an accepted (ACTIVE) link gives access; a pending request doesn't:
       if (!relationship || relationship.status !== "ACTIVE") {
         return res.status(403).json({
           error: "You don't have access to this student's work shifts",
@@ -202,15 +197,11 @@ router.get(
   }
 );
 
-/**
- * ============================================
- * STUDENT ROUTES - View and Confirm Hours
- * ============================================
- */
 
-/**
- * GET /work-shifts/me - Student views their own work shifts
- */
+// STUDENT ROUTES - View and Confirm Hours:
+
+
+// GET /work-shifts/me - Student views their own work shifts:
 router.get(
   "/me",
   authenticate,
@@ -263,9 +254,8 @@ router.get(
   }
 );
 
-/**
- * GET /work-shifts/me/weekly - Student views weekly hours summary
- */
+
+// GET /work-shifts/me/weekly - Student views weekly hours summary:
 router.get(
   "/me/weekly",
   authenticate,
@@ -305,9 +295,8 @@ router.get(
   }
 );
 
-/**
- * PUT /work-shifts/:shiftId/confirm - Student confirms a work shift
- */
+
+// PUT /work-shifts/:shiftId/confirm - Student confirms a work shift:
 router.put(
   "/:shiftId/confirm",
   authenticate,
@@ -372,7 +361,7 @@ router.put(
         data: { status: "CONFIRMED" },
       });
 
-      // AUDIT LOG
+      // AUDIT LOG:
       await prisma.auditLog.create({
         data: {
           action: "CONFIRM_WORK_SHIFT",
@@ -390,7 +379,7 @@ router.put(
         },
       });
 
-      // 🔥 COMPLIANCE CHECK: Detect and log violations
+      // COMPLIANCE CHECK: Detect and log violations
       let violation = null;
       try {
         violation = await detectViolation(prisma, updatedShift, student);
@@ -419,9 +408,8 @@ router.put(
   }
 );
 
-/**
- * PUT /work-shifts/:shiftId/reject - Student rejects a work shift
- */
+
+// PUT /work-shifts/:shiftId/reject - Student rejects a work shift:
 router.put(
   "/:shiftId/reject",
   authenticate,
@@ -468,7 +456,7 @@ router.put(
         data: { status: "REJECTED" },
       });
 
-      // AUDIT LOG
+      // AUDIT LOG:
       await prisma.auditLog.create({
         data: {
           action: "REJECT_WORK_SHIFT",
@@ -497,9 +485,8 @@ router.put(
   }
 );
 
-/**
- * GET /work-shifts/me/history - Student views work history with weekly breakdown
- */
+
+// GET /work-shifts/me/history - Student views work history with weekly breakdown:
 router.get(
   "/me/history",
   authenticate,
@@ -518,7 +505,8 @@ router.get(
 
       const start = startDate
         ? new Date(startDate)
-        : new Date(Date.now() - 90 * 24 * 60 * 60 * 1000); // Default: 90 days ago
+        // Default: 90 days ago
+        : new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
       const end = endDate ? new Date(endDate) : new Date();
 
       const history = await getHoursInRange(prisma, student.id, start, end);

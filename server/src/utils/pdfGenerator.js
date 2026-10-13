@@ -1,13 +1,10 @@
-/**
- * PDF Generator Utility for Audit Pack Exports
- * Generates professional PDF documents for Home Office compliance
- */
+
+// PDF Generator Utility for Audit Pack Exports
+// Generates professional PDF documents for Home Office compliance:
 
 import PDFDocument from 'pdfkit';
 
-/**
- * Format date for PDF display
- */
+// Format date for PDF display:
 function formatDate(dateString) {
   if (!dateString) return 'N/A';
   const date = new Date(dateString);
@@ -20,9 +17,7 @@ function formatDate(dateString) {
   });
 }
 
-/**
- * Add header to PDF page
- */
+// Add header to PDF page:
 function addHeader(doc, title, subtitle = null) {
   doc.fontSize(20)
      .fillColor('#8b5cf6')
@@ -40,13 +35,11 @@ function addHeader(doc, title, subtitle = null) {
      .strokeColor('#e5e7eb')
      .lineWidth(1)
      .stroke();
-  
-  return 130; // Return Y position after header
+  // Return Y position after header
+  return 130;
 }
 
-/**
- * Add section title
- */
+// Add section title:
 function addSectionTitle(doc, y, title, number = null) {
   const sectionTitle = number ? `${number}. ${title}` : title;
   doc.fontSize(16)
@@ -64,9 +57,7 @@ function addSectionTitle(doc, y, title, number = null) {
   return y + 40;
 }
 
-/**
- * Add key-value pair
- */
+// Add key-value pair:
 function addKeyValue(doc, y, key, value, maxWidth = 200) {
   doc.fontSize(10)
      .fillColor('#6b7280')
@@ -79,9 +70,7 @@ function addKeyValue(doc, y, key, value, maxWidth = 200) {
   return y + 20;
 }
 
-/**
- * Add card/box with content
- */
+// Add card/box with content:
 function addCard(doc, y, content, options = {}) {
   const { padding = 10, backgroundColor = '#f9fafb', borderColor = '#e5e7eb' } = options;
   
@@ -96,9 +85,8 @@ function addCard(doc, y, content, options = {}) {
   return y + content.height + padding * 2 + 10;
 }
 
-/**
- * Generate Student Audit Pack PDF
- */
+
+// Generate Student Audit Pack PDF:
 export async function generateStudentAuditPackPDF(auditPack) {
   return new Promise((resolve, reject) => {
     try {
@@ -114,7 +102,7 @@ export async function generateStudentAuditPackPDF(auditPack) {
       
       let y = 50;
       
-      // Cover Page
+      // Cover Page:
       y = addHeader(doc, 'ISC Audit — International Student Compliance Audit', 'Student Audit Pack');
       
       y += 20;
@@ -141,7 +129,7 @@ export async function generateStudentAuditPackPDF(auditPack) {
            lineGap: 5
          });
       
-      // New Page - Layer 1: Identity & Context
+      // New Page - Layer 1: Identity & Context:
       doc.addPage();
       y = addHeader(doc, 'Audit Trail Report', `Student: ${auditPack.identity?.studentName || 'N/A'}`);
       
@@ -153,7 +141,7 @@ export async function generateStudentAuditPackPDF(auditPack) {
       y = addKeyValue(doc, y, 'Visa Type', auditPack.identity?.visaType || 'N/A');
       y = addKeyValue(doc, y, 'Course End Date', formatDate(auditPack.identity?.courseEndDate));
       
-      // New Page - Layer 2: Term Declarations
+      // New Page - Layer 2: Term Declarations:
       doc.addPage();
       y = addHeader(doc, 'Term Date Declarations', 'Student-Provided Academic Term Information');
       
@@ -201,7 +189,7 @@ export async function generateStudentAuditPackPDF(auditPack) {
            .text('No term declarations recorded.', 50, y);
       }
       
-      // New Page - Layer 3: Employer Acknowledgements
+      // New Page - Layer 3: Employer Acknowledgements:
       doc.addPage();
       y = addHeader(doc, 'Employer Acknowledgements', 'Employer Confirmation of Student Declarations');
       
@@ -253,7 +241,7 @@ export async function generateStudentAuditPackPDF(auditPack) {
            .text('No employer acknowledgements recorded.', 50, y);
       }
       
-      // New Page - Layer 4: Compliance Rules
+      // New Page - Layer 4: Compliance Rules:
       doc.addPage();
       y = addHeader(doc, 'Compliance Rules', 'System-Generated Work Hour Rules');
       
@@ -290,7 +278,7 @@ export async function generateStudentAuditPackPDF(auditPack) {
            .text('No compliance rules generated yet.', 50, y);
       }
       
-      // New Page - Layer 5: Change History
+      // New Page - Layer 5: Change History:
       doc.addPage();
       y = addHeader(doc, 'Change History', 'Record of All Modifications');
       
@@ -350,7 +338,7 @@ export async function generateStudentAuditPackPDF(auditPack) {
            .text('No changes recorded yet.', 50, y);
       }
       
-      // Final Page - Summary
+      // Final Page - Summary:
       doc.addPage();
       y = addHeader(doc, 'Audit Trail Summary', 'Complete Record Summary');
       
@@ -387,7 +375,7 @@ export async function generateStudentAuditPackPDF(auditPack) {
            lineGap: 3
          });
       
-      // Footer on all pages
+      // Footer on all pages:
       const pageRange = doc.bufferedPageRange();
       const startPage = pageRange.start;
       const totalPages = pageRange.count;
@@ -411,10 +399,8 @@ export async function generateStudentAuditPackPDF(auditPack) {
   });
 }
 
-/**
- * Generate Term Letter PDF for Students
- * A professional letter that students can share with employers
- */
+// Generate Term Letter PDF for Students
+// A professional letter that students can share with employers:
 export async function generateTermLetterPDF(student, terms) {
   return new Promise((resolve, reject) => {
     try {
@@ -430,7 +416,7 @@ export async function generateTermLetterPDF(student, terms) {
       
       let y = 50;
       
-      // Header
+      // Header:
       doc.fontSize(20)
          .fillColor('#1f2937')
          .text('ISC Audit — International Student Compliance Audit', 50, y, { align: 'center' });
@@ -442,7 +428,7 @@ export async function generateTermLetterPDF(student, terms) {
       
       y += 40;
       
-      // Date
+      // Date:
       const today = new Date();
       doc.fontSize(10)
          .fillColor('#6b7280')
@@ -450,14 +436,14 @@ export async function generateTermLetterPDF(student, terms) {
       
       y += 30;
       
-      // Letter body
+      // Letter body:
       doc.fontSize(11)
          .fillColor('#1f2937')
          .text('To Whom It May Concern,', 50, y);
       
       y += 30;
       
-      // Student information paragraph
+      // Student information paragraph:
       const studentName = student.fullName || student.user?.email || 'Student';
       const universityName = student.universityName || 'University';
       const universityId = student.universityId || 'N/A';
@@ -476,18 +462,18 @@ export async function generateTermLetterPDF(student, terms) {
       
       y += 50;
       
-      // Terms table header
+      // Terms table header:
       doc.fontSize(10)
          .fillColor('#1f2937')
          .text('Academic Term Dates:', 50, y, { bold: true });
       
       y += 25;
       
-      // Filter to only include confirmed terms (safety check - should already be filtered at endpoint level)
+      // Filter to only include confirmed terms (safety check - should already be filtered at endpoint level):
       const confirmedTerms = terms.filter(term => term.confirmedAt !== null && term.confirmedAt !== undefined);
       
       if (confirmedTerms.length === 0) {
-        // If no confirmed terms, add a message
+        // If no confirmed terms, add a message:
         doc.fontSize(10)
            .fillColor('#6b7280')
            .text('No confirmed term dates available.', 50, y);
@@ -495,7 +481,7 @@ export async function generateTermLetterPDF(student, terms) {
         return;
       }
       
-      // Group terms by academic year
+      // Group terms by academic year:
       const groupedTerms = {};
       const noYearTerms = [];
       
@@ -559,7 +545,7 @@ export async function generateTermLetterPDF(student, terms) {
         y += 10;
       });
       
-      // Display terms without academic year
+      // Display terms without academic year:
       if (noYearTerms.length > 0) {
         if (y > 650) {
           doc.addPage();
@@ -628,7 +614,7 @@ export async function generateTermLetterPDF(student, terms) {
       
       y += 50;
       
-      // Closing
+      // Closing:
       doc.fontSize(10)
          .fillColor('#1f2937')
          .text('This letter is generated by ISC Audit and serves as documentation of the student\'s declared academic term dates.', 50, y, {
@@ -679,9 +665,7 @@ export async function generateTermLetterPDF(student, terms) {
   });
 }
 
-/**
- * Generate Employer Relationship Audit Pack PDF
- */
+// Generate Employer Relationship Audit Pack PDF:
 export async function generateRelationshipAuditPackPDF(auditPack) {
   return new Promise((resolve, reject) => {
     try {
@@ -697,7 +681,7 @@ export async function generateRelationshipAuditPackPDF(auditPack) {
       
       let y = 50;
       
-      // Cover Page
+      // Cover Page:
       y = addHeader(doc, 'ISC Audit — International Student Compliance Audit', 'Employer-Student Relationship Audit Pack');
       
       y += 20;
@@ -729,7 +713,7 @@ export async function generateRelationshipAuditPackPDF(auditPack) {
            lineGap: 5
          });
       
-      // New Page - Layer 1: Identity
+      // New Page - Layer 1: Identity:
       doc.addPage();
       y = addHeader(doc, 'Audit Trail Report', `Relationship ID: ${auditPack.relationship?.id || 'N/A'}`);
       
@@ -743,7 +727,7 @@ export async function generateRelationshipAuditPackPDF(auditPack) {
       y = addKeyValue(doc, y, 'Relationship Status', auditPack.relationship?.status || 'N/A');
       y = addKeyValue(doc, y, 'Linked At', formatDate(auditPack.relationship?.linkedAt));
       
-      // New Page - Layer 2: Student Declarations
+      // New Page - Layer 2: Student Declarations:
       doc.addPage();
       y = addHeader(doc, 'Student Term Declarations', 'Student-Provided Academic Term Information');
       
@@ -776,7 +760,7 @@ export async function generateRelationshipAuditPackPDF(auditPack) {
            .text('No student declarations available.', 50, y);
       }
       
-      // New Page - Layer 3: Employer Acknowledgement
+      // New Page - Layer 3: Employer Acknowledgement:
       doc.addPage();
       y = addHeader(doc, 'Employer Acknowledgement', 'Employer Confirmation of Student Declarations');
       
@@ -807,7 +791,7 @@ export async function generateRelationshipAuditPackPDF(auditPack) {
            .text('No acknowledgement recorded yet.', 50, y);
       }
       
-      // New Page - Layer 4: Compliance Rules
+      // New Page - Layer 4: Compliance Rules:
       doc.addPage();
       y = addHeader(doc, 'Compliance Rules', 'System-Generated Work Hour Rules');
       
@@ -843,7 +827,7 @@ export async function generateRelationshipAuditPackPDF(auditPack) {
            .text('No compliance rules generated yet.', 50, y);
       }
       
-      // New Page - Layer 5: Change History
+      // New Page - Layer 5: Change History:
       doc.addPage();
       y = addHeader(doc, 'Change History', 'Record of All Modifications');
       
@@ -903,7 +887,7 @@ export async function generateRelationshipAuditPackPDF(auditPack) {
            .text('No changes recorded yet.', 50, y);
       }
       
-      // Final Page - Summary
+      // Final Page - Summary:
       doc.addPage();
       y = addHeader(doc, 'Audit Trail Summary', 'Complete Record Summary');
       
@@ -940,7 +924,7 @@ export async function generateRelationshipAuditPackPDF(auditPack) {
            lineGap: 3
          });
       
-      // Footer on all pages
+      // Footer on all pages:
       const pageRange = doc.bufferedPageRange();
       const startPage = pageRange.start;
       const totalPages = pageRange.count;

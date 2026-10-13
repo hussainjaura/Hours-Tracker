@@ -1,13 +1,11 @@
-/**
- * Error handling utilities
- * Provides consistent error response format and error logging
- */
+
+// Error handling utilities
+// Provides consistent error response format and error logging:
 
 import { Prisma } from "@prisma/client";
 
-/**
- * Custom error class for application errors
- */
+
+// Custom error class for application errors:
 export class AppError extends Error {
   constructor(message, statusCode = 500, code = null, details = null) {
     super(message);
@@ -19,9 +17,7 @@ export class AppError extends Error {
   }
 }
 
-/**
- * Creates a consistent error response format
- */
+// Creates a consistent error response format:
 export const createErrorResponse = (error, requestId = null) => {
   const response = {
     success: false,
@@ -37,12 +33,12 @@ export const createErrorResponse = (error, requestId = null) => {
     response.error.code = error.code;
   }
 
-  // Add details if available (but not in production for security)
+  // Add details if available (but not in production for security):
   if (error.details && process.env.NODE_ENV !== "production") {
     response.error.details = error.details;
   }
 
-  // Add stack trace in development
+  // Add stack trace in development:
   if (process.env.NODE_ENV === "development" && error.stack) {
     response.error.stack = error.stack;
   }
@@ -50,9 +46,7 @@ export const createErrorResponse = (error, requestId = null) => {
   return response;
 };
 
-/**
- * Maps Prisma errors to user-friendly messages
- */
+// Maps Prisma errors to user-friendly messages:
 export const handlePrismaError = (error) => {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     switch (error.code) {
@@ -97,9 +91,7 @@ export const handlePrismaError = (error) => {
   return error;
 };
 
-/**
- * Logs error with context
- */
+// Logs error with context:
 export const logError = (error, requestId = null, context = {}) => {
   const errorLog = {
     requestId,
@@ -121,9 +113,7 @@ export const logError = (error, requestId = null, context = {}) => {
   // - CloudWatch
 };
 
-/**
- * Creates a user-friendly error message
- */
+// Creates a user-friendly error message:
 export const getUserFriendlyMessage = (error) => {
   if (error instanceof AppError) {
     return error.message;

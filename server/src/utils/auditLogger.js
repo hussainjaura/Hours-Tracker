@@ -5,9 +5,7 @@
 
 import prisma from "../prisma.js";
 
-/**
- * Get client IP address from request
- */
+// Get client IP address from request:
 export function getClientIp(req) {
   return (
     req.headers["x-forwarded-for"]?.split(",")[0] ||
@@ -18,17 +16,14 @@ export function getClientIp(req) {
   );
 }
 
-/**
- * Get user agent from request
- */
+// Get user agent from request:
 export function getUserAgent(req) {
   return req.headers["user-agent"] || "unknown";
 }
 
-/**
- * Layer 1: Identity & Context
- * Captures: Student name, Employer name, Visa category, Academic year, University name
- */
+
+// Layer 1: Identity & Context
+// Captures: Student name, Employer name, Visa category, Academic year, University name:
 export async function logIdentityContext(prisma, action, entityType, entityId, performedBy, universityId, contextData, req = null) {
   const metadata = {
     // Layer 1: Identity & Context
@@ -55,10 +50,9 @@ export async function logIdentityContext(prisma, action, entityType, entityId, p
   });
 }
 
-/**
- * Layer 2: Term-date Declaration
- * Captures: Term dates, Student declaration text, Confirmation timestamp
- */
+
+// Layer 2: Term-date Declaration
+// Captures: Term dates, Student declaration text, Confirmation timestamp:
 export async function logTermDeclaration(prisma, term, student, user, declarationText, req = null) {
   const declaration = declarationText || 
     "I confirm these term dates are accurate to the best of my knowledge.";
@@ -89,10 +83,9 @@ export async function logTermDeclaration(prisma, term, student, user, declaratio
   });
 }
 
-/**
- * Layer 3: Employer Acknowledgement
- * Captures: Employer viewing dates, Acknowledgement text, Timestamp
- */
+
+// Layer 3: Employer Acknowledgement
+// Captures: Employer viewing dates, Acknowledgement text, Timestamp:
 export async function logEmployerAcknowledgement(prisma, relationship, student, employer, acknowledgementText, req = null) {
   const acknowledgement = acknowledgementText || 
     "We have relied on the information provided and applied the correct working restrictions.";
@@ -138,10 +131,9 @@ export async function logEmployerAcknowledgement(prisma, relationship, student, 
   });
 }
 
-/**
- * Layer 4: System-generated Compliance Rule
- * Captures: Applied rule, Date range, Source data
- */
+
+// Layer 4: System-generated Compliance Rule
+// Captures: Applied rule, Date range, Source data:
 export async function logComplianceRule(prisma, student, ruleData, req = null) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -192,10 +184,9 @@ export async function logComplianceRule(prisma, student, ruleData, req = null) {
   });
 }
 
-/**
- * Layer 5: Change History
- * Captures: Previous values, New values, Who changed, When, Reason
- */
+
+// Layer 5: Change History
+// Captures: Previous values, New values, Who changed, When, Reason:
 export async function logChangeHistory(prisma, action, entityType, entityId, performedBy, universityId, oldValues, newValues, reason = null, req = null) {
   return await prisma.auditLog.create({
     data: {
@@ -205,7 +196,7 @@ export async function logChangeHistory(prisma, action, entityType, entityId, per
       performedBy,
       universityId,
       metadata: {
-        // Layer 1: Identity (if available)
+        // Layer 1: Identity (if available):
         ...(oldValues.studentName && { studentName: oldValues.studentName }),
         ...(oldValues.employerName && { employerName: oldValues.employerName }),
         // Layer 5: Change History
@@ -227,9 +218,7 @@ export async function logChangeHistory(prisma, action, entityType, entityId, per
   });
 }
 
-/**
- * Comprehensive audit log creator - combines all layers when applicable
- */
+// Comprehensive audit log creator - combines all layers when applicable:
 export async function createComprehensiveAuditLog(prisma, options, req = null) {
   const {
     action,
@@ -239,13 +228,13 @@ export async function createComprehensiveAuditLog(prisma, options, req = null) {
     universityId,
     // Layer 1: Identity & Context
     identityContext = {},
-    // Layer 2: Declaration (if applicable)
+    // Layer 2: Declaration (if applicable):
     declarationText = null,
-    // Layer 3: Acknowledgement (if applicable)
+    // Layer 3: Acknowledgement (if applicable):
     acknowledgementText = null,
-    // Layer 4: Compliance Rule (if applicable)
+    // Layer 4: Compliance Rule (if applicable):
     complianceRule = null,
-    // Layer 5: Change History (if applicable)
+    // Layer 5: Change History (if applicable):
     changeHistory = null,
     // Additional metadata
     additionalMetadata = {},
@@ -276,9 +265,8 @@ export async function createComprehensiveAuditLog(prisma, options, req = null) {
   });
 }
 
-/**
- * Get audit trail for a student (for export/display)
- */
+
+// Get audit trail for a student (for export/display):
 export async function getStudentAuditTrail(prisma, studentId, universityId) {
   const student = await prisma.student.findUnique({
     where: { id: studentId },
@@ -295,7 +283,7 @@ export async function getStudentAuditTrail(prisma, studentId, universityId) {
     throw new Error("Student not found");
   }
 
-  // Get all audit logs for this student
+  // Get all audit logs for this student:
   const auditLogs = await prisma.auditLog.findMany({
     where: {
       universityId: universityId,
@@ -303,13 +291,13 @@ export async function getStudentAuditTrail(prisma, studentId, universityId) {
     orderBy: { createdAt: "asc" },
   });
 
-  // Get student's terms
+  // Get student's terms:
   const terms = await prisma.term.findMany({
     where: { studentId: student.id },
     orderBy: { startDate: "asc" },
   });
 
-  // Get relationships with acknowledgements (include employer profile)
+  // Get relationships with acknowledgements (include employer profile):
   const relationships = await prisma.studentEmployer.findMany({
     where: { studentId: student.id },
     include: {
@@ -323,7 +311,7 @@ export async function getStudentAuditTrail(prisma, studentId, universityId) {
     },
   });
 
-  // Fetch employer profiles for all unique employer IDs
+  // Fetch employer profiles for all unique employer IDs:
   const employerIds = [...new Set(relationships.map(rel => rel.employerId))];
   const employerProfiles = await prisma.employer.findMany({
     where: {
@@ -338,7 +326,7 @@ export async function getStudentAuditTrail(prisma, studentId, universityId) {
     },
   });
 
-  // Create a map for quick lookup
+  // Create a map for quick lookup:
   const employerMap = new Map();
   employerProfiles.forEach(emp => {
     employerMap.set(emp.userId, emp);
@@ -346,7 +334,7 @@ export async function getStudentAuditTrail(prisma, studentId, universityId) {
 
   // Organize by layers
   const auditTrail = {
-    // Layer 1: Identity & Context
+    // Layer 1: Identity & Context:
     identity: {
       studentName: student.fullName || student.user?.email || student.universityId,
       universityId: student.universityId,
@@ -404,9 +392,8 @@ export async function getStudentAuditTrail(prisma, studentId, universityId) {
   return auditTrail;
 }
 
-/**
- * Get audit trail for an employer-student relationship
- */
+
+// Get audit trail for an employer-student relationship:
 export async function getRelationshipAuditTrail(prisma, relationshipId) {
   const relationship = await prisma.studentEmployer.findUnique({
     where: { id: relationshipId },

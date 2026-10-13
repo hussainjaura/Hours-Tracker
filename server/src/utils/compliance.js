@@ -1,8 +1,5 @@
-/**
- * Compliance and Violation Detection Utilities
- * 
- * Functions to detect, log, and track compliance violations
- */
+// Compliance and Violation Detection Utilities 
+// Functions to detect, log, and track compliance violations:
 
 import { getWeeklyHours, getWeekStart, getWeekEnd } from "./weeklyHours.js";
 import { getWorkEligibility } from "./workEligibility.js";

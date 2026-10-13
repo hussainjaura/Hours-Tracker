@@ -7,15 +7,11 @@ const router = express.Router();
 
 
 
-/**
- * ============================================
- * TERM TEMPLATE CRUD OPERATIONS (ADMIN only)
- * ============================================
- */
 
-/**
- * GET all term templates for a university
- */
+ /* Term Template CRUD operations(Admin only): */
+
+
+// GET all term templates for a university
 router.get(
     "/universities/:universityId/templates",
     authenticate,
@@ -23,36 +19,35 @@ router.get(
     async (req, res) => {
       try {
         const universityId = Number(req.params.universityId);
-  
+
         if (isNaN(universityId)) {
           return res.status(400).json({ error: "Invalid university ID" });
         }
-  
+
         const university = await prisma.university.findUnique({
           where: { id: universityId },
         });
-  
+
         if (!university) {
           return res.status(404).json({ error: "University not found" });
         }
-  
+
         const templates = await prisma.termTemplate.findMany({
           where: { universityId },
           orderBy: { startDate: "asc" },
         });
-  
+
         res.json(templates);
       } catch (error) {
         console.error("GET TEMPLATES ERROR:", error);
         res.status(500).json({ error: "Internal server error" });
       }
     }
-  );
-  
-  /**
-   * CREATE a new term template
-   */
-  router.post(
+);
+
+
+// CREATE a new term template:
+router.post(
     "/universities/:universityId/templates",
     authenticate,
     authorizeRoles("ADMIN"),
@@ -66,20 +61,20 @@ router.get(
       try {
         const universityId = Number(req.params.universityId);
         const { name, startDate, endDate } = req.body;
-  
+
         if (isNaN(universityId)) {
           return res.status(400).json({ error: "Invalid university ID" });
         }
-  
+
         // Verify university exists
         const university = await prisma.university.findUnique({
           where: { id: universityId },
         });
-  
+
         if (!university) {
           return res.status(404).json({ error: "University not found" });
         }
-  
+
         const template = await prisma.termTemplate.create({
           data: {
             universityId,
@@ -88,7 +83,7 @@ router.get(
             endDate,
           },
         });
-  
+
         // AUDIT LOG
         await prisma.auditLog.create({
           data: {
@@ -105,19 +100,18 @@ router.get(
             },
           },
         });
-  
+
         res.status(201).json(template);
       } catch (error) {
         console.error("CREATE TEMPLATE ERROR:", error);
         res.status(500).json({ error: "Internal server error" });
       }
     }
-  );
-  
-  /**
-   * UPDATE a term template
-   */
-  router.put(
+);
+
+
+// UPDATE a term template:
+router.put(
     "/templates/:templateId",
     authenticate,
     authorizeRoles("ADMIN"),
@@ -125,33 +119,33 @@ router.get(
       try {
         const templateId = Number(req.params.templateId);
         const { name, startDate, endDate } = req.body;
-  
+
         if (isNaN(templateId)) {
           return res.status(400).json({ error: "Invalid template ID" });
         }
-  
+
         // Get old values and university for audit
         const oldTemplate = await prisma.termTemplate.findUnique({
           where: { id: templateId },
           include: { university: true },
         });
-  
+
         if (!oldTemplate) {
           return res.status(404).json({ error: "Term template not found" });
         }
-  
+
         // Validate dates if provided
         if (startDate || endDate) {
           const startValidation = startDate ? validateDate(startDate, 'startDate') : { valid: true };
           const endValidation = endDate ? validateDate(endDate, 'endDate') : { valid: true };
-          
+
           if (!startValidation.valid) {
             return res.status(400).json({ error: startValidation.error });
           }
           if (!endValidation.valid) {
             return res.status(400).json({ error: endValidation.error });
           }
-          
+
           // If both dates provided, validate range
           if (startDate && endDate) {
             const rangeValidation = validateDateRange(startDate, endDate);
@@ -166,24 +160,24 @@ router.get(
             req.body.endDate = endValidation.date;
           }
         }
-  
+
         const updateData = {};
         if (name) updateData.name = name.toUpperCase();
         if (req.body.startDate) updateData.startDate = req.body.startDate;
         if (req.body.endDate) updateData.endDate = req.body.endDate;
-  
+
         if (Object.keys(updateData).length === 0) {
           return res.status(400).json({
             error: "At least one field must be provided",
           });
         }
-  
+
         const updated = await prisma.termTemplate.update({
           where: { id: templateId },
           data: updateData,
         });
-  
-        // AUDIT LOG
+
+        // AUDIT LOG:
         await prisma.auditLog.create({
           data: {
             action: "UPDATE_TERM_TEMPLATE",
@@ -205,41 +199,40 @@ router.get(
             },
           },
         });
-  
+
         res.json(updated);
       } catch (error) {
         console.error("UPDATE TEMPLATE ERROR:", error);
         res.status(500).json({ error: "Internal server error" });
       }
     }
-  );
-  
-  /**
-   * DELETE a term template
-   */
-  router.delete(
+);
+
+
+// DELETE a term template:
+router.delete(
     "/templates/:templateId",
     authenticate,
     authorizeRoles("ADMIN"),
     async (req, res) => {
       try {
         const templateId = Number(req.params.templateId);
-  
+
         if (isNaN(templateId)) {
           return res.status(400).json({ error: "Invalid template ID" });
         }
-  
-        // Get template data for audit before deletion
+
+        // Get template data for audit before deletion:
         const template = await prisma.termTemplate.findUnique({
           where: { id: templateId },
           include: { university: true },
         });
-  
+
         if (!template) {
           return res.status(404).json({ error: "Term template not found" });
         }
-  
-        // AUDIT LOG (before deletion)
+
+        // AUDIT LOG (before deletion):
         await prisma.auditLog.create({
           data: {
             action: "DELETE_TERM_TEMPLATE",
@@ -255,18 +248,17 @@ router.get(
             },
           },
         });
-  
+
         await prisma.termTemplate.delete({
           where: { id: templateId },
         });
-  
+
         res.json({ message: "Term template deleted successfully" });
       } catch (error) {
         console.error("DELETE TEMPLATE ERROR:", error);
         res.status(500).json({ error: "Internal server error" });
       }
     }
-  );
-  
+);
+
 export default router;
-  
