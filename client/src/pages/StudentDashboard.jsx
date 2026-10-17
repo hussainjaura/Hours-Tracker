@@ -16,7 +16,12 @@ const StudentDashboard = () => {
   const [pendingRequests, setPendingRequests] = useState([])
   const [terms, setTerms] = useState([])
   const [templates, setTemplates] = useState([])
-  const [error, setError] = useState('')
+  const [error, setErrorMessage] = useState('')
+  // Errors show in the box at the top of the page, so scroll up whenever one is set
+  const setError = (message) => {
+    setErrorMessage(message)
+    if (message) window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
   const [activeTab, setActiveTab] = useState('overview')
   const { mobileNavOpen, setMobileNavOpen } = useMobileNav()
   
@@ -798,7 +803,8 @@ const StudentDashboard = () => {
               className="dashboard-card alert-card" 
               style={{ 
                 backgroundColor: '#fef3c7', 
-                border: '2px solid #f59e0b',
+                border: '1px solid #fcd34d',
+                borderLeft: '5px solid #d97706',
                 cursor: 'pointer',
                 marginBottom: '1.5rem'
               }}
@@ -807,7 +813,7 @@ const StudentDashboard = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ flex: 1 }}>
                   <h3 style={{ margin: '0 0 0.5rem 0', color: '#92400e' }}>
-                    ⚠️ Pending Access Requests
+                    Pending Access Requests
                   </h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                     <div style={{ fontSize: '1.1rem', fontWeight: '600', color: '#92400e' }}>
@@ -1392,7 +1398,7 @@ const StudentDashboard = () => {
                       }
                     }}
                   >
-                    📄 Download Term Letter
+                    Download Term Letter
                   </button>
                 )}
                 <button
@@ -1822,7 +1828,7 @@ const StudentDashboard = () => {
                     }
                   }}
                 >
-                  📄 Download Term Letter
+                  Download Term Letter
                 </button>
               )}
             </div>
@@ -2078,7 +2084,12 @@ const AuditTrailTab = ({ profile, onExport }) => {
   const [auditTrail, setAuditTrail] = useState(null)
   const [auditLogs, setAuditLogs] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error, setErrorMessage] = useState('')
+  // Errors show in the box at the top of the page, so scroll up whenever one is set
+  const setError = (message) => {
+    setErrorMessage(message)
+    if (message) window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
   const [exporting, setExporting] = useState(false)
 
   useEffect(() => {
@@ -2181,7 +2192,7 @@ const AuditTrailTab = ({ profile, onExport }) => {
               disabled={exporting}
               title="Export as PDF document - Ready for Home Office submission"
             >
-              {exporting ? 'Exporting...' : '📄 Export PDF'}
+              {exporting ? 'Exporting...' : 'Export PDF'}
             </button>
             <button
               className="btn btn-secondary"

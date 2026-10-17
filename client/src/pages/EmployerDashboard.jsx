@@ -11,7 +11,12 @@ const EmployerDashboard = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [students, setStudents] = useState([])
-  const [error, setError] = useState('')
+  const [error, setErrorMessage] = useState('')
+  // Errors show in the box at the top of the page, so scroll up whenever one is set
+  const setError = (message) => {
+    setErrorMessage(message)
+    if (message) window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
   const [activeTab, setActiveTab] = useState('overview')
   const [employerProfile, setEmployerProfile] = useState(null)
   const [profileLoading, setProfileLoading] = useState(false)
@@ -197,6 +202,12 @@ const EmployerDashboard = () => {
 
   const activeStudents = students.filter(s => s.status === 'ACTIVE')
   const pendingRequests = students.filter(s => s.status === 'PENDING')
+
+  // The server only builds a term letter from term dates the student has confirmed
+  const hasConfirmedTerms = (universityId) => {
+    const rel = activeStudents.find((r) => r.student.universityId === universityId)
+    return !!rel?.student.terms?.some((term) => term.confirmedAt)
+  }
 
   return (
     <div className="dashboard-container">
@@ -693,11 +704,18 @@ const EmployerDashboard = () => {
                                 Pending Acknowledgement
                               </div>
                             )}
+                            {!hasConfirmedTerms(student.universityId) && (
+                              <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#92400e' }}>
+                                The term letter isn't available yet because the student hasn't confirmed their term dates.
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                           <button
                             className="btn btn-secondary"
+                            disabled={!hasConfirmedTerms(student.universityId)}
+                            title={hasConfirmedTerms(student.universityId) ? '' : 'The student has not confirmed their term dates yet'}
                             onClick={async () => {
                               try {
                                 await employerAPI.downloadStudentTermLetter(student.universityId)
@@ -708,7 +726,7 @@ const EmployerDashboard = () => {
                               }
                             }}
                           >
-                            📄 Download Term Letter
+                            Download Term Letter
                           </button>
                           {!rel.acknowledgedAt && (
                             <button
@@ -1089,9 +1107,15 @@ const EmployerDashboard = () => {
                   </div>
                 </div>
 
-                <div className="student-profile-actions" style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                <div className="student-profile-actions" style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap' }}>
+                  {!hasConfirmedTerms(searchedStudent.universityId) && (
+                    <span style={{ fontSize: '0.875rem', color: '#92400e' }}>
+                      The term letter isn't available yet because the student hasn't confirmed their term dates.
+                    </span>
+                  )}
                   <button
                     className="btn btn-secondary"
+                    disabled={!hasConfirmedTerms(searchedStudent.universityId)}
                     onClick={async () => {
                       try {
                         await employerAPI.downloadStudentTermLetter(searchedStudent.universityId)
@@ -1102,7 +1126,7 @@ const EmployerDashboard = () => {
                       }
                     }}
                   >
-                    📄 Download Term Letter
+                    Download Term Letter
                   </button>
                 </div>
               </div>
@@ -1125,7 +1149,12 @@ const EmployerAuditTrailTab = ({ students }) => {
   const [selectedRelationship, setSelectedRelationship] = useState(null)
   const [selectedAuditTrail, setSelectedAuditTrail] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error, setErrorMessage] = useState('')
+  // Errors show in the box at the top of the page, so scroll up whenever one is set
+  const setError = (message) => {
+    setErrorMessage(message)
+    if (message) window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
   const [exporting, setExporting] = useState(false)
 
   const activeStudents = students.filter(s => s.status === 'ACTIVE')

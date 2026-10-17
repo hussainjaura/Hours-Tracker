@@ -27,7 +27,16 @@ api.interceptors.request.use(
 // Response interceptor to handle errors
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    // File downloads ask for a Blob, so an error reply arrives as a Blob too. Turn it back into JSON so we can read its message.
+    if (error.response?.data instanceof Blob) {
+      try {
+        error.response.data = JSON.parse(await error.response.data.text())
+      } catch {
+        // Not JSON - leave it as it is
+      }
+    }
+
     // Handle 401 Unauthorized - redirect to login:
 
     const isLoginRequest = error.config?.url?.includes('/auth/login')
