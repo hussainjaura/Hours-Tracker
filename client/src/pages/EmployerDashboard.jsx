@@ -209,6 +209,16 @@ const EmployerDashboard = () => {
     return !!rel?.student.terms?.some((term) => term.confirmedAt)
   }
 
+  // Finds the term a student is in today and the terms still to come so managers can plan rotas:
+  const getTermSchedule = (terms = []) => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const sorted = [...terms].sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+    const current = sorted.find((term) => new Date(term.startDate) <= today && new Date(term.endDate) >= today)
+    const upcoming = sorted.filter((term) => new Date(term.startDate) > today)
+    return { current, upcoming }
+  }
+
   return (
     <div className="dashboard-container">
       {error && (
@@ -953,6 +963,40 @@ const EmployerDashboard = () => {
                         Waiting for student approval
                       </div>
                     )}
+                    {/* Term dates - only shared once the student accepts */}
+                    {rel.status === 'ACTIVE' && (() => {
+                      const { current, upcoming } = getTermSchedule(rel.student.terms)
+                      const shownTerms = current ? [current, ...upcoming] : upcoming
+                      return (
+                        <div className="student-term-schedule">
+                          <div className={`term-now ${current ? 'term-now-term' : 'term-now-holiday'}`}>
+                            {current
+                              ? `Now: Term time (${current.name}, until ${formatDate(current.endDate)})`
+                              : `Now: Holiday${upcoming[0] ? ` (next term starts ${formatDate(upcoming[0].startDate)})` : ''}`}
+                          </div>
+                          {shownTerms.length > 0 ? (
+                            <ul className="term-schedule-list">
+                              {shownTerms.map((term) => (
+                                <li key={term.id} className="term-schedule-row">
+                                  <div>
+                                    <span className="term-schedule-name">{term.name}</span>
+                                    {term.academicYear && <span className="term-schedule-year">{term.academicYear}</span>}
+                                    <div className="term-schedule-dates">
+                                      {formatDate(term.startDate)} – {formatDate(term.endDate)}
+                                    </div>
+                                  </div>
+                                  <span className={`confirmation-badge ${term.confirmedAt ? 'confirmed' : 'pending'}`}>
+                                    {term.confirmedAt ? 'Confirmed' : 'Not Confirmed'}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="term-schedule-empty">No current or upcoming term dates declared yet.</p>
+                          )}
+                        </div>
+                      )
+                    })()}
                   </div>
                 ))}
               </div>
