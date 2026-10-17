@@ -52,6 +52,12 @@ api.interceptors.response.use(
     else if (error.message) {
       errorMessage = error.message
     }
+
+    // Validation errors list the exact reasons in "details" - show those instead of the generic "Validation failed"
+    const details = error.response?.data?.error?.details
+    if (Array.isArray(details) && details.length > 0) {
+      errorMessage = details.map((detail) => detail.error).join('. ')
+    }
     
     // Return error with consistent format
     return Promise.reject({
@@ -124,6 +130,8 @@ export const employerAPI = {
   requestAccess: (universityId) => api.post('/relationships/request', { studentUniversityId: universityId }),
   getStudents: () => api.get('/relationships/my-students'),
   getRequests: () => api.get('/relationships/requests'),
+  getRejections: () => api.get('/relationships/rejections'),
+  dismissRejection: (rejectionId) => api.post(`/relationships/rejections/${rejectionId}/dismiss`),
   searchStudent: (universityId) => api.get(`/students/${universityId}`),
   acknowledgeStudent: (relationshipId) => api.put(`/relationships/${relationshipId}/acknowledge`),
   // Profile endpoints

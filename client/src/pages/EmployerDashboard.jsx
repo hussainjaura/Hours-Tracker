@@ -22,11 +22,33 @@ const EmployerDashboard = () => {
   const [searchedStudent, setSearchedStudent] = useState(null)
   const [searching, setSearching] = useState(false)
 
+  // Access requests students rejected that this employer hasn't dismissed yet
+  const [rejections, setRejections] = useState([])
+
 
   useEffect(() => {
     loadDashboardData()
     loadEmployerProfile()
+    loadRejections()
   }, [])
+
+  const loadRejections = async () => {
+    try {
+      const res = await employerAPI.getRejections()
+      setRejections(res.data || [])
+    } catch (err) {
+      console.error('Failed to load rejected requests:', err)
+    }
+  }
+
+  const dismissRejection = async (rejectionId) => {
+    try {
+      await employerAPI.dismissRejection(rejectionId)
+      setRejections((prev) => prev.filter((r) => r.id !== rejectionId))
+    } catch (err) {
+      setError(err.message || 'Failed to dismiss notice')
+    }
+  }
 
   // Prevent background scroll when drawer is open
   useEffect(() => {
@@ -388,6 +410,27 @@ const EmployerDashboard = () => {
           <div className="overview-two-column">
             {/* Left Column */}
             <div className="overview-column">
+              {/* Rejected Requests - shown until the employer dismisses each one */}
+              {rejections.length > 0 && (
+                <div className="dashboard-card alert-card">
+                  <h3>Request{rejections.length > 1 ? 's' : ''} Rejected</h3>
+                  {rejections.map((rejection) => (
+                    <div key={rejection.id} className="alert-content" style={{ marginTop: '0.75rem' }}>
+                      <div className="alert-text">
+                        <strong>University ID {rejection.studentUniversityId || 'Unknown'} rejected your access request</strong>
+                        <p>Rejected on {formatDate(rejection.rejectedAt)}</p>
+                      </div>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => dismissRejection(rejection.id)}
+                      >
+                        OK
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Active Students */}
               {activeStudents.length > 0 ? (
                 <div className="dashboard-card">

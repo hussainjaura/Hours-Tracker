@@ -485,6 +485,93 @@ router.put(
   }
 );
 
+// GET /relationships/rejections - Employer sees access requests that students rejected and they haven't dismissed yet.
+// Rejected relationships are deleted, so the REJECT_EMPLOYER_ACCESS audit log is the record we read from.
+router.get(
+  "/rejections",
+  authenticate,
+  authorizeRoles("EMPLOYER"),
+  async (req, res) => {
+    try {
+      const rejections = await prisma.auditLog.findMany({
+        where: {
+          action: "REJECT_EMPLOYER_ACCESS",
+          metadata: { path: ["employerId"], equals: req.user.id },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      // Dismissals are audit logs too, pointing at the rejection log they dismissed
+      const dismissals = await prisma.auditLog.findMany({
+        where: {
+          action: "DISMISS_REJECTION_NOTICE",
+          performedBy: req.user.id,
+          entityId: { in: rejections.map((r) => r.id) },
+        },
+        select: { entityId: true },
+      });
+      const dismissedIds = new Set(dismissals.map((d) => d.entityId));
+
+      res.json(
+        rejections
+          .filter((r) => !dismissedIds.has(r.id))
+          .map((r) => ({
+            id: r.id,
+            studentUniversityId: r.universityId,
+            rejectedAt: r.createdAt,
+          }))
+      );
+    } catch (error) {
+      console.error("GET REJECTIONS ERROR:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+// POST /relationships/rejections/:auditLogId/dismiss - Employer has seen a rejection, so stop showing it:
+router.post(
+  "/rejections/:auditLogId/dismiss",
+  authenticate,
+  authorizeRoles("EMPLOYER"),
+  async (req, res) => {
+    try {
+      const auditLogId = Number(req.params.auditLogId);
+
+      if (isNaN(auditLogId)) {
+        return res.status(400).json({ error: "Invalid rejection ID" });
+      }
+
+      const rejection = await prisma.auditLog.findUnique({
+        where: { id: auditLogId },
+      });
+
+      if (
+        !rejection ||
+        rejection.action !== "REJECT_EMPLOYER_ACCESS" ||
+        rejection.metadata?.employerId !== req.user.id
+      ) {
+        return res.status(404).json({ error: "Rejection not found" });
+      }
+
+      // AUDIT LOG
+      await prisma.auditLog.create({
+        data: {
+          action: "DISMISS_REJECTION_NOTICE",
+          entityType: "AuditLog",
+          entityId: rejection.id,
+          performedBy: req.user.id,
+          universityId: rejection.universityId,
+        },
+      });
+
+      res.json({ message: "Rejection notice dismissed" });
+    } catch (error) {
+      console.error("DISMISS REJECTION ERROR:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
 
 // PUT /relationships/:relationshipId/deactivate - Student deactivates active relationship:
 router.put(

@@ -3,6 +3,23 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import './Auth.css'
 
+// Same password rules as the server (server/src/utils/password.js), so users see the exact problem before submitting
+const getPasswordError = (password) => {
+  if (password.length < 8) return 'Password must be at least 8 characters long'
+  if (password.length > 128) return 'Password must be no more than 128 characters long'
+  if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter'
+  if (!/[a-z]/.test(password)) return 'Password must contain at least one lowercase letter'
+  if (!/[0-9]/.test(password)) return 'Password must contain at least one number'
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
+    return 'Password must contain at least one special character (e.g. ! @ # $ %)'
+  }
+  const commonPasswords = ['password', 'password123', '12345678', 'qwerty123', 'admin123']
+  if (commonPasswords.includes(password.toLowerCase())) {
+    return 'Password is too common. Please choose a stronger password'
+  }
+  return null
+}
+
 const Register = () => {
   // Scroll to top when component mounts
   useEffect(() => {
@@ -14,6 +31,12 @@ const Register = () => {
   const [role, setRole] = useState('STUDENT')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Show an error and scroll to the top where the error box is so users can see it:
+  const showError = (message) => {
+    setError(message)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
   
   // Shared profile fields (used by both employer and student)
   const [fullName, setFullName] = useState('')
@@ -39,27 +62,28 @@ const Register = () => {
 
     // Validation
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
+      showError('Passwords do not match')
       return
     }
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters long')
+    const passwordError = getPasswordError(password)
+    if (passwordError) {
+      showError(passwordError)
       return
     }
 
     // Validate employer profile fields if role is EMPLOYER
     if (role === 'EMPLOYER') {
       if (!fullName.trim()) {
-        setError('Full name is required')
+        showError('Full name is required')
         return
       }
       if (!workEmail.trim()) {
-        setError('Work email is required')
+        showError('Work email is required')
         return
       }
       if (!organisationName.trim()) {
-        setError('Organisation name is required')
+        showError('Organisation name is required')
         return
       }
     }
@@ -67,23 +91,23 @@ const Register = () => {
     // Validate student profile fields if role is STUDENT
     if (role === 'STUDENT') {
       if (!fullName.trim()) {
-        setError('Full name is required')
+        showError('Full name is required')
         return
       }
       if (!universityId.trim()) {
-        setError('University ID is required')
+        showError('University ID is required')
         return
       }
       if (!universityName.trim()) {
-        setError('University name is required')
+        showError('University name is required')
         return
       }
       if (!visaType) {
-        setError('Visa type is required')
+        showError('Visa type is required')
         return
       }
       if (!courseEndDate) {
-        setError('Course end date is required')
+        showError('Course end date is required')
         return
       }
 
@@ -92,7 +116,7 @@ const Register = () => {
       const today = new Date()
       today.setHours(0, 0, 0, 0)
       if (endDate <= today) {
-        setError('Course end date must be in the future')
+        showError('Course end date must be in the future')
         return
       }
 
@@ -100,7 +124,7 @@ const Register = () => {
       if (maxWeeklyHours && maxWeeklyHours.trim() !== '') {
         const hours = parseFloat(maxWeeklyHours)
         if (isNaN(hours) || hours < 1 || hours > 168) {
-          setError('Maximum weekly hours must be between 1 and 168')
+          showError('Maximum weekly hours must be between 1 and 168')
           return
         }
       }
@@ -160,7 +184,7 @@ const Register = () => {
         navigate('/')
       }
     } else {
-      setError(result.error || 'Registration failed')
+      showError(result.error || 'Registration failed')
     }
     
     setLoading(false)
