@@ -2,9 +2,7 @@ import bcrypt from "bcrypt";
 import prisma from "../src/prisma.js";
 
 async function main() {
-  // --------------------
-  // ADMIN
-  // --------------------
+  // ADMIN:
   const adminPassword = await bcrypt.hash("admin123", 10);
 
   const admin = await prisma.user.upsert({
@@ -19,9 +17,7 @@ async function main() {
 
   console.log("✅ Admin user ensured:", admin.email);
 
-  // --------------------
-  // UNIVERSITIES
-  // --------------------
+  // UNIVERSITIES:
   const southampton = await prisma.university.upsert({
     where: { code: "SOUTHAMPTON" },
     update: {},
@@ -44,10 +40,8 @@ async function main() {
 
   console.log("✅ University ensured:", oxford.name);
 
-  // --------------------
-  // TERM TEMPLATES - Southampton
-  // --------------------
-  // Delete existing templates for clean seed
+  // TERM TEMPLATES - Southampton:
+  // Delete existing templates for clean seed:
   await prisma.termTemplate.deleteMany({
     where: { universityId: southampton.id },
   });
@@ -81,10 +75,8 @@ async function main() {
 
   console.log("✅ Term templates created for Southampton");
 
-  // --------------------
-  // TERM TEMPLATES - Oxford
-  // --------------------
-  // Delete existing templates for clean seed
+  // TERM TEMPLATES - Oxford:
+  // Delete existing templates for clean seed:
   await prisma.termTemplate.deleteMany({
     where: { universityId: oxford.id },
   });
@@ -118,9 +110,7 @@ async function main() {
 
   console.log("✅ Term templates created for Oxford");
 
-  // --------------------
-  // STUDENT USER
-  // --------------------
+  // STUDENT USER:
   const studentPassword = await bcrypt.hash("student123", 10);
 
   const studentUser = await prisma.user.upsert({
@@ -135,9 +125,7 @@ async function main() {
 
   console.log("✅ Student user ensured:", studentUser.email);
 
-  // --------------------
-  // STUDENT PROFILE
-  // --------------------
+  // STUDENT PROFILE:
   const studentProfile = await prisma.student.upsert({
     where: { userId: studentUser.id },
     update: {},
@@ -152,9 +140,7 @@ async function main() {
 
   console.log("✅ Student profile ensured for:", studentUser.email);
 
-  // --------------------
-  // EMPLOYER USER (for testing)
-  // --------------------
+  // EMPLOYER USER (for testing):
   const employerPassword = await bcrypt.hash("employer123", 10);
 
   const employerUser = await prisma.user.upsert({
