@@ -26,7 +26,31 @@ export async function getWorkEligibility(prisma, student, requestedHours = null)
   });
 
   const inTermTime = !!activeTerm;
-  
+
+  // if the student has not added any term dates we cannot know if it is a holiday:
+  // so we play it safe and use the term time limit until they add their dates:
+  const termCount = await prisma.term.count({
+    where: { studentId: student.id },
+  });
+  const termsMissing = termCount === 0;
+
+  if (termsMissing) {
+    // the custom limit still wins if the student set a lower one:
+    const safeLimit = student.maxWeeklyHours || 20;
+    const tooManyHours = requestedHours != null && requestedHours > safeLimit;
+
+    return {
+      canWork: !tooManyHours,
+      allowedWeeklyHours: safeLimit,
+      inTermTime: false,
+      termsMissing: true,
+      activeTerm: null,
+      reason: tooManyHours
+        ? `Requested ${requestedHours}h exceeds the safe limit of ${safeLimit}h. The student has not added their term dates yet, so the term time limit applies.`
+        : `No term dates added yet. Until the student adds them, treat this as term time: maximum ${safeLimit} hours per week.`,
+    };
+  }
+
   // Determine allowed hours based on course level
   let allowedWeeklyHours = 40; // Default to full-time (holidays)
   if (inTermTime) {
@@ -60,6 +84,7 @@ export async function getWorkEligibility(prisma, student, requestedHours = null)
     canWork,
     allowedWeeklyHours: effectiveLimit,
     inTermTime,
+    termsMissing: false,
     activeTerm: activeTerm?.name ?? null,
     reason,
   };

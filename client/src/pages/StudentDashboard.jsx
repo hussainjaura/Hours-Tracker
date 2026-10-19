@@ -481,6 +481,16 @@ const StudentDashboard = () => {
     return activeTerm || null
   }
 
+  // this checks if the student has not added any term dates yet:
+  const hasNoTerms = () => terms.length === 0
+
+  // this is the word shown for the current status:
+  // with no terms we cannot say holiday so we ask for the dates instead:
+  const getStatusLabel = () => {
+    if (hasNoTerms()) return 'No Terms Yet'
+    return isInTermTime() ? 'Term Time' : 'Holiday'
+  }
+
   // Get allowed hours based on term time status and course level
   const getAllowedHours = () => {
     // Check if course has ended
@@ -491,6 +501,11 @@ const StudentDashboard = () => {
       }
     }
     
+    // with no term dates we play it safe and use the term time limit:
+    if (hasNoTerms()) {
+      return 20
+    }
+
     // If not in term time, full-time work allowed (40+ hours)
     if (!isInTermTime()) {
       return 40
@@ -728,7 +743,7 @@ const StudentDashboard = () => {
             <div className="stat-label">Allowed Hours/Week</div>
           </div>
           <div className="stat-box">
-            <div className="stat-value">{isInTermTime() ? 'Term Time' : 'Holiday'}</div>
+            <div className="stat-value">{getStatusLabel()}</div>
             <div className="stat-label">Current Status</div>
           </div>
         </div>
@@ -748,7 +763,7 @@ const StudentDashboard = () => {
             <div className="stat-label">Allowed Hours/Week</div>
           </div>
           <div className="stat-box">
-            <div className="stat-value">{isInTermTime() ? 'Term Time' : 'Holiday'}</div>
+            <div className="stat-value">{getStatusLabel()}</div>
             <div className="stat-label">Current Status</div>
           </div>
         </div>
@@ -835,13 +850,15 @@ const StudentDashboard = () => {
           )}
 
           {/* Welcome & Status Banner */}
-          <div className={`overview-banner ${isInTermTime() ? 'banner-term-time' : 'banner-holiday'}`} style={{ display: 'block', visibility: 'visible' }}>
+          <div className={`overview-banner ${isInTermTime() || hasNoTerms() ? 'banner-term-time' : 'banner-holiday'}`} style={{ display: 'block', visibility: 'visible' }}>
             <div className="banner-content">
               <div className="banner-text">
                 <h2>
                   {(() => {
                     try {
-                      return isInTermTime() 
+                      // this banner asks for term dates when there are none:
+                      if (hasNoTerms()) return 'Add Your Term Dates'
+                      return isInTermTime()
                         ? `Currently in ${getActiveTerm()?.name || 'Term Time'}` 
                         : 'Currently on Holiday'
                     } catch (e) {
@@ -852,6 +869,7 @@ const StudentDashboard = () => {
                 <p>
                   {(() => {
                     try {
+                      if (hasNoTerms()) return `Until you add your term dates, keep to the term time limit of ${getAllowedHours()} hours per week`
                       return isInTermTime()
                         ? `Maximum ${getAllowedHours()} hours per week allowed during term time`
                         : 'Full-time work allowed - no weekly hour limit'
@@ -898,7 +916,7 @@ const StudentDashboard = () => {
             </div>
             <div className="overview-stat-card">
               <div className="stat-card-content">
-                <div className="stat-card-value">{isInTermTime() ? 'Term Time' : 'Holiday'}</div>
+                <div className="stat-card-value">{getStatusLabel()}</div>
                 <div className="stat-card-label">Current Status</div>
               </div>
             </div>
@@ -1233,13 +1251,15 @@ const StudentDashboard = () => {
               {/* Work Eligibility & Rules */}
               <div className="dashboard-card">
                 <h3>Work Eligibility & Rules</h3>
-                <div className={`compliance-status-overview ${isInTermTime() ? 'term-time' : 'holiday'}`}>
+                <div className={`compliance-status-overview ${isInTermTime() || hasNoTerms() ? 'term-time' : 'holiday'}`}>
                   <div className="compliance-text">
                     <div className="compliance-title-large">
                       {(() => {
                         if (profile?.courseEndDate && new Date(profile.courseEndDate) < new Date()) {
                           return 'Cannot Work'
                         }
+                        // this title stays on the safe side when no terms are added:
+                        if (hasNoTerms()) return 'Can Work - Term Time Limit Until Dates Added'
                         return isInTermTime() ? 'Can Work - Term Time' : 'Can Work - Holiday Period'
                       })()}
                     </div>
@@ -1248,6 +1268,7 @@ const StudentDashboard = () => {
                         if (profile?.courseEndDate && new Date(profile.courseEndDate) < new Date()) {
                           return 'Your course has ended. You cannot work on a Student visa.'
                         }
+                        if (hasNoTerms()) return `Maximum ${getAllowedHours()} hours per week until you add your term dates`
                         return isInTermTime()
                           ? `Maximum ${getAllowedHours()} hours per week allowed during term time`
                           : 'Full-time work allowed - no weekly hour limit during holidays'
@@ -1906,8 +1927,8 @@ const StudentDashboard = () => {
                   <div className="profile-status-grid">
                     <div className="status-card">
                       <div className="status-label">Current Period</div>
-                      <div className={`status-value ${isInTermTime() ? 'term-time' : 'holiday'}`}>
-                        {isInTermTime() ? 'Term Time' : 'Holiday'}
+                      <div className={`status-value ${isInTermTime() || hasNoTerms() ? 'term-time' : 'holiday'}`}>
+                        {getStatusLabel()}
                       </div>
                       {getActiveTerm() && (
                         <div className="status-detail">Active Term: {getActiveTerm().name}</div>
@@ -1917,9 +1938,11 @@ const StudentDashboard = () => {
                       <div className="status-label">Allowed Hours This Week</div>
                       <div className="status-value">{getAllowedHours()}h</div>
                       <div className="status-detail">
-                        {isInTermTime() 
-                          ? '20-hour limit applies during term time' 
-                          : 'Full-time work allowed during holidays'}
+                        {hasNoTerms()
+                          ? 'Add your term dates. Until then the term time limit applies'
+                          : isInTermTime()
+                            ? '20-hour limit applies during term time'
+                            : 'Full-time work allowed during holidays'}
                       </div>
                     </div>
                   </div>

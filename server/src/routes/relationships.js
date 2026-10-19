@@ -42,7 +42,9 @@ router.post(
         },
       });
 
-      if (existing) {
+      // this only blocks a new request while the old one is still pending or active:
+      // a removed employer (inactive) is allowed to ask again:
+      if (existing && existing.status !== "INACTIVE") {
         return res.status(409).json({
           success: false,
           error: {
@@ -53,14 +55,29 @@ router.post(
         });
       }
 
-      // Create relationship request
-      const relationship = await prisma.studentEmployer.create({
-        data: {
-          studentId: student.id,
-          employerId: req.user.id,
-          status: "PENDING",
-        },
-      });
+      let relationship;
+      if (existing) {
+        // this reopens the old removed link as a fresh request so its history stays in one place:
+        // the old acknowledgement is cleared because the student has to accept again:
+        relationship = await prisma.studentEmployer.update({
+          where: { id: existing.id },
+          data: {
+            status: "PENDING",
+            linkedAt: new Date(),
+            acknowledgedAt: null,
+            acknowledgedBy: null,
+          },
+        });
+      } else {
+        // Create relationship request
+        relationship = await prisma.studentEmployer.create({
+          data: {
+            studentId: student.id,
+            employerId: req.user.id,
+            status: "PENDING",
+          },
+        });
+      }
 
       // AUDIT LOG
       await prisma.auditLog.create({

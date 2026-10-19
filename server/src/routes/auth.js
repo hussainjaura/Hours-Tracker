@@ -54,7 +54,20 @@ router.post("/register",
   ]),
   async (req, res) => {
   try {
-    const { email, password, role, employerProfile, studentProfile } = req.body;
+    const { password, role, employerProfile, studentProfile } = req.body;
+
+    // this saves every new email in small letters so capitals cannot make a second account:
+    const email = req.body.email.trim().toLowerCase();
+
+    // this stops sign up if the email already exists with any mix of capitals:
+    const existingUser = await prisma.user.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
+      select: { id: true },
+    });
+    if (existingUser) {
+      // this reuses the same email already in use reply from the catch block below:
+      throw Object.assign(new Error("Email already in use"), { code: "P2002" });
+    }
 
     // Validate employer profile fields if role is EMPLOYER
     if (role === 'EMPLOYER') {
@@ -358,11 +371,15 @@ router.post("/login",
   ]),
   async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
+
+    // this tidies the typed email so capitals and spaces do not matter at login:
+    const email = req.body.email.trim().toLowerCase();
 
     // Explicitly select only fields that exist (lastLogin may not exist until migration is run)
-    const user = await prisma.user.findUnique({ 
-      where: { email },
+    // this finds the account even if it was saved with capitals before this fix:
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
       select: {
         id: true,
         email: true,
@@ -520,11 +537,12 @@ router.post(
   ]),
   async (req, res) => {
     try {
-      const { email } = req.body;
+      // this tidies the typed email so capitals do not matter for password resets:
+      const email = req.body.email.trim().toLowerCase();
 
       // Explicitly select only fields that exist (lastLogin may not exist until migration is run):
-      const user = await prisma.user.findUnique({
-        where: { email },
+      const user = await prisma.user.findFirst({
+        where: { email: { equals: email, mode: "insensitive" } },
         select: {
           id: true,
           email: true,

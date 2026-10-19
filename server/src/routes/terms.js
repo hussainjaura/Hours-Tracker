@@ -12,6 +12,31 @@ import { hasActiveAccess } from "../utils/access.js";
 
 const router = express.Router();
 
+// this turns a university name into a simple key so small differences do not matter:
+// e.g. "University of Southampton", "Uni of Southampton" and "southampton" all become "southampton":
+const simplifyUniversityName = (name = "") =>
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, " ")
+    .replace(/\b(the|university|uni|of)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+// this finds the student's university using the name they typed when signing up:
+const findStudentUniversity = async (student) => {
+  const universities = await prisma.university.findMany();
+  const studentKey = simplifyUniversityName(student.universityName || "");
+
+  // this matches on the name first, then the short code like "SOUTHAMPTON":
+  // the last check keeps old accounts working where the student id was set to the code:
+  return (
+    universities.find((uni) => studentKey && simplifyUniversityName(uni.name) === studentKey) ||
+    universities.find((uni) => studentKey && simplifyUniversityName(uni.code) === studentKey) ||
+    universities.find((uni) => uni.code === student.universityId) ||
+    null
+  );
+};
+
 // CREATE TERM:
 router.post(
   "/",
@@ -572,23 +597,21 @@ router.get(
         });
       }
 
-      // Find university by code (stored in student.universityId):
-      const university = await prisma.university.findUnique({
-        where: { code: student.universityId },
-        include: {
-          templates: {
-            orderBy: { startDate: "asc" },
-          },
-        },
-      });
+      // this finds the university from the name the student typed, not their student id:
+      const university = await findStudentUniversity(student);
 
+      // this sends an empty list when we have no templates for their university:
+      // the terms page then just lets them add dates by hand:
       if (!university) {
-        return res.status(404).json({
-          error: "University not found for your profile",
-        });
+        return res.json([]);
       }
 
-      res.json(university.templates);
+      const templates = await prisma.termTemplate.findMany({
+        where: { universityId: university.id },
+        orderBy: { startDate: "asc" },
+      });
+
+      res.json(templates);
     } catch (err) {
       console.error("GET TEMPLATES ERROR:", err);
       res.status(500).json({ error: "Internal server error" });
@@ -639,7 +662,9 @@ router.post(
       }
 
       // Verify template belongs to student's university
-      if (template.university.code !== student.universityId) {
+      // this uses the same name matching as the templates list above:
+      const studentUniversity = await findStudentUniversity(student);
+      if (!studentUniversity || template.universityId !== studentUniversity.id) {
         return res.status(403).json({
           error: "This template does not belong to your university",
         });

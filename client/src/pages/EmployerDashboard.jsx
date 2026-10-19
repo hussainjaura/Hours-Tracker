@@ -969,10 +969,13 @@ const EmployerDashboard = () => {
                       const shownTerms = current ? [current, ...upcoming] : upcoming
                       return (
                         <div className="student-term-schedule">
-                          <div className={`term-now ${current ? 'term-now-term' : 'term-now-holiday'}`}>
-                            {current
-                              ? `Now: Term time (${current.name}, until ${formatDate(current.endDate)})`
-                              : `Now: Holiday${upcoming[0] ? ` (next term starts ${formatDate(upcoming[0].startDate)})` : ''}`}
+                          {/* this pill says no dates yet instead of holiday when the student has no terms: */}
+                          <div className={`term-now ${current || !rel.student.terms?.length ? 'term-now-term' : 'term-now-holiday'}`}>
+                            {!rel.student.terms?.length
+                              ? 'Now: No term dates added yet (treat as term time, max 20h a week)'
+                              : current
+                                ? `Now: Term time (${current.name}, until ${formatDate(current.endDate)})`
+                                : `Now: Holiday${upcoming[0] ? ` (next term starts ${formatDate(upcoming[0].startDate)})` : ''}`}
                           </div>
                           {shownTerms.length > 0 ? (
                             <ul className="term-schedule-list">
@@ -1052,9 +1055,10 @@ const EmployerDashboard = () => {
                     ? 'Your access request is waiting for the student to accept it. Their details will appear here once they do.'
                     : searchedStudent.accessStatus === 'NONE'
                       ? "This student is registered. To protect their privacy, their name, visa and work eligibility are only shown after they accept your access request."
-                      : 'Your access to this student has ended. Ask the student to link with you again if you still employ them.'}
+                      : 'Your access to this student has ended. You can send a new request if you still employ them.'}
                 </p>
-                {searchedStudent.accessStatus === 'NONE' && (
+                {/* this shows the request button for new students and for ones who removed you before: */}
+                {(searchedStudent.accessStatus === 'NONE' || searchedStudent.accessStatus === 'INACTIVE') && (
                   <div className="student-profile-actions" style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
                     <button
                       className="btn btn-primary"
@@ -1098,10 +1102,13 @@ const EmployerDashboard = () => {
                     <div>
                       <div className="eligibility-title">
                         {searchedStudent.canWork === false 
-                          ? 'Student Cannot Work' 
-                          : searchedStudent.inTermTime 
-                            ? 'Student Can Work - Term Time Rules Apply'
-                            : 'Student Can Work - Holiday Period'}
+                          ? 'Student Cannot Work'
+                          : searchedStudent.termsMissing
+                            // this title warns the manager when the student has no term dates:
+                            ? 'Student Can Work - Term Dates Not Added Yet'
+                            : searchedStudent.inTermTime
+                              ? 'Student Can Work - Term Time Rules Apply'
+                              : 'Student Can Work - Holiday Period'}
                       </div>
                       {searchedStudent.reason && (
                         <div className="eligibility-reason">{searchedStudent.reason}</div>
@@ -1114,10 +1121,10 @@ const EmployerDashboard = () => {
                       <span className="detail-label">Weekly Hour Limit:</span>
                       <span className="detail-value">
                         {searchedStudent.allowedWeeklyHours || 'N/A'}h
-                        {searchedStudent.inTermTime && (
+                        {(searchedStudent.inTermTime || searchedStudent.termsMissing) && (
                           <span className="detail-note"> (Term time limit)</span>
                         )}
-                        {!searchedStudent.inTermTime && (
+                        {!searchedStudent.inTermTime && !searchedStudent.termsMissing && (
                           <span className="detail-note"> (Full-time allowed)</span>
                         )}
                       </span>
@@ -1125,7 +1132,8 @@ const EmployerDashboard = () => {
                     <div className="detail-item">
                       <span className="detail-label">Current Period:</span>
                       <span className="detail-value">
-                        {searchedStudent.inTermTime ? 'Term Time' : 'Holiday'}
+                        {/* this shows unknown instead of holiday when there are no term dates: */}
+                        {searchedStudent.termsMissing ? 'Unknown - No Term Dates' : searchedStudent.inTermTime ? 'Term Time' : 'Holiday'}
                       </span>
                     </div>
                     {searchedStudent.activeTerm && (
@@ -1138,12 +1146,12 @@ const EmployerDashboard = () => {
                         </span>
                       </div>
                     )}
-                    {searchedStudent.inTermTime && (
+                    {(searchedStudent.inTermTime || searchedStudent.termsMissing) && (
                       <div className="compliance-warning-box">
                         <strong>Compliance Rule:</strong> During term time, this student must not be scheduled for more than {searchedStudent.allowedWeeklyHours} hours per week. This is a legal requirement for UK student visas.
                       </div>
                     )}
-                    {!searchedStudent.inTermTime && (
+                    {!searchedStudent.inTermTime && !searchedStudent.termsMissing && (
                       <div className="compliance-info-box">
                         <strong>Holiday Period:</strong> During holidays, this student can work full-time with no weekly hour limit.
                       </div>
