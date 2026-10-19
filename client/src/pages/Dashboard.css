@@ -277,16 +277,18 @@
   letter-spacing: 0.05em;
 }
 
+/* PENDING BADGE IS WHITE WITH A DASHED BORDER SO IT READS AS WAITING: */
 .status-pending {
-  background: rgba(245, 158, 11, 0.1);
-  color: var(--warning-color);
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: #ffffff;
+  color: #4b5563;
+  border: 1px dashed #9ca3af;
 }
 
+/* CONFIRMED BADGE USES A DARK OUTLINE TO MATCH THE BUTTONS: */
 .status-confirmed {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success-color);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: #ffffff;
+  color: var(--btn-dark);
+  border: 1px solid var(--btn-dark);
 }
 
 .status-rejected {
@@ -295,10 +297,11 @@
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
+/* ACTIVE BADGE IS SOLID DARK SO IT STANDS OUT THE MOST: */
 .status-active {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success-color);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: var(--btn-dark);
+  color: #ffffff;
+  border: 1px solid var(--btn-dark);
 }
 
 .status-inactive {
@@ -569,9 +572,11 @@
   margin-bottom: var(--spacing-lg);
 }
 
+/* CAN WORK RESULT IS LIGHT GREY WITH A DARK EDGE INSTEAD OF GREEN: */
 .eligibility-status.can-work {
-  background: rgba(16, 185, 129, 0.1);
-  border: 2px solid rgba(16, 185, 129, 0.3);
+  background: #f9fafb;
+  border: 2px solid var(--border-color);
+  border-left: 5px solid var(--btn-dark);
 }
 
 .eligibility-status.cannot-work {
@@ -584,8 +589,9 @@
   font-weight: 700;
 }
 
+/* CAN WORK ICON IS DARK: */
 .eligibility-status.can-work .eligibility-icon {
-  color: var(--success-color);
+  color: var(--btn-dark);
 }
 
 .eligibility-status.cannot-work .eligibility-icon {
@@ -633,19 +639,21 @@
   color: #f59e0b;
 }
 
+/* HOLIDAY INFO BOX IS LIGHT GREY WITH A DARK EDGE INSTEAD OF GREEN: */
 .compliance-info-box {
   margin-top: var(--spacing-md);
   padding: var(--spacing-md);
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  border-left: 3px solid var(--success-color);
+  background: #f9fafb;
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--btn-dark);
   border-radius: var(--radius-md);
   color: #1f2937;
   font-size: 0.9375rem;
 }
 
+/* BOLD LABEL INSIDE THE INFO BOX STAYS DARK: */
 .compliance-info-box strong {
-  color: var(--success-color);
+  color: var(--btn-dark);
 }
 
 .detail-item {
@@ -978,19 +986,22 @@
   box-shadow: var(--shadow-sm);
 }
 
+/* TERM HAPPENING NOW GETS A DARK LEFT EDGE: */
 .term-card.term-active {
-  border-left: 4px solid var(--success-color);
-  background: rgba(16, 185, 129, 0.05);
+  border-left: 4px solid var(--btn-dark);
+  background: #ffffff;
 }
 
+/* TERM COMING UP GETS A MID GREY LEFT EDGE: */
 .term-card.term-upcoming {
-  border-left: 4px solid var(--info-color);
-  background: rgba(59, 130, 246, 0.05);
+  border-left: 4px solid #9ca3af;
+  background: #ffffff;
 }
 
+/* TERM THAT HAS FINISHED GETS A LIGHT EDGE AND GREY BACKGROUND: */
 .term-card.term-past {
-  border-left: 4px solid var(--text-secondary);
-  background: rgba(107, 114, 128, 0.05);
+  border-left: 4px solid var(--border-color);
+  background: #f9fafb;
 }
 
 .term-header {
@@ -1029,16 +1040,18 @@
   text-transform: uppercase;
 }
 
+/* CONFIRMED DATES BADGE IS A DARK OUTLINE: */
 .confirmation-badge.confirmed {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success-color);
-  border: 1px solid var(--success-color);
+  background: #ffffff;
+  color: var(--btn-dark);
+  border: 1px solid var(--btn-dark);
 }
 
+/* NOT CONFIRMED BADGE IS DASHED SO IT LOOKS UNFINISHED: */
 .confirmation-badge.pending {
-  background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
-  border: 1px solid #f59e0b;
+  background: #ffffff;
+  color: #4b5563;
+  border: 1px dashed #9ca3af;
 }
 
 .acknowledgement-status {
@@ -1048,16 +1061,20 @@
   font-size: 0.875rem;
 }
 
+/* ACKNOWLEDGED BOX IS LIGHT GREY WITH A DARK EDGE: */
 .acknowledgement-status.acknowledged {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success-color);
-  border: 1px solid var(--success-color);
+  background: #f9fafb;
+  color: var(--btn-dark);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--btn-dark);
+  font-weight: 600;
 }
 
+/* PENDING ACKNOWLEDGEMENT BOX IS DASHED UNTIL THE EMPLOYER ACTS: */
 .acknowledgement-status.pending {
-  background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
-  border: 1px solid #f59e0b;
+  background: #ffffff;
+  color: #4b5563;
+  border: 1px dashed #9ca3af;
 }
 
 /* Compliance student cards */
@@ -1131,22 +1148,25 @@
   letter-spacing: 0.05em;
 }
 
+/* ACTIVE TERM BADGE IS SOLID DARK: */
 .term-status-badge.status-active {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success-color);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  background: var(--btn-dark);
+  color: #ffffff;
+  border: 1px solid var(--btn-dark);
 }
 
+/* UPCOMING TERM BADGE IS SOFT GREY: */
 .term-status-badge.status-upcoming {
-  background: rgba(59, 130, 246, 0.1);
-  color: var(--info-color);
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
 }
 
+/* PAST TERM BADGE IS FADED OUT: */
 .term-status-badge.status-past {
-  background: rgba(107, 114, 128, 0.1);
-  color: #6b7280;
-  border: 1px solid rgba(107, 114, 128, 0.3);
+  background: transparent;
+  color: #9ca3af;
+  border: 1px solid var(--border-color);
 }
 
 /* Full-Time Work Periods Section */
@@ -1178,26 +1198,30 @@
   transition: all var(--transition-base);
 }
 
+/* CARD LIFTS SLIGHTLY WITH A DARK BORDER WHEN HOVERED: */
 .full-time-period-card:hover {
-  border-color: var(--success-color);
+  border-color: var(--btn-dark);
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
 
+/* PERIOD HAPPENING NOW GETS A DARK LEFT EDGE: */
 .full-time-period-card.current {
-  border-left: 5px solid var(--success-color);
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.03) 100%);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+  border-left: 5px solid var(--btn-dark);
+  background: #ffffff;
+  box-shadow: var(--shadow-sm);
 }
 
+/* PERIOD COMING UP GETS A MID GREY LEFT EDGE: */
 .full-time-period-card.upcoming {
-  border-left: 5px solid var(--info-color);
-  background: rgba(59, 130, 246, 0.05);
+  border-left: 5px solid #9ca3af;
+  background: #ffffff;
 }
 
+/* PERIOD THAT HAS FINISHED IS FADED: */
 .full-time-period-card.past {
-  border-left: 5px solid var(--text-secondary);
-  background: rgba(107, 114, 128, 0.03);
+  border-left: 5px solid var(--border-color);
+  background: #f9fafb;
   opacity: 0.8;
 }
 
@@ -1208,6 +1232,7 @@
   margin-bottom: var(--spacing-md);
 }
 
+/* ROUND ICON NEXT TO A PERIOD USES THE DARK THEME COLOUR: */
 .full-time-period-icon {
   font-size: 1.5rem;
   width: 2.5rem;
@@ -1215,19 +1240,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--success-color);
+  background: var(--btn-dark);
   color: white;
   border-radius: var(--radius-full);
   flex-shrink: 0;
 }
 
+/* CURRENT PERIOD ICON GETS A SOFT DARK RING: */
 .full-time-period-card.current .full-time-period-icon {
-  background: var(--success-color);
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+  background: var(--btn-dark);
+  box-shadow: 0 0 0 4px rgba(31, 41, 55, 0.15);
 }
 
+/* UPCOMING PERIOD ICON IS MID GREY: */
 .full-time-period-card.upcoming .full-time-period-icon {
-  background: var(--info-color);
+  background: #9ca3af;
 }
 
 .full-time-period-card.past .full-time-period-icon {
@@ -1266,35 +1293,41 @@
   text-transform: uppercase;
 }
 
+/* CURRENT PERIOD BADGE IS SOLID DARK: */
 .badge-current {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--success-color);
-  border: 1px solid var(--success-color);
+  background: var(--btn-dark);
+  color: #ffffff;
+  border: 1px solid var(--btn-dark);
 }
 
+/* UPCOMING PERIOD BADGE IS SOFT GREY: */
 .badge-upcoming {
-  background: rgba(59, 130, 246, 0.15);
-  color: var(--info-color);
-  border: 1px solid var(--info-color);
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
 }
 
+/* PAST PERIOD BADGE IS FADED OUT: */
 .badge-past {
-  background: rgba(107, 114, 128, 0.15);
-  color: #6b7280;
-  border: 1px solid var(--text-secondary);
+  background: transparent;
+  color: #9ca3af;
+  border: 1px solid var(--border-color);
 }
 
+/* FULL-TIME ALLOWED MESSAGE IS LIGHT GREY WITH A DARK EDGE: */
 .full-time-period-message {
   padding: var(--spacing-md);
-  background: rgba(16, 185, 129, 0.1);
+  background: #f9fafb;
   border-radius: var(--radius-md);
-  border-left: 3px solid var(--success-color);
-  color: var(--success-color);
+  border-left: 3px solid var(--btn-dark);
+  color: #374151;
   font-size: 0.9375rem;
 }
 
+/* BOLD PART OF THE MESSAGE STAYS DARK: */
 .full-time-period-message strong {
   font-weight: 700;
+  color: var(--btn-dark);
 }
 
 .term-actions {
@@ -1302,14 +1335,18 @@
   gap: var(--spacing-sm);
 }
 
+/* DELETE BUTTON IS AN OUTLINE WITH DEEP RED TEXT SO IT IS CLEAR BUT NOT LOUD: */
 .btn-danger {
-  background: var(--error-color);
-  color: white;
-  border: none;
+  background: transparent;
+  color: #991b1b;
+  border: 2px solid var(--border-color);
+  font-weight: 600;
 }
 
+/* ON HOVER THE BORDER TURNS DEEP RED TO WARN BEFORE DELETING: */
 .btn-danger:hover {
-  background: #dc2626;
+  background: #ffffff;
+  border-color: #991b1b;
 }
 
 /* Eligibility Preview in Log Hours Form */
@@ -1775,10 +1812,12 @@
   gap: var(--spacing-lg);
 }
 
+/* CURRENT TERM CARD ON THE OVERVIEW HAS A DARK LEFT EDGE: */
 .current-term-card {
   padding: var(--spacing-md);
-  background: rgba(16, 185, 129, 0.05);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--btn-dark);
   border-radius: var(--radius-md);
 }
 
@@ -1834,16 +1873,18 @@
   font-weight: 600;
 }
 
+/* TERM CONFIRMED MESSAGE IS A DARK OUTLINE: */
 .term-confirmation-status.confirmed {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success-color);
-  border: 1px solid var(--success-color);
+  background: #ffffff;
+  color: var(--btn-dark);
+  border: 1px solid var(--btn-dark);
 }
 
+/* TERM NOT CONFIRMED MESSAGE IS DASHED: */
 .term-confirmation-status.pending {
-  background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
-  border: 1px solid #f59e0b;
+  background: #ffffff;
+  color: #4b5563;
+  border: 1px dashed #9ca3af;
 }
 
 .upcoming-terms-list {
@@ -1933,22 +1974,25 @@
   border: 1px solid #ef4444;
 }
 
+/* SMALL ACTIVE BADGE IS SOLID DARK: */
 .status-badge-small.active {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success-color);
-  border: 1px solid var(--success-color);
+  background: var(--btn-dark);
+  color: #ffffff;
+  border: 1px solid var(--btn-dark);
 }
 
+/* SMALL ACTIVE BADGE IS SOLID DARK: */
 .status-badge-small.status-active {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success-color);
-  border: 1px solid var(--success-color);
+  background: var(--btn-dark);
+  color: #ffffff;
+  border: 1px solid var(--btn-dark);
 }
 
+/* SMALL PENDING BADGE IS DASHED: */
 .status-badge-small.status-pending {
-  background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
-  border: 1px solid #f59e0b;
+  background: #ffffff;
+  color: #4b5563;
+  border: 1px dashed #9ca3af;
 }
 
 .acknowledgement-badge-small {
@@ -1959,16 +2003,18 @@
   font-weight: 600;
 }
 
+/* SMALL ACKNOWLEDGED BADGE IS LIGHT GREY: */
 .acknowledgement-badge-small {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success-color);
-  border: 1px solid var(--success-color);
+  background: #f9fafb;
+  color: var(--btn-dark);
+  border: 1px solid var(--border-color);
 }
 
+/* SMALL PENDING ACKNOWLEDGEMENT BADGE IS DASHED: */
 .acknowledgement-badge-small.pending {
-  background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
-  border: 1px solid #f59e0b;
+  background: #ffffff;
+  color: #4b5563;
+  border: 1px dashed #9ca3af;
 }
 
 .employers-summary-list {
@@ -2539,11 +2585,12 @@
   color: #6b7280;
 }
 
+/* ACKNOWLEDGEMENT WORDING BOX IS LIGHT GREY WITH A DARK EDGE: */
 .acknowledgement-text {
   margin-top: var(--spacing-md);
   padding: var(--spacing-md);
-  background: rgba(16, 185, 129, 0.05);
-  border-left: 3px solid var(--success-color);
+  background: #f9fafb;
+  border-left: 3px solid var(--btn-dark);
   border-radius: var(--radius-sm);
   font-size: 0.9375rem;
   color: #1f2937;
@@ -2794,10 +2841,11 @@
   flex-wrap: wrap;
 }
 
+/* ACKNOWLEDGED HEADING IN THE AUDIT TRAIL IS DARK TEXT: */
 .acknowledgement-status {
   font-size: 1rem;
   font-weight: 700;
-  color: var(--success-color);
+  color: var(--btn-dark);
   margin-bottom: 0.25rem;
 }
 
@@ -3219,14 +3267,16 @@
   margin-bottom: var(--spacing-sm);
 }
 
+/* NOW PILL IS SOLID DARK DURING TERM TIME: */
 .term-now-term {
-  background: rgba(245, 158, 11, 0.1);
-  color: #92400e;
+  background: var(--btn-dark);
+  color: #ffffff;
 }
 
+/* NOW PILL IS SOFT GREY DURING HOLIDAYS: */
 .term-now-holiday {
-  background: rgba(16, 185, 129, 0.1);
-  color: #047857;
+  background: #f3f4f6;
+  color: #374151;
 }
 
 .term-schedule-list {
