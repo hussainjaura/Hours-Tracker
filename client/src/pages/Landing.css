@@ -952,9 +952,10 @@ section[id] { scroll-margin-top: 70px; }
   border-color: #1f2937;
 }
 
+/* WHAT IT IS CARD USES A DARK BORDER INSTEAD OF GREEN: */
 .what-it-is-card-positive {
   background: #ffffff;
-  border-color: #10b981;
+  border-color: #1f2937;
 }
 
 .what-it-is-card-negative {

@@ -110,11 +110,12 @@
   font-size: 1rem;
 }
 
+/* SUCCESS MESSAGE IS LIGHT GREY WITH A DARK EDGE INSTEAD OF GREEN: */
 .success-message {
-  background: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-  border-left: 3px solid #22c55e;
-  color: #15803d;
+  background: #f9fafb;
+  border: 1px solid var(--border-color);
+  border-left: 3px solid #1f2937;
+  color: #1f2937;
   padding: var(--spacing-md);
   border-radius: var(--radius-md);
   margin-bottom: var(--spacing-lg);

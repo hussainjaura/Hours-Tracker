@@ -190,8 +190,9 @@
   color: var(--error-color);
 }
 
+/* GOOD SUMMARY NUMBERS USE THE DARK THEME COLOUR: */
 .summary-value.text-success {
-  color: var(--success-color);
+  color: var(--btn-dark);
 }
 
 .summary-value.text-info {
@@ -297,7 +298,7 @@
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
-/* ACTIVE BADGE IS SOLID DARK SO IT STANDS OUT THE MOST: */
+/* ACTIVE BADGE IS SOLID DARK SO IT STANDS OUT THE MOST AND THIS WAY MY SITE LOOKS GOOD: */
 .status-active {
   background: var(--btn-dark);
   color: #ffffff;
@@ -320,9 +321,10 @@
   margin-top: var(--spacing-md);
 }
 
+/* COMPLIANT STATUS BOX IS LIGHT GREY INSTEAD OF GREEN: */
 .compliance-status.compliant {
-  background: rgba(16, 185, 129, 0.1);
-  border: 2px solid rgba(16, 185, 129, 0.3);
+  background: #f9fafb;
+  border: 2px solid var(--border-color);
 }
 
 .compliance-status.non-compliant {
@@ -335,8 +337,9 @@
   font-weight: 700;
 }
 
+/* COMPLIANT ICON IS DARK: */
 .compliance-status.compliant .compliance-icon {
-  color: var(--success-color);
+  color: var(--btn-dark);
 }
 
 .compliance-status.non-compliant .compliance-icon {
@@ -785,8 +788,9 @@
   color: #1f2937;
 }
 
+/* GOOD PROFILE VALUES USE THE DARK THEME COLOUR: */
 .profile-value.text-success {
-  color: var(--success-color);
+  color: var(--btn-dark);
 }
 
 .profile-value.text-error {
@@ -1364,10 +1368,11 @@
   color: var(--error-color);
 }
 
+/* HOLIDAY HOURS PREVIEW IS LIGHT GREY WITH DARK TEXT: */
 .eligibility-preview.non-term-time {
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  color: var(--success-color);
+  background: #f9fafb;
+  border: 1px solid var(--border-color);
+  color: var(--btn-dark);
 }
 
 .eligibility-preview strong {
@@ -1528,10 +1533,11 @@
   border: 1px solid #ef4444;
 }
 
+/* DAYS REMAINING BADGE IS A DARK OUTLINE: */
 .profile-status-badge.active {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--success-color);
-  border: 1px solid var(--success-color);
+  background: #ffffff;
+  color: var(--btn-dark);
+  border: 1px solid var(--btn-dark);
 }
 
 .profile-rules {
@@ -1624,8 +1630,9 @@
   color: var(--info-color);
 }
 
+/* HOLIDAY STATUS TEXT IS DARK: */
 .status-value.holiday {
-  color: var(--success-color);
+  color: var(--btn-dark);
 }
 
 .status-detail {
@@ -1674,14 +1681,16 @@
   border: 2px solid rgba(139, 92, 246, 0.2);
 }
 
+/* TERM TIME BANNER IS SOFT GREY INSTEAD OF BLUE: */
 .overview-banner.banner-term-time {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
-  border-color: rgba(59, 130, 246, 0.2);
+  background: #f3f4f6;
+  border-color: #d1d5db;
 }
 
+/* HOLIDAY BANNER IS LIGHT GREY INSTEAD OF GREEN: */
 .overview-banner.banner-holiday {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
-  border-color: rgba(16, 185, 129, 0.2);
+  background: #f9fafb;
+  border-color: var(--border-color);
 }
 
 .banner-content {
@@ -1702,12 +1711,14 @@
   flex-shrink: 0;
 }
 
+/* TERM TIME BANNER ICON CIRCLE IS GREY: */
 .banner-term-time .banner-icon {
-  background: rgba(59, 130, 246, 0.15);
+  background: #e5e7eb;
 }
 
+/* HOLIDAY BANNER ICON CIRCLE IS GREY: */
 .banner-holiday .banner-icon {
-  background: rgba(16, 185, 129, 0.15);
+  background: #e5e7eb;
 }
 
 .banner-text {
@@ -2089,9 +2100,10 @@
   border-radius: var(--radius-md);
 }
 
+/* COMPLIANT OVERVIEW BOX IS LIGHT GREY: */
 .compliance-status-overview.compliant {
-  background: rgba(16, 185, 129, 0.05);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: #f9fafb;
+  border: 1px solid var(--border-color);
 }
 
 .compliance-status-overview.non-compliant {
@@ -2110,9 +2122,10 @@
   flex-shrink: 0;
 }
 
+/* COMPLIANT OVERVIEW ICON IS DARK ON GREY: */
 .compliance-status-overview.compliant .compliance-icon-large {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--success-color);
+  background: #e5e7eb;
+  color: var(--btn-dark);
 }
 
 .compliance-status-overview.non-compliant .compliance-icon-large {
@@ -2334,10 +2347,11 @@
   gap: var(--spacing-sm);
 }
 
+/* ROLE FEATURE ROWS ARE LIGHT GREY WITH A DARK EDGE: */
 .role-features li {
   padding: var(--spacing-sm);
-  background: rgba(16, 185, 129, 0.05);
-  border-left: 3px solid var(--success-color);
+  background: #f9fafb;
+  border-left: 3px solid var(--btn-dark);
   border-radius: var(--radius-sm);
   color: #1f2937;
   font-size: 0.9375rem;

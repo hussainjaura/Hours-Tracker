@@ -1994,7 +1994,7 @@ const StudentDashboard = () => {
                                             </span>
                                           </div>
                                           {term.confirmedAt && (
-                                            <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '0.5rem' }}>
+                                            <div style={{ fontSize: '0.75rem', color: '#4b5563', marginTop: '0.5rem' }}>
                                               ✓ Confirmed on {formatDate(term.confirmedAt)}
                                             </div>
                                           )}
@@ -2033,7 +2033,7 @@ const StudentDashboard = () => {
                                             </span>
                                           </div>
                                           {term.confirmedAt && (
-                                            <div style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '0.5rem' }}>
+                                            <div style={{ fontSize: '0.75rem', color: '#4b5563', marginTop: '0.5rem' }}>
                                               ✓ Confirmed on {formatDate(term.confirmedAt)}
                                             </div>
                                           )}

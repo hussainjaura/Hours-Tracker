@@ -14,7 +14,8 @@
   --accent-lavender: #e9d5ff;
   
   /* Status Colors */
-  --success-color: #10b981;
+  /* SUCCESS USES THE DARK THEME COLOUR SO NOTHING SHOWS UP GREEN: */
+  --success-color: #1f2937;
   --warning-color: #f59e0b;
   --error-color: #ef4444;
   --info-color: #3b82f6;
