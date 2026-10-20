@@ -1081,6 +1081,15 @@
   border: 1px dashed #9ca3af;
 }
 
+/* THIS SMALL GREY LINE EXPLAINS WHY THE ACKNOWLEDGEMENT WAS CLEARED: */
+.acknowledgement-reset-note {
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
 /* Compliance student cards */
 .compliance-students-list {
   display: flex;

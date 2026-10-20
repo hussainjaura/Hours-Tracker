@@ -378,7 +378,7 @@ const Register = () => {
                   placeholder="20"
                 />
                 <small className="form-hint">
-                  Maximum hours you can work per week (default is 20 for student visas)
+                  Only set this if you want a lower limit than the law allows. It can never raise your limit above 20 hours in term time.
                 </small>
               </div>
             </>

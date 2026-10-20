@@ -481,7 +481,8 @@ const EmployerDashboard = () => {
                           </div>
                         ) : (
                           <div className="acknowledgement-badge-small pending" style={{ marginTop: '0.5rem' }}>
-                            Pending Acknowledgement
+                            {/* this shows a different label when the student changed dates after an acknowledgement: */}
+                            {rel.acknowledgementReset ? 'Dates Changed - Acknowledge Again' : 'Pending Acknowledgement'}
                           </div>
                         )}
                       </div>
@@ -708,6 +709,14 @@ const EmployerDashboard = () => {
                             {rel.acknowledgedAt ? (
                               <div className="acknowledgement-status acknowledged">
                                 Acknowledged on {formatDate(rel.acknowledgedAt)}
+                              </div>
+                            ) : rel.acknowledgementReset ? (
+                              // this tells the manager their old acknowledgement was cleared because the dates changed:
+                              <div className="acknowledgement-status pending">
+                                Dates Changed - Please Acknowledge Again
+                                <div className="acknowledgement-reset-note">
+                                  The term dates changed on {formatDate(rel.acknowledgementReset.resetAt)}, so your earlier acknowledgement no longer covers them.
+                                </div>
                               </div>
                             ) : (
                               <div className="acknowledgement-status pending">
@@ -1121,10 +1130,14 @@ const EmployerDashboard = () => {
                       <span className="detail-label">Weekly Hour Limit:</span>
                       <span className="detail-value">
                         {searchedStudent.allowedWeeklyHours || 'N/A'}h
-                        {(searchedStudent.inTermTime || searchedStudent.termsMissing) && (
+                        {/* this says where the limit comes from: the student's own lower limit or the law: */}
+                        {searchedStudent.personalLimitApplied && (
+                          <span className="detail-note"> (Student's own lower limit)</span>
+                        )}
+                        {!searchedStudent.personalLimitApplied && (searchedStudent.inTermTime || searchedStudent.termsMissing) && (
                           <span className="detail-note"> (Term time limit)</span>
                         )}
-                        {!searchedStudent.inTermTime && !searchedStudent.termsMissing && (
+                        {!searchedStudent.personalLimitApplied && !searchedStudent.inTermTime && !searchedStudent.termsMissing && (
                           <span className="detail-note"> (Full-time allowed)</span>
                         )}
                       </span>
@@ -1148,12 +1161,19 @@ const EmployerDashboard = () => {
                     )}
                     {(searchedStudent.inTermTime || searchedStudent.termsMissing) && (
                       <div className="compliance-warning-box">
-                        <strong>Compliance Rule:</strong> During term time, this student must not be scheduled for more than {searchedStudent.allowedWeeklyHours} hours per week. This is a legal requirement for UK student visas.
+                        <strong>Compliance Rule:</strong> During term time, this student must not be scheduled for more than {searchedStudent.allowedWeeklyHours} hours per week.
+                        {/* this keeps the legal wording true when the student chose a lower limit: */}
+                        {searchedStudent.personalLimitApplied
+                          ? ' This is the student\'s own limit, which is lower than the legal maximum for UK student visas.'
+                          : ' This is a legal requirement for UK student visas.'}
                       </div>
                     )}
                     {!searchedStudent.inTermTime && !searchedStudent.termsMissing && (
                       <div className="compliance-info-box">
-                        <strong>Holiday Period:</strong> During holidays, this student can work full-time with no weekly hour limit.
+                        <strong>Holiday Period:</strong>{' '}
+                        {searchedStudent.personalLimitApplied
+                          ? `The law allows full-time work during holidays, but this student has set their own limit of ${searchedStudent.allowedWeeklyHours} hours per week.`
+                          : 'During holidays, this student can work full-time with no weekly hour limit.'}
                       </div>
                     )}
                   </div>

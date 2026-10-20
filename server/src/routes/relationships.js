@@ -2,10 +2,12 @@ import express from "express";
 import prisma from "../prisma.js";
 import { authenticate, authorizeRoles } from "../middleware/auth.js";
 import { logEmployerAcknowledgement } from "../utils/auditLogger.js";
+import { findResetNotices } from "../utils/acknowledgements.js";
 
 const router = express.Router();
 
-// EMPLOYER ROUTES - Request Student Access:
+// EMPLOYER ROUTES:
+// this requests student access:
 
 
 // POST /relationships/request - Employer requests access to a student:
@@ -23,7 +25,7 @@ router.post(
         });
       }
 
-      // Find student
+      // Find student:
       const student = await prisma.student.findUnique({
         where: { universityId: studentUniversityId },
       });
@@ -32,7 +34,7 @@ router.post(
         return res.status(404).json({ error: "Student not found" });
       }
 
-      // Check if relationship already exists
+      // Check if relationship already exists:
       const existing = await prisma.studentEmployer.findUnique({
         where: {
           studentId_employerId: {
@@ -144,9 +146,12 @@ router.get(
 
       // Only students who accepted this employer share their details.
       // For pending requests the employer just sees the ID they asked for.
+      // this finds students whose dates changed after the employer acknowledged them:
+      const resetNotices = await findResetNotices(prisma, relationships);
+
       const visible = relationships.map((rel) =>
         rel.status === "ACTIVE"
-          ? rel
+          ? { ...rel, acknowledgementReset: resetNotices[rel.id] || null }
           : { ...rel, student: { universityId: rel.student.universityId } }
       );
 

@@ -9,6 +9,7 @@ import {
 } from "../utils/auditLogger.js";
 import { generateTermLetterPDF } from "../utils/pdfGenerator.js";
 import { hasActiveAccess } from "../utils/access.js";
+import { resetAcknowledgements, termDetailsChanged } from "../utils/acknowledgements.js";
 
 const router = express.Router();
 
@@ -178,6 +179,9 @@ router.post(
 
       // AUDIT: Layer 2 - Term Declaration
       await logTermDeclaration(prisma, term, student, user, null, req);
+
+      // this asks employers to acknowledge again because a new term was added:
+      await resetAcknowledgements(prisma, student, req.user.id, `Student added the ${term.name} term`);
 
       res.status(201).json(term);
     } catch (err) {
@@ -414,6 +418,11 @@ router.put(
         req
       );
 
+      // this asks employers to acknowledge again only if something really changed:
+      if (termDetailsChanged(oldData, newData)) {
+        await resetAcknowledgements(prisma, term.student, req.user.id, `Student changed the ${updatedTerm.name} term`);
+      }
+
       res.json({
         message: "Term updated successfully",
         term: updatedTerm,
@@ -538,6 +547,9 @@ router.delete(
       where: { id: termId },
     });
 
+    // this asks employers to acknowledge again because a term was removed:
+    await resetAcknowledgements(prisma, student, req.user.id, `Student deleted the ${term.name} term`);
+
     res.json({ message: "Term deleted successfully" });
   }
 );
@@ -565,6 +577,9 @@ router.delete(
           studentId: student.id,
         },
       });
+
+      // this asks employers to acknowledge again because all terms were removed:
+      await resetAcknowledgements(prisma, student, req.user.id, "Student deleted all terms");
 
       res.json({
         message: "All terms deleted successfully",
@@ -793,6 +808,9 @@ router.post(
           },
         },
       });
+
+      // this asks employers to acknowledge again because a new term was added:
+      await resetAcknowledgements(prisma, student, req.user.id, `Student added the ${term.name} term`);
 
       res.status(201).json({
         term,

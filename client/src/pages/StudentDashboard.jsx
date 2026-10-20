@@ -492,7 +492,7 @@ const StudentDashboard = () => {
   }
 
   // Get allowed hours based on term time status and course level
-  const getAllowedHours = () => {
+  const getLegalHours = () => {
     // Check if course has ended
     if (profile?.courseEndDate) {
       const courseEnd = new Date(profile.courseEndDate)
@@ -524,6 +524,18 @@ const StudentDashboard = () => {
     
     // Default to 20 hours for DEGREE_OR_ABOVE or if courseLevel is null/undefined
     return 20
+  }
+
+  // this checks if the student's own limit is stricter than the law right now:
+  const hasLowerPersonalLimit = () => {
+    const personalLimit = profile?.maxWeeklyHours
+    return !!personalLimit && personalLimit < getLegalHours()
+  }
+
+  // this is the limit shown everywhere: the law sets the maximum:
+  // the student's own limit can only make it lower, never higher:
+  const getAllowedHours = () => {
+    return hasLowerPersonalLimit() ? profile.maxWeeklyHours : getLegalHours()
   }
 
   const formatDate = (dateString) => {
@@ -872,7 +884,9 @@ const StudentDashboard = () => {
                       if (hasNoTerms()) return `Until you add your term dates, keep to the term time limit of ${getAllowedHours()} hours per week`
                       return isInTermTime()
                         ? `Maximum ${getAllowedHours()} hours per week allowed during term time`
-                        : 'Full-time work allowed - no weekly hour limit'
+                        : hasLowerPersonalLimit()
+                          ? `Full-time work allowed by law - your own limit is ${getAllowedHours()} hours per week`
+                          : 'Full-time work allowed - no weekly hour limit'
                     } catch (e) {
                       return 'View your work eligibility and term information below'
                     }
@@ -1169,7 +1183,8 @@ const StudentDashboard = () => {
                     {profile.maxWeeklyHours && (
                       <div className="profile-summary-item">
                         <span className="summary-item-label">Custom Limit</span>
-                        <span className="summary-item-value">{profile.maxWeeklyHours}h/week</span>
+                        {/* this reminds the student their own limit can never go above the legal one: */}
+                        <span className="summary-item-value">{profile.maxWeeklyHours}h/week (only used when lower than the legal limit)</span>
                       </div>
                     )}
                   </div>
@@ -1271,7 +1286,9 @@ const StudentDashboard = () => {
                         if (hasNoTerms()) return `Maximum ${getAllowedHours()} hours per week until you add your term dates`
                         return isInTermTime()
                           ? `Maximum ${getAllowedHours()} hours per week allowed during term time`
-                          : 'Full-time work allowed - no weekly hour limit during holidays'
+                          : hasLowerPersonalLimit()
+                            ? `Full-time work allowed by law during holidays - your own limit is ${getAllowedHours()} hours per week`
+                            : 'Full-time work allowed - no weekly hour limit during holidays'
                       })()}
                     </div>
                   </div>
@@ -1896,7 +1913,7 @@ const StudentDashboard = () => {
                     {profile.maxWeeklyHours && (
                       <div className="profile-info-item">
                         <div className="profile-info-label">Custom Weekly Hour Limit</div>
-                        <div className="profile-info-value">{profile.maxWeeklyHours} hours/week</div>
+                        <div className="profile-info-value">{profile.maxWeeklyHours} hours/week (only used when lower than the legal limit)</div>
                       </div>
                     )}
                   </div>

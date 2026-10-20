@@ -1,6 +1,7 @@
 import express from "express";
 import prisma from "../prisma.js";
 import { authenticate, authorizeRoles } from "../middleware/auth.js";
+import { resetAcknowledgements } from "../utils/acknowledgements.js";
 
 const router = express.Router();
 
@@ -68,6 +69,9 @@ router.delete(
       where: { id: termId },
     });
 
+    // this asks employers to acknowledge again because an admin removed a term:
+    await resetAcknowledgements(prisma, term.student, req.user.id, `Admin deleted the ${term.name} term`);
+
     res.json({
       message: "Term deleted successfully",
       deletedTerm: {
@@ -100,6 +104,11 @@ router.delete(
     const result = await prisma.term.deleteMany({
       where: { studentId: student.id },
     });
+
+    // this asks employers to acknowledge again because an admin removed all terms:
+    if (result.count > 0) {
+      await resetAcknowledgements(prisma, student, req.user.id, "Admin deleted all terms");
+    }
 
     res.json({
       message: "All terms deleted successfully",
