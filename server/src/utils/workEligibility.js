@@ -1,3 +1,5 @@
+import { getTodayUk } from "./dates.js";
+
 // this picks the hours limit to use: the law sets the maximum:
 // a student's own limit can only make it lower, never higher:
 function applyPersonalLimit(legalLimit, personalLimit) {
@@ -12,7 +14,8 @@ export async function getWorkEligibility(prisma, student, requestedHours = null)
     throw new Error("Invalid student object passed to getWorkEligibility");
   }
 
-  const today = new Date();
+  // today is the UK date at midnight, so the last day of term still counts as term time:
+  const today = getTodayUk();
 
   // Course finished = no work
   if (student.courseEndDate && today > student.courseEndDate) {
@@ -25,7 +28,7 @@ export async function getWorkEligibility(prisma, student, requestedHours = null)
     };
   }
 
-  // Find active term
+  // Find active term:
   const activeTerm = await prisma.term.findFirst({
     where: {
       studentId: student.id,
@@ -61,24 +64,26 @@ export async function getWorkEligibility(prisma, student, requestedHours = null)
     };
   }
 
-  // Determine allowed hours based on course level
-  let allowedWeeklyHours = 40; // Default to full-time (holidays)
+  // Determine allowed hours based on course level:
+  // Default to full-time which are holidays:
+  let allowedWeeklyHours = 40;
   if (inTermTime) {
-    // BELOW_DEGREE = 10 hours, DEGREE_OR_ABOVE or null = 20 hours (default)
+    // BELOW_DEGREE = 10 hours, DEGREE_OR_ABOVE or null = 20 hours
     if (activeTerm.courseLevel === 'BELOW_DEGREE') {
       allowedWeeklyHours = 10;
     } else {
-      allowedWeeklyHours = 20; // DEGREE_OR_ABOVE or null/undefined
+      // DEGREE_OR_ABOVE or null/undefined
+      allowedWeeklyHours = 20;
     }
   }
 
-  // Compliance rules no hour tracking, just rules:
+  // Compliance rules no hour tracking just rules:
   let canWork = true;
   let reason = inTermTime
     ? `In ${activeTerm?.name || 'term time'} - Maximum ${allowedWeeklyHours} hours per week allowed`
     : "Outside term time - Full-time work allowed (no weekly limit)";
 
-  // this uses the student's own limit only when it is stricter than the law:
+  // this uses the students own limit only when it is stricter than the law:
   const effectiveLimit = applyPersonalLimit(allowedWeeklyHours, student.maxWeeklyHours);
   const personalLimitApplied = effectiveLimit < allowedWeeklyHours;
 
@@ -88,7 +93,7 @@ export async function getWorkEligibility(prisma, student, requestedHours = null)
   } else if (inTermTime) {
     reason = `Term time: Maximum ${effectiveLimit} hours per week allowed. Student can work up to ${effectiveLimit}h but not more.`;
   } else if (personalLimitApplied) {
-    // this explains a holiday limit that comes from the student, not the law:
+    // this explains a holiday limit that comes from the student not the law:
     reason = `Holiday period: the law allows full-time work, but the student has set their own limit of ${effectiveLimit} hours per week.`;
   } else {
     reason = `Holiday period: Full-time work allowed. No weekly hour limit applies.`;

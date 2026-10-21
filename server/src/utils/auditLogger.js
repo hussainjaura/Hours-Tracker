@@ -4,6 +4,7 @@
  */
 
 import prisma from "../prisma.js";
+import { getTodayUk } from "./dates.js";
 
 // Get client IP address from request:
 export function getClientIp(req) {
@@ -135,8 +136,8 @@ export async function logEmployerAcknowledgement(prisma, relationship, student, 
 // Layer 4: System-generated Compliance Rule
 // Captures: Applied rule, Date range, Source data:
 export async function logComplianceRule(prisma, student, ruleData, req = null) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // this uses the UK date so the first and last day of term both count:
+  const today = getTodayUk();
 
   // Find active term if in term time
   const activeTerm = await prisma.term.findFirst({

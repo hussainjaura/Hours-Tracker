@@ -5,6 +5,7 @@ import { useMobileNav } from '../hooks/useMobileNav'
 import PersonName from '../components/PersonName'
 import { useNavigate } from 'react-router-dom'
 import './Dashboard.css'
+import { toDayKey, getTodayKey, isTodayInTerm, formatDay } from '../utils/dates'
 
 const EmployerDashboard = () => {
   const { user, logout } = useAuth()
@@ -210,12 +211,12 @@ const EmployerDashboard = () => {
   }
 
   // Finds the term a student is in today and the terms still to come so managers can plan rotas:
+  // this compares plain days so the last day of a term still shows as the current term:
   const getTermSchedule = (terms = []) => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const sorted = [...terms].sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
-    const current = sorted.find((term) => new Date(term.startDate) <= today && new Date(term.endDate) >= today)
-    const upcoming = sorted.filter((term) => new Date(term.startDate) > today)
+    const today = getTodayKey()
+    const sorted = [...terms].sort((a, b) => toDayKey(a.startDate).localeCompare(toDayKey(b.startDate)))
+    const current = sorted.find((term) => isTodayInTerm(term))
+    const upcoming = sorted.filter((term) => toDayKey(term.startDate) > today)
     return { current, upcoming }
   }
 
@@ -705,7 +706,7 @@ const EmployerDashboard = () => {
                           <div className="student-info">
                             <div><strong>University:</strong> {student.universityName || 'Unknown University'}</div>
                             <div><strong>Visa Type:</strong> {student.visaType}</div>
-                            <div><strong>Course End Date:</strong> {formatDate(student.courseEndDate)}</div>
+                            <div><strong>Course End Date:</strong> {formatDay(student.courseEndDate)}</div>
                             {rel.acknowledgedAt ? (
                               <div className="acknowledgement-status acknowledged">
                                 Acknowledged on {formatDate(rel.acknowledgedAt)}
@@ -783,7 +784,7 @@ const EmployerDashboard = () => {
                                       <div className="term-academic-year">Academic Year: {term.academicYear}</div>
                                     )}
                                     <div className="term-dates">
-                                      {formatDate(term.startDate)} - {formatDate(term.endDate)}
+                                      {formatDay(term.startDate)} - {formatDay(term.endDate)}
                                     </div>
                                   </div>
                                   {term.confirmedAt ? (
@@ -983,8 +984,8 @@ const EmployerDashboard = () => {
                             {!rel.student.terms?.length
                               ? 'Now: No term dates added yet (treat as term time, max 20h a week)'
                               : current
-                                ? `Now: Term time (${current.name}, until ${formatDate(current.endDate)})`
-                                : `Now: Holiday${upcoming[0] ? ` (next term starts ${formatDate(upcoming[0].startDate)})` : ''}`}
+                                ? `Now: Term time (${current.name}, until ${formatDay(current.endDate)})`
+                                : `Now: Holiday${upcoming[0] ? ` (next term starts ${formatDay(upcoming[0].startDate)})` : ''}`}
                           </div>
                           {shownTerms.length > 0 ? (
                             <ul className="term-schedule-list">
@@ -994,7 +995,7 @@ const EmployerDashboard = () => {
                                     <span className="term-schedule-name">{term.name}</span>
                                     {term.academicYear && <span className="term-schedule-year">{term.academicYear}</span>}
                                     <div className="term-schedule-dates">
-                                      {formatDate(term.startDate)} – {formatDate(term.endDate)}
+                                      {formatDay(term.startDate)} – {formatDay(term.endDate)}
                                     </div>
                                   </div>
                                   <span className={`confirmation-badge ${term.confirmedAt ? 'confirmed' : 'pending'}`}>
@@ -1443,7 +1444,7 @@ const EmployerAuditTrailTab = ({ students }) => {
                       </div>
                       <div className="audit-identity-item">
                         <div className="identity-label">Course End Date</div>
-                        <div className="identity-value">{formatDate(selectedAuditTrail.student?.courseEndDate)}</div>
+                        <div className="identity-value">{formatDay(selectedAuditTrail.student?.courseEndDate)}</div>
                       </div>
                       <div className="audit-identity-item">
                         <div className="identity-label">Employer ID</div>
@@ -1473,11 +1474,11 @@ const EmployerAuditTrailTab = ({ students }) => {
                             <div className="declaration-dates">
                               <div className="date-item">
                                 <span className="date-label">Start:</span>
-                                <span className="date-value">{formatDate(decl.term.startDate)}</span>
+                                <span className="date-value">{formatDay(decl.term.startDate)}</span>
                               </div>
                               <div className="date-item">
                                 <span className="date-label">End:</span>
-                                <span className="date-value">{formatDate(decl.term.endDate)}</span>
+                                <span className="date-value">{formatDay(decl.term.endDate)}</span>
                               </div>
                             </div>
                             <div className="declaration-meta">

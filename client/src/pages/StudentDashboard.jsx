@@ -5,6 +5,7 @@ import { useMobileNav } from '../hooks/useMobileNav'
 import PersonName from '../components/PersonName'
 import { useNavigate } from 'react-router-dom'
 import './Dashboard.css'
+import { toDayKey, getTodayKey, isTodayInTerm, daysFromToday, addDays, formatDay } from '../utils/dates'
 
 const StudentDashboard = () => {
   const { logout } = useAuth()
@@ -199,8 +200,8 @@ const StudentDashboard = () => {
       })
 
       if (overlappingTerm) {
-        const termStartStr = formatDate(overlappingTerm.startDate)
-        const termEndStr = formatDate(overlappingTerm.endDate)
+        const termStartStr = formatDay(overlappingTerm.startDate)
+        const termEndStr = formatDay(overlappingTerm.endDate)
         setError(`This term overlaps with your existing ${overlappingTerm.name} term (${termStartStr} - ${termEndStr}). Terms cannot have overlapping dates.`)
         setSubmittingTerm(false)
         return
@@ -285,8 +286,8 @@ const StudentDashboard = () => {
       })
 
       if (overlappingTerm) {
-        const termStartStr = formatDate(overlappingTerm.startDate)
-        const termEndStr = formatDate(overlappingTerm.endDate)
+        const termStartStr = formatDay(overlappingTerm.startDate)
+        const termEndStr = formatDay(overlappingTerm.endDate)
         setError(`This term overlaps with your existing ${overlappingTerm.name} term (${termStartStr} - ${termEndStr}). Terms cannot have overlapping dates.`)
         setSubmittingTerm(false)
         return
@@ -348,8 +349,8 @@ const StudentDashboard = () => {
         })
 
         if (overlappingTerm) {
-          const termStartStr = formatDate(overlappingTerm.startDate)
-          const termEndStr = formatDate(overlappingTerm.endDate)
+          const termStartStr = formatDay(overlappingTerm.startDate)
+          const termEndStr = formatDay(overlappingTerm.endDate)
           setError(`This update would cause overlap with your existing ${overlappingTerm.name} term (${termStartStr} - ${termEndStr}). Terms cannot have overlapping dates.`)
           setSubmittingTerm(false)
           return
@@ -450,35 +451,27 @@ const StudentDashboard = () => {
     setTermForm({ courseLevel: '', name: '', customName: '', academicYear: '', startDate: '', endDate: '' })
   }
 
+  // this compares plain days so a term is still active on its last day:
   const getTermStatus = (term) => {
-    const now = new Date()
-    const start = new Date(term.startDate)
-    const end = new Date(term.endDate)
-    
-    if (now < start) return 'upcoming'
-    if (now >= start && now <= end) return 'active'
+    const today = getTodayKey()
+    if (today < toDayKey(term.startDate)) return 'upcoming'
+    if (isTodayInTerm(term)) return 'active'
     return 'past'
   }
 
   // Helper function to determine if current date is in term time
   const isInTermTime = () => {
-    const now = new Date()
-    return terms.some(term => {
-      const start = new Date(term.startDate)
-      const end = new Date(term.endDate)
-      return now >= start && now <= end
-    })
+    return terms.some(term => isTodayInTerm(term))
   }
 
   // Get active term object if in term time
   const getActiveTerm = () => {
-    const now = new Date()
-    const activeTerm = terms.find(term => {
-      const start = new Date(term.startDate)
-      const end = new Date(term.endDate)
-      return now >= start && now <= end
-    })
-    return activeTerm || null
+    return terms.find(term => isTodayInTerm(term)) || null
+  }
+
+  // this checks if the course end date has passed (the end date itself still counts):
+  const hasCourseEnded = () => {
+    return !!profile?.courseEndDate && daysFromToday(profile.courseEndDate) < 0
   }
 
   // this checks if the student has not added any term dates yet:
@@ -494,11 +487,8 @@ const StudentDashboard = () => {
   // Get allowed hours based on term time status and course level
   const getLegalHours = () => {
     // Check if course has ended
-    if (profile?.courseEndDate) {
-      const courseEnd = new Date(profile.courseEndDate)
-      if (new Date() > courseEnd) {
-        return 0
-      }
+    if (hasCourseEnded()) {
+      return 0
     }
     
     // with no term dates we play it safe and use the term time limit:
@@ -555,28 +545,16 @@ const StudentDashboard = () => {
     if (terms.length === 0) return []
     
     // Sort all terms by start date
-    const sortedTerms = [...terms].sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+    const sortedTerms = [...terms].sort((a, b) => toDayKey(a.startDate).localeCompare(toDayKey(b.startDate)))
     const periods = []
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const today = getTodayKey()
     
-    // Find gaps between consecutive terms
+    // Find gaps between consecutive terms:
+    // we work with plain days like 2026-12-11 so the dates never move in another time zone:
     for (let i = 0; i < sortedTerms.length - 1; i++) {
-      const currentTermEnd = new Date(sortedTerms[i].endDate)
-      currentTermEnd.setHours(23, 59, 59, 999)
-      
-      const nextTermStart = new Date(sortedTerms[i + 1].startDate)
-      nextTermStart.setHours(0, 0, 0, 0)
-      
-      // Gap starts the day after current term ends
-      const gapStart = new Date(currentTermEnd)
-      gapStart.setDate(gapStart.getDate() + 1)
-      gapStart.setHours(0, 0, 0, 0)
-      
-      // Gap ends the day before next term starts
-      const gapEnd = new Date(nextTermStart)
-      gapEnd.setDate(gapEnd.getDate() - 1)
-      gapEnd.setHours(23, 59, 59, 999)
+      // Gap starts the day after current term ends and ends the day before the next term starts:
+      const gapStart = addDays(toDayKey(sortedTerms[i].endDate), 1)
+      const gapEnd = addDays(toDayKey(sortedTerms[i + 1].startDate), -1)
       
       // Only add if there's at least one day gap
       if (gapStart <= gapEnd) {
@@ -589,28 +567,13 @@ const StudentDashboard = () => {
     }
     
     // Check for period after last term
-    const lastTermEnd = new Date(sortedTerms[sortedTerms.length - 1].endDate)
-    lastTermEnd.setHours(23, 59, 59, 999)
-    
-    const afterLastStart = new Date(lastTermEnd)
-    afterLastStart.setDate(afterLastStart.getDate() + 1)
-    afterLastStart.setHours(0, 0, 0, 0)
+    const afterLastStart = addDays(toDayKey(sortedTerms[sortedTerms.length - 1].endDate), 1)
+    const oneYearLater = addDays(afterLastStart, 365)
     
     // Determine end date: use course end date if available, otherwise 1 year from last term end
-    let periodEnd
-    if (profile?.courseEndDate) {
-      const courseEnd = new Date(profile.courseEndDate)
-      courseEnd.setHours(23, 59, 59, 999)
-      // Use course end date if it's after the last term end, otherwise use 1 year from last term end
-      if (courseEnd > afterLastStart) {
-        periodEnd = courseEnd
-      } else {
-        periodEnd = new Date(afterLastStart)
-        periodEnd.setFullYear(periodEnd.getFullYear() + 1)
-      }
-    } else {
-      periodEnd = new Date(afterLastStart)
-      periodEnd.setFullYear(periodEnd.getFullYear() + 1)
+    let periodEnd = oneYearLater
+    if (profile?.courseEndDate && toDayKey(profile.courseEndDate) > afterLastStart) {
+      periodEnd = toDayKey(profile.courseEndDate)
     }
     
     // Only add if the period hasn't completely passed and start date is valid
@@ -623,13 +586,11 @@ const StudentDashboard = () => {
     }
     
     // Filter out periods that ended more than 6 months ago
-    const sixMonthsAgo = new Date()
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+    const sixMonthsAgo = addDays(today, -183)
     
-    return periods.filter(period => {
-      const periodEndDate = new Date(period.endDate)
-      return periodEndDate >= sixMonthsAgo
-    }).sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+    return periods
+      .filter(period => period.endDate >= sixMonthsAgo)
+      .sort((a, b) => a.startDate.localeCompare(b.startDate))
   }
 
   if (loading) {
@@ -942,12 +903,7 @@ const StudentDashboard = () => {
             <div className="overview-column">
               {/* Current Term Information */}
               {(() => {
-                const activeTerm = terms.find(term => {
-                  const now = new Date()
-                  const start = new Date(term.startDate)
-                  const end = new Date(term.endDate)
-                  return now >= start && now <= end
-                })
+                const activeTerm = getActiveTerm()
                 
                 return activeTerm ? (
                   <div className="dashboard-card">
@@ -965,11 +921,11 @@ const StudentDashboard = () => {
                       <div className="current-term-dates">
                         <div className="date-item">
                           <span className="date-label">Start:</span>
-                          <span className="date-value">{formatDate(activeTerm.startDate)}</span>
+                          <span className="date-value">{formatDay(activeTerm.startDate)}</span>
                         </div>
                         <div className="date-item">
                           <span className="date-label">End:</span>
-                          <span className="date-value">{formatDate(activeTerm.endDate)}</span>
+                          <span className="date-value">{formatDay(activeTerm.endDate)}</span>
                         </div>
                       </div>
                       {activeTerm.confirmedAt ? (
@@ -989,11 +945,8 @@ const StudentDashboard = () => {
               {/* Upcoming Terms */}
               {(() => {
                 const upcomingTerms = terms
-                  .filter(term => {
-                    const now = new Date()
-                    return new Date(term.startDate) > now
-                  })
-                  .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+                  .filter(term => toDayKey(term.startDate) > getTodayKey())
+                  .sort((a, b) => toDayKey(a.startDate).localeCompare(toDayKey(b.startDate)))
                   .slice(0, 3)
 
                 return upcomingTerms.length > 0 ? (
@@ -1008,7 +961,7 @@ const StudentDashboard = () => {
                               <div className="upcoming-term-year">{term.academicYear}</div>
                             )}
                             <div className="upcoming-term-date">
-                              Starts: {formatDate(term.startDate)}
+                              Starts: {formatDay(term.startDate)}
                             </div>
                           </div>
                           <span className="term-status-badge status-upcoming">Upcoming</span>
@@ -1167,14 +1120,13 @@ const StudentDashboard = () => {
                     <div className="profile-summary-item">
                       <span className="summary-item-label">Course End Date</span>
                       <span className="summary-item-value">
-                        {formatDate(profile.courseEndDate)}
+                        {formatDay(profile.courseEndDate)}
                         {(() => {
-                          const courseEnd = new Date(profile.courseEndDate)
-                          const today = new Date()
-                          if (courseEnd < today) {
+                          // this counts whole days so the end date itself is not shown as ended:
+                          if (hasCourseEnded()) {
                             return <span className="status-badge-small expired">Ended</span>
                           } else {
-                            const daysRemaining = Math.ceil((courseEnd - today) / (1000 * 60 * 60 * 24))
+                            const daysRemaining = daysFromToday(profile.courseEndDate)
                             return <span className="status-badge-small active">{daysRemaining} days</span>
                           }
                         })()}
@@ -1270,7 +1222,7 @@ const StudentDashboard = () => {
                   <div className="compliance-text">
                     <div className="compliance-title-large">
                       {(() => {
-                        if (profile?.courseEndDate && new Date(profile.courseEndDate) < new Date()) {
+                        if (hasCourseEnded()) {
                           return 'Cannot Work'
                         }
                         // this title stays on the safe side when no terms are added:
@@ -1280,7 +1232,7 @@ const StudentDashboard = () => {
                     </div>
                     <div className="compliance-description">
                       {(() => {
-                        if (profile?.courseEndDate && new Date(profile.courseEndDate) < new Date()) {
+                        if (hasCourseEnded()) {
                           return 'Your course has ended. You cannot work on a Student visa.'
                         }
                         if (hasNoTerms()) return `Maximum ${getAllowedHours()} hours per week until you add your term dates`
@@ -1607,7 +1559,7 @@ const StudentDashboard = () => {
                       <div className="template-header">
                         <div className="template-name">{template.name}</div>
                         <div className="template-dates">
-                          {formatDate(template.startDate)} - {formatDate(template.endDate)}
+                          {formatDay(template.startDate)} - {formatDay(template.endDate)}
                         </div>
                       </div>
                       <button
@@ -1667,7 +1619,7 @@ const StudentDashboard = () => {
                                         <div className="term-name">{term.name}</div>
                                         <div className="term-academic-year">Academic Year: {term.academicYear || 'Not set'}</div>
                                         <div className="term-dates">
-                                          {formatDate(term.startDate)} - {formatDate(term.endDate)}
+                                          {formatDay(term.startDate)} - {formatDay(term.endDate)}
                                         </div>
                                       </div>
                                       <div>
@@ -1728,7 +1680,7 @@ const StudentDashboard = () => {
                                         <div className="term-name">{term.name}</div>
                                         <div className="term-academic-year">Academic Year: {term.academicYear || 'Not set'}</div>
                                         <div className="term-dates">
-                                          {formatDate(term.startDate)} - {formatDate(term.endDate)}
+                                          {formatDay(term.startDate)} - {formatDay(term.endDate)}
                                         </div>
                                       </div>
                                       <div>
@@ -1800,11 +1752,10 @@ const StudentDashboard = () => {
                   </p>
                   <div className="full-time-periods-list">
                     {fullTimePeriods.map((period, index) => {
-                      const periodStart = new Date(period.startDate)
-                      const periodEnd = new Date(period.endDate)
-                      const today = new Date()
-                      const isCurrent = today >= periodStart && today <= periodEnd
-                      const isPast = today > periodEnd
+                      // periods are plain days, so we compare them with today's UK date:
+                      const today = getTodayKey()
+                      const isCurrent = today >= period.startDate && today <= period.endDate
+                      const isPast = today > period.endDate
                       
                       return (
                         <div 
@@ -1814,7 +1765,7 @@ const StudentDashboard = () => {
                           <div className="full-time-period-header">
                             <div className="full-time-period-content">
                               <div className="full-time-period-dates">
-                                {formatDate(period.startDate)} - {formatDate(period.endDate)}
+                                {formatDay(period.startDate)} - {formatDay(period.endDate)}
                               </div>
                               <div className="full-time-period-description">
                                 {period.description}
@@ -1897,14 +1848,12 @@ const StudentDashboard = () => {
                     <div className="profile-info-item">
                       <div className="profile-info-label">Course End Date</div>
                       <div className="profile-info-value">
-                        {formatDate(profile.courseEndDate)}
+                        {formatDay(profile.courseEndDate)}
                         {(() => {
-                          const courseEnd = new Date(profile.courseEndDate)
-                          const today = new Date()
-                          if (courseEnd < today) {
+                          if (hasCourseEnded()) {
                             return <span className="profile-status-badge expired">Course Ended</span>
                           } else {
-                            const daysRemaining = Math.ceil((courseEnd - today) / (1000 * 60 * 60 * 24))
+                            const daysRemaining = daysFromToday(profile.courseEndDate)
                             return <span className="profile-status-badge active">{daysRemaining} days remaining</span>
                           }
                         })()}
@@ -2026,7 +1975,7 @@ const StudentDashboard = () => {
                                             <div>
                                               <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>{term.name} Term</div>
                                               <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                                                {formatDate(term.startDate)} - {formatDate(term.endDate)}
+                                                {formatDay(term.startDate)} - {formatDay(term.endDate)}
                                               </div>
                                             </div>
                                             <span className={`term-status-badge status-${status}`}>
@@ -2065,7 +2014,7 @@ const StudentDashboard = () => {
                                             <div>
                                               <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>{term.name} Term</div>
                                               <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                                                {formatDate(term.startDate)} - {formatDate(term.endDate)}
+                                                {formatDay(term.startDate)} - {formatDay(term.endDate)}
                                               </div>
                                             </div>
                                             <span className={`term-status-badge status-${status}`}>
@@ -2271,7 +2220,7 @@ const AuditTrailTab = ({ profile, onExport }) => {
                 </div>
                 <div className="audit-identity-item">
                   <div className="identity-label">Course End Date</div>
-                  <div className="identity-value">{formatDate(auditTrail.identity?.courseEndDate || profile?.courseEndDate)}</div>
+                  <div className="identity-value">{formatDay(auditTrail.identity?.courseEndDate || profile?.courseEndDate)}</div>
                 </div>
               </div>
             </div>
@@ -2297,11 +2246,11 @@ const AuditTrailTab = ({ profile, onExport }) => {
                       <div className="declaration-dates">
                         <div className="date-item">
                           <span className="date-label">Start:</span>
-                          <span className="date-value">{formatDate(decl.term.startDate)}</span>
+                          <span className="date-value">{formatDay(decl.term.startDate)}</span>
                         </div>
                         <div className="date-item">
                           <span className="date-label">End:</span>
-                          <span className="date-value">{formatDate(decl.term.endDate)}</span>
+                          <span className="date-value">{formatDay(decl.term.endDate)}</span>
                         </div>
                       </div>
                       <div className="declaration-meta">
