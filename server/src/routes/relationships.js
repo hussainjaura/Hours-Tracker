@@ -1,8 +1,9 @@
 import express from "express";
 import prisma from "../prisma.js";
 import { authenticate, authorizeRoles } from "../middleware/auth.js";
-import { logEmployerAcknowledgement } from "../utils/auditLogger.js";
+import { logEmployerAcknowledgement, getClientIp } from "../utils/auditLogger.js";
 import { findResetNotices } from "../utils/acknowledgements.js";
+import { requireVerifiedEmail } from "../middleware/requireVerifiedEmail.js";
 
 const router = express.Router();
 
@@ -15,6 +16,8 @@ router.post(
   "/request",
   authenticate,
   authorizeRoles("EMPLOYER"),
+  // an employer must verify their email before asking to see a student's dates:
+  requireVerifiedEmail,
   async (req, res) => {
     try {
       const { studentUniversityId } = req.body;
@@ -85,6 +88,8 @@ router.post(
       await prisma.auditLog.create({
         data: {
           action: "REQUEST_STUDENT_ACCESS",
+          // this saves where the request came from, as evidence in the audit pack:
+          ipAddress: getClientIp(req),
           entityType: "StudentEmployer",
           entityId: relationship.id,
           performedBy: req.user.id,
@@ -201,6 +206,8 @@ router.delete(
       await prisma.auditLog.create({
         data: {
           action: "REMOVE_STUDENT_RELATIONSHIP",
+          // this saves where the request came from, as evidence in the audit pack:
+          ipAddress: getClientIp(req),
           entityType: "StudentEmployer",
           entityId: relationship.id,
           performedBy: req.user.id,
@@ -375,6 +382,8 @@ router.put(
   "/:relationshipId/accept",
   authenticate,
   authorizeRoles("STUDENT"),
+  // a student must verify their email before sharing their dates with an employer:
+  requireVerifiedEmail,
   async (req, res) => {
     try {
       const relationshipId = Number(req.params.relationshipId);
@@ -420,6 +429,8 @@ router.put(
       await prisma.auditLog.create({
         data: {
           action: "ACCEPT_EMPLOYER_ACCESS",
+          // this saves where the request came from, as evidence in the audit pack:
+          ipAddress: getClientIp(req),
           entityType: "StudentEmployer",
           entityId: relationship.id,
           performedBy: req.user.id,
@@ -488,6 +499,8 @@ router.put(
       await prisma.auditLog.create({
         data: {
           action: "REJECT_EMPLOYER_ACCESS",
+          // this saves where the request came from, as evidence in the audit pack:
+          ipAddress: getClientIp(req),
           entityType: "StudentEmployer",
           entityId: relationship.id,
           performedBy: req.user.id,
@@ -639,6 +652,8 @@ router.put(
       await prisma.auditLog.create({
         data: {
           action: "DEACTIVATE_EMPLOYER_ACCESS",
+          // this saves where the request came from, as evidence in the audit pack:
+          ipAddress: getClientIp(req),
           entityType: "StudentEmployer",
           entityId: relationship.id,
           performedBy: req.user.id,
@@ -668,6 +683,8 @@ router.put(
   "/:relationshipId/acknowledge",
   authenticate,
   authorizeRoles("EMPLOYER"),
+  // the acknowledgement is legal evidence, so it must come from a verified email:
+  requireVerifiedEmail,
   async (req, res) => {
     try {
       const relationshipId = Number(req.params.relationshipId);

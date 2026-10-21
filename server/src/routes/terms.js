@@ -6,6 +6,7 @@ import {
   logTermDeclaration,
   logChangeHistory,
   createComprehensiveAuditLog,
+  getClientIp,
 } from "../utils/auditLogger.js";
 import { generateTermLetterPDF } from "../utils/pdfGenerator.js";
 import { hasActiveAccess } from "../utils/access.js";
@@ -178,7 +179,8 @@ router.post(
       });
 
       // AUDIT: Layer 2 - Term Declaration
-      await logTermDeclaration(prisma, term, student, user, null, req);
+      // adding a term is not the same as confirming it, so the saved words say so:
+      await logTermDeclaration(prisma, term, student, user, "I have added these term dates. They are not confirmed yet.", req);
 
       // this asks employers to acknowledge again because a new term was added:
       await resetAcknowledgements(prisma, student, req.user.id, `Student added the ${term.name} term`);
@@ -794,6 +796,7 @@ router.post(
       await prisma.auditLog.create({
         data: {
           action: "CREATE_TERM_FROM_TEMPLATE",
+          ipAddress: getClientIp(req),
           entityType: "Term",
           entityId: term.id,
           performedBy: req.user.id,
@@ -865,8 +868,13 @@ router.get(
         });
       }
 
+      // this counts terms that are not confirmed yet, so the letter can say they were left out:
+      const unconfirmedCount = await prisma.term.count({
+        where: { studentId: student.id, confirmedAt: null },
+      });
+
       // Generate PDF:
-      const pdfBuffer = await generateTermLetterPDF(student, terms);
+      const pdfBuffer = await generateTermLetterPDF(student, terms, { unconfirmedCount });
 
       // Set response headers
       res.setHeader('Content-Type', 'application/pdf');
@@ -935,8 +943,17 @@ router.get(
         });
       }
 
+      // the letter is addressed to the employer's organisation when they download it:
+      const [employerProfile, unconfirmedCount] = await Promise.all([
+        prisma.employer.findUnique({ where: { userId: req.user.id } }),
+        prisma.term.count({ where: { studentId: student.id, confirmedAt: null } }),
+      ]);
+
       // Generate PDF:
-      const pdfBuffer = await generateTermLetterPDF(student, terms);
+      const pdfBuffer = await generateTermLetterPDF(student, terms, {
+        addressee: employerProfile?.organisationName || null,
+        unconfirmedCount,
+      });
 
       // Set response headers
       res.setHeader('Content-Type', 'application/pdf');
@@ -954,4 +971,4 @@ router.get(
   }
 );
 
-export default router;
+export default router;

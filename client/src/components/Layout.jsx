@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import MobileNavContext from '../contexts/MobileNavContext'
+import { authAPI } from '../services/api'
 import './Layout.css'
 
 const Layout = ({ children }) => {
@@ -10,6 +11,25 @@ const Layout = ({ children }) => {
   // The ☰ button lives here in the navbar, but the drawer lives in the
   // dashboard page, so the open/closed state is shared through context.
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  // these hold the state of the "send a new link" button in the verify banner:
+  const [resendState, setResendState] = useState('idle')
+  const [resendMessage, setResendMessage] = useState('')
+
+  // the banner only shows when the server says the email is not verified yet:
+  const needsVerification = user && user.emailVerifiedAt === null
+
+  // this asks the server to email a fresh verification link:
+  const handleResendVerification = async () => {
+    setResendState('sending')
+    try {
+      const response = await authAPI.resendVerification()
+      setResendState('sent')
+      setResendMessage(response.data.message)
+    } catch (err) {
+      setResendState('idle')
+      setResendMessage(err.message || 'We could not send the email. Please try again.')
+    }
+  }
 
   const handleLogout = () => {
     logout()
@@ -58,6 +78,28 @@ const Layout = ({ children }) => {
             </div>
           </div>
         </header>
+        {/* this banner asks new users to verify their email before sharing anything: */}
+        {needsVerification && (
+          <div className="verify-email-banner" role="status">
+            <div className="verify-email-banner-content">
+              <div className="verify-email-banner-text">
+                <strong>Please verify your email address.</strong>
+                <span>
+                  We sent a link to {user.email}. Until you open it, you cannot share term dates, request access or acknowledge a student.
+                </span>
+                {resendMessage && <span className="verify-email-banner-note">{resendMessage}</span>}
+              </div>
+              <button
+                type="button"
+                className="verify-email-banner-button"
+                onClick={handleResendVerification}
+                disabled={resendState !== 'idle'}
+              >
+                {resendState === 'sending' ? 'Sending...' : resendState === 'sent' ? 'Email sent' : 'Send a new link'}
+              </button>
+            </div>
+          </div>
+        )}
         <main className="main-content">
           {children}
         </main>

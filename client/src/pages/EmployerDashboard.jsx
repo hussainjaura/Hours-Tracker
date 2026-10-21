@@ -108,7 +108,9 @@ const EmployerDashboard = () => {
   }
 
   const handleAcknowledgeStudent = async (relationshipId) => {
-    if (!window.confirm('By acknowledging, you confirm that you have reviewed the student\'s declared term dates and understand the compliance rules. This creates an audit trail for compliance purposes.')) {
+    // these are the same words the server saves with the acknowledgement, so the audit pack matches:
+    const statement = "I have reviewed this student's declared term dates and understand the weekly working hour limits that apply to them. I will use these limits when scheduling their work."
+    if (!window.confirm(`By acknowledging, you agree to this statement:\n\n"${statement}"\n\nIt will be saved in the audit trail with the date and time.`)) {
       return
     }
     

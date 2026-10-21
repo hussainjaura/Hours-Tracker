@@ -5,16 +5,16 @@ import prisma from "../prisma.js";
 import { signToken } from "../utils/jwt.js";
 import requireAuth from "../middleware/requireAuth.js";
 import { validate } from "../middleware/validation.js";
-import { authRateLimiter, passwordResetRateLimiter } from "../middleware/security.js";
+import { authRateLimiter, passwordResetRateLimiter, verificationEmailRateLimiter } from "../middleware/security.js";
 import { AppError } from "../utils/errors.js";
 import { createHash } from "crypto";
 import { sendPasswordResetEmail } from "../utils/email.js";
-import { 
-  generateVerificationToken, 
-  sendVerificationEmail, 
+import {
+  createAndSendVerification,
   isEmailVerificationEnabled,
-  verifyToken
+  verifyEmailToken,
 } from "../utils/emailVerification.js";
+import { getClientIp } from "../utils/auditLogger.js";
 
 const router = express.Router();
 
@@ -31,6 +31,8 @@ router.get("/me", requireAuth, async (req, res) => {
         email: true,
         role: true,
         createdAt: true,
+        // the website uses this to show the "verify your email" banner:
+        emailVerifiedAt: true,
         student: true,
       },
     });
@@ -112,11 +114,13 @@ router.post("/register",
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // when verification is switched off the account counts as verified straight away:
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         role,
+        emailVerifiedAt: isEmailVerificationEnabled() ? null : new Date(),
       },
     });
 
@@ -195,7 +199,7 @@ router.post("/register",
     if (role === 'EMPLOYER' && employerProfile) {
       try {
         // Get IP and user agent from request
-        const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        const ipAddress = getClientIp(req);
         const userAgent = req.headers['user-agent'] || 'Unknown';
 
         const createdEmployer = await prisma.employer.create({
@@ -258,13 +262,12 @@ router.post("/register",
       },
     });
 
-    // Optional email verification
-    let emailVerificationToken = null;
+    // this emails the verification link when verification is switched on:
     if (isEmailVerificationEnabled()) {
-      emailVerificationToken = generateVerificationToken(user.email);
-      await sendVerificationEmail(user.email, emailVerificationToken);
+      await createAndSendVerification(prisma, user);
     }
 
+    // the user is still logged in, but sharing actions wait until they verify:
     const token = signToken({ id: user.id, role: user.role });
 
     const response = {
@@ -273,6 +276,7 @@ router.post("/register",
         id: user.id,
         email: user.email,
         role: user.role,
+        emailVerifiedAt: user.emailVerifiedAt,
       },
     };
 
@@ -386,6 +390,7 @@ router.post("/login",
         password: true,
         role: true,
         createdAt: true,
+        emailVerifiedAt: true,
         // lastLogin: true, // Uncomment after migration
       }
     });
@@ -472,7 +477,7 @@ router.post("/login",
     }
 
     // Update last login time (if field exists - migration may not be run yet)
-    const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const ipAddress = getClientIp(req);
     try {
       await prisma.user.update({
         where: { id: user.id },
@@ -519,6 +524,7 @@ router.post("/login",
         id: user.id,
         email: user.email,
         role: user.role,
+        emailVerifiedAt: user.emailVerifiedAt,
       }
     });
   } catch (error) {
@@ -596,7 +602,7 @@ router.post(
       }
 
       // AUDIT LOG
-      const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+      const ipAddress = getClientIp(req);
       await prisma.auditLog.create({
         data: {
           action: "PASSWORD_RESET_REQUESTED",
@@ -684,7 +690,7 @@ router.post(
       });
 
       // AUDIT LOG:
-      const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+      const ipAddress = getClientIp(req);
       await prisma.auditLog.create({
         data: {
           action: "PASSWORD_RESET_COMPLETED",
@@ -712,46 +718,88 @@ router.post(
   }
 );
 
-// Email verification endpoint (optional):
-router.get("/verify-email", async (req, res) => {
-  try {
-    const { token } = req.query;
+// POST /auth/verify-email - the verify page sends the token from the emailed link:
+// it is a POST because it changes the account, and it works without being logged in:
+router.post(
+  "/verify-email",
+  authRateLimiter,
+  validate([
+    { field: 'token', validator: 'required' }
+  ]),
+  async (req, res) => {
+    try {
+      const user = await verifyEmailToken(prisma, req.body.token);
 
-    if (!token) {
-      throw new AppError("Verification token is required", 400, "MISSING_TOKEN");
-    }
-
-    const { email } = verifyToken(token);
-
-    // Update user's email verification status (if you add this field to the schema)
-    // For now, we'll just return success:
-    res.json({
-      success: true,
-      message: "Email verified successfully",
-      email,
-    });
-  } catch (error) {
-    if (error instanceof AppError) {
-      return res.status(error.statusCode).json({
-        success: false,
-        error: {
-          message: error.message,
-          code: error.code,
-          requestId: req.requestId || null,
-          timestamp: new Date().toISOString(),
+      // AUDIT LOG - this records when the email was proven:
+      await prisma.auditLog.create({
+        data: {
+          action: "EMAIL_VERIFIED",
+          entityType: "User",
+          entityId: 0,
+          performedBy: user.id,
+          universityId: null,
+          ipAddress: getClientIp(req),
+          metadata: { userId: user.id, email: user.email },
         },
       });
-    }
 
-    res.status(500).json({
-      success: false,
-      error: {
-        message: "Internal server error",
-        requestId: req.requestId || null,
-        timestamp: new Date().toISOString(),
-      },
-    });
+      res.json({
+        success: true,
+        message: "Your email address is verified.",
+        email: user.email,
+      });
+    } catch (error) {
+      // a bad or old link gets a clear message the page can show:
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({
+          success: false,
+          error: {
+            message: error.message,
+            code: error.code,
+            requestId: req.requestId || null,
+          },
+        });
+      }
+      console.error("VERIFY EMAIL ERROR:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
-});
+);
+
+
+// POST /auth/resend-verification - a logged in user asks for a new link:
+// it has its own strict limit so nobody can flood an inbox:
+router.post(
+  "/resend-verification",
+  requireAuth,
+  verificationEmailRateLimiter,
+  async (req, res) => {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: req.user.id },
+        select: { id: true, email: true, emailVerifiedAt: true },
+      });
+
+      if (!user) {
+        return res.status(404).json({ error: "Account not found" });
+      }
+
+      // nothing to send if they already verified:
+      if (user.emailVerifiedAt) {
+        return res.json({ success: true, alreadyVerified: true, message: "Your email address is already verified." });
+      }
+
+      await createAndSendVerification(prisma, user);
+
+      res.json({
+        success: true,
+        message: `We sent a new verification link to ${user.email}.`,
+      });
+    } catch (error) {
+      console.error("RESEND VERIFICATION ERROR:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
 
 export default router;

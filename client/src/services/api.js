@@ -88,7 +88,10 @@ export const authAPI = {
   login: (email, password) => api.post('/auth/login', { email, password }),
   register: (registrationData) => api.post('/auth/register', registrationData),
   getMe: () => api.get('/auth/me'),
-  verifyEmail: (token) => api.get(`/auth/verify-email?token=${token}`),
+  // this sends the token from the emailed link so the server can mark the email as verified:
+  verifyEmail: (token) => api.post('/auth/verify-email', { token }),
+  // this asks the server to email a fresh verification link:
+  resendVerification: () => api.post('/auth/resend-verification'),
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
   resetPassword: (token, password) => api.post('/auth/reset-password', { token, password }),
 }

@@ -7,14 +7,14 @@ import prisma from "../prisma.js";
 import { getTodayUk } from "./dates.js";
 
 // Get client IP address from request:
+// we never read the X-Forwarded-For header ourselves, because anyone can type a fake one:
+// req.ip only uses that header when TRUST_PROXY is set in .env (see app.js), meaning a real proxy added it:
 export function getClientIp(req) {
-  return (
-    req.headers["x-forwarded-for"]?.split(",")[0] ||
-    req.headers["x-real-ip"] ||
-    req.connection?.remoteAddress ||
-    req.socket?.remoteAddress ||
-    "unknown"
-  );
+  const ip = req.ip || req.socket?.remoteAddress;
+  if (!ip) return "unknown";
+
+  // Node writes IPv4 addresses like ::ffff:127.0.0.1, so we keep just the normal part:
+  return ip.startsWith("::ffff:") ? ip.slice(7) : ip;
 }
 
 // Get user agent from request:
@@ -85,11 +85,15 @@ export async function logTermDeclaration(prisma, term, student, user, declaratio
 }
 
 
+// this is the exact sentence the employer agrees to in the acknowledge pop-up:
+// the website shows the same words, so the audit pack proves what they really agreed to:
+export const ACKNOWLEDGEMENT_TEXT =
+  "I have reviewed this student's declared term dates and understand the weekly working hour limits that apply to them. I will use these limits when scheduling their work.";
+
 // Layer 3: Employer Acknowledgement
 // Captures: Employer viewing dates, Acknowledgement text, Timestamp:
 export async function logEmployerAcknowledgement(prisma, relationship, student, employer, acknowledgementText, req = null) {
-  const acknowledgement = acknowledgementText || 
-    "We have relied on the information provided and applied the correct working restrictions.";
+  const acknowledgement = acknowledgementText || ACKNOWLEDGEMENT_TEXT;
 
   // Get student's terms for context
   const terms = await prisma.term.findMany({
@@ -413,12 +417,19 @@ export async function getRelationshipAuditTrail(prisma, relationshipId) {
     throw new Error("Relationship not found");
   }
 
-  // Get all audit logs related to this relationship
+  // Get all audit logs related to this relationship:
+  // an employer only sees this link's history, the student's term changes, and their own checks:
+  // before, every log with the student's ID was included, so one employer could see another employer's activity:
   const auditLogs = await prisma.auditLog.findMany({
     where: {
       OR: [
         { entityType: "StudentEmployer", entityId: relationshipId },
-        { universityId: relationship.student.universityId },
+        { entityType: "Term", universityId: relationship.student.universityId },
+        {
+          entityType: "Student",
+          universityId: relationship.student.universityId,
+          performedBy: { in: [relationship.employerId, "SYSTEM"] },
+        },
       ],
     },
     orderBy: { createdAt: "asc" },

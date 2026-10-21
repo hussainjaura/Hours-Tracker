@@ -3,6 +3,7 @@ import prisma from "../prisma.js";
 import { authenticate, authorizeRoles } from "../middleware/auth.js";
 import { getWorkEligibility } from "../utils/workEligibility.js";
 import { findRelationship } from "../utils/access.js";
+import { getClientIp } from "../utils/auditLogger.js";
 import { validate, validateDate, validatePositiveNumber } from "../middleware/validation.js";
 
 const router = express.Router();
@@ -66,6 +67,8 @@ router.get(
       await prisma.auditLog.create({
         data: {
           action: "CHECK_ELIGIBILITY",
+          // this saves where the check came from, as evidence in the audit pack:
+          ipAddress: getClientIp(req),
           entityType: "Student",
           entityId: student.id,
           performedBy: req.user.id,

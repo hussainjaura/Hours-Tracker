@@ -95,6 +95,8 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    // this reloads the user from the server, for example right after they verify their email:
+    refreshUser: fetchUser,
     isAuthenticated: !!user,
     isStudent: user?.role === 'STUDENT',
     isEmployer: user?.role === 'EMPLOYER',

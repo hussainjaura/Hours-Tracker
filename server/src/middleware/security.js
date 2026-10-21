@@ -137,6 +137,14 @@ export const passwordResetRateLimiter = rateLimiter({
   keyExtra: (req) => (typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : ""),
 });
 
+// this limits "send me a new verification email" so nobody can flood an inbox:
+// it runs after the login check, so it counts per user:
+export const verificationEmailRateLimiter = rateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  maxRequests: process.env.NODE_ENV === 'production' ? 3 : 20,
+  message: "Too many verification emails requested, please wait 15 minutes and try again",
+});
+
 /**
  * Request size limit middleware
  * @param {number} maxSize - Maximum request body size in bytes (default: 1MB)

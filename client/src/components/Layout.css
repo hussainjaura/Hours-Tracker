@@ -143,6 +143,70 @@
   box-shadow: 0 4px 12px rgba(31, 41, 55, 0.3);
 }
 
+/* THIS GREY BANNER ASKS NEW USERS TO VERIFY THEIR EMAIL: */
+.verify-email-banner {
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  border-left: 3px solid #1f2937;
+}
+
+/* THE TEXT AND BUTTON SIT SIDE BY SIDE, LINED UP WITH THE HEADER: */
+.verify-email-banner-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0.875rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* THE MESSAGE STACKS ITS LINES IN DARK NAVY AND GREY: */
+.verify-email-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: #1f2937;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.verify-email-banner-note {
+  color: #6b7280;
+}
+
+/* THE RESEND BUTTON MATCHES THE DARK NAVY LOGOUT BUTTON: */
+.verify-email-banner-button {
+  background: #1f2937;
+  color: #ffffff;
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.verify-email-banner-button:hover:not(:disabled) {
+  background: #111827;
+}
+
+.verify-email-banner-button:disabled {
+  background: #6b7280;
+  cursor: default;
+}
+
+/* ON PHONES THE BUTTON MOVES UNDER THE TEXT: */
+@media (max-width: 768px) {
+  .verify-email-banner-content {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.875rem 1rem;
+  }
+}
+
 .main-content {
   flex: 1;
   padding: 2rem;

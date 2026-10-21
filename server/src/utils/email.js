@@ -89,3 +89,28 @@ export async function sendPasswordResetEmail(to, resetUrl) {
 
   return sendEmail({ to, subject, text, html });
 }
+
+
+// this emails the link that proves the user owns their email address:
+export async function sendVerificationEmail(to, verifyUrl) {
+  const subject = "Verify your ISC Audit email address";
+  const text =
+    `Welcome to ISC Audit.\n\n` +
+    `Please confirm this is your email address by opening this link (it expires in 24 hours):\n${verifyUrl}\n\n` +
+    `If you didn't create an ISC Audit account, you can ignore this email.`;
+  const safeUrl = escapeHtml(verifyUrl);
+  const html = `
+    <div style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; color: #111827; max-width: 520px;">
+      <h2 style="margin: 0 0 16px;">Verify your email address</h2>
+      <p>Welcome to ISC Audit. Please confirm this is your email address. This link expires in 24 hours.</p>
+      <p style="margin: 24px 0;">
+        <a href="${safeUrl}" style="background: #111827; color: #ffffff; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+          Verify my email
+        </a>
+      </p>
+      <p style="color: #6b7280; font-size: 14px;">If the button doesn't work, copy this link into your browser:<br>${safeUrl}</p>
+      <p style="color: #6b7280; font-size: 14px;">If you didn't create an ISC Audit account, you can ignore this email.</p>
+    </div>`;
+
+  return sendEmail({ to, subject, text, html });
+}

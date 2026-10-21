@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import VerifyEmail from './pages/VerifyEmail'
 import StudentDashboard from './pages/StudentDashboard'
 import EmployerDashboard from './pages/EmployerDashboard'
 import Layout from './components/Layout'
@@ -21,6 +22,8 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          {/* this is the page the verification email links to: */}
+          <Route path="/verify-email" element={<VerifyEmail />} />
           
           {/* Protected Routes */}
           <Route

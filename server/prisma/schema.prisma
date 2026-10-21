@@ -20,10 +20,12 @@ model User {
   role      Role
   createdAt DateTime @default(now())
   lastLogin DateTime? // Track last login time
+  emailVerifiedAt DateTime? // Empty until the user clicks the link in their verification email
 
   student            Student?
   employer           Employer?
   passwordResetTokens PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
 }
 
 model University {
@@ -133,6 +135,20 @@ model Employer {
   // IP addresses for acknowledgements (stored as JSON array)
   acknowledgementIps Json? // Array of IP addresses used for acknowledgements
   
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// One-time links sent to check that a user owns their email address.
+// Like reset tokens, only a hash of the token is stored.
+model EmailVerificationToken {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
