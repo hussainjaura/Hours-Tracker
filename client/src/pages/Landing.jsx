@@ -14,7 +14,9 @@ const navLinks = [
 ]
 
 const Landing = () => {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, isEmployer } = useAuth()
+  // this sends each person to their own dashboard, so employers don't land on the student one:
+  const dashboardPath = isEmployer ? '/employer' : '/student'
   const [menuOpen, setMenuOpen] = useState(false)
   // for toggling and closing the menu button:
   const toggleMenu = () => {
@@ -57,7 +59,7 @@ const Landing = () => {
                 </Link>
               </>
             ) : (
-              <Link to="/student" className="btn-start-free">
+              <Link to={dashboardPath} className="btn-start-free">
                 Go to Dashboard
                 <span className="btn-arrow">→</span>
               </Link>
@@ -76,7 +78,7 @@ const Landing = () => {
             </h1>
             <div className="hero-content-box">
               <p className="hero-description">
-                Protect your business from £60,000 Right-to-Work fines. Automated compliance audit trails for student workers — built on student declarations, employer acknowledgements, and immutable records that support your Statutory Excuse.
+                Know each international student's weekly work limit before you plan their shifts. ISC Audit keeps a dated record of the term dates students declare and the rules employers acknowledge, so you can show the checks you made.
               </p>
               <div className="hero-cta">
                 {!isAuthenticated ? (
@@ -89,7 +91,7 @@ const Landing = () => {
                     </Link>
                   </>
                 ) : (
-                  <Link to="/student" className="btn-hero-primary">
+                  <Link to={dashboardPath} className="btn-hero-primary">
                     Go to Dashboard
                   </Link>
                 )}
@@ -118,25 +120,27 @@ const Landing = () => {
       <section className="value-proposition-section">
         <div className="value-prop-container">
           <div className="value-prop-left">
+            {/* these are real facts about the rules, not made up user numbers: */}
+            {/* the app has no real users yet, so showing user counts or ratings would not be honest: */}
             <div className="value-prop-stats">
               <div className="stat-item">
-                <div className="stat-number">1K+</div>
-                <div className="stat-label">ACTIVE USERS</div>
+                <div className="stat-number">20h</div>
+                <div className="stat-label">TERM-TIME LIMIT</div>
               </div>
               <div className="stat-item">
-                <div className="stat-number">500+</div>
-                <div className="stat-label">COMPLIANCE CHECKS</div>
+                <div className="stat-number">10h</div>
+                <div className="stat-label">BELOW DEGREE</div>
               </div>
               <div className="stat-item">
-                <div className="stat-number">4.9+</div>
-                <div className="stat-label">USER RATING</div>
+                <div className="stat-number">£60K</div>
+                <div className="stat-label">MAX FINE PER WORKER</div>
               </div>
             </div>
             <h2 className="value-proposition-title">
-              IMMENSE COMPLIANCE PROTECTION
+              CLEAR RULES, DATED RECORDS
             </h2>
             <p className="value-proposition-tagline">
-              WE TURN YOUR COMPLIANCE WORRIES INTO AUDIT-READY EVIDENCE
+              EVERY DECLARATION AND ACKNOWLEDGEMENT IS SAVED WITH A DATE AND TIME
             </p>
             <a href="#features" className="btn-view-reviews">
               View Features
@@ -283,7 +287,7 @@ const Landing = () => {
             <div className="risk-card risk-card-critical">
               <h3 className="risk-title">Licence at Risk</h3>
               <p className="risk-description">
-                Even a single hour over the 20-hour limit can lead to the <strong>revocation of your Sponsor Licence</strong>, halting your ability to hire international talent and potentially shutting down your business operations.
+                If your business holds a sponsor licence, a fine for illegal working can lead the Home Office to <strong>suspend or revoke your licence</strong>, which stops you sponsoring overseas workers.
               </p>
             </div>
 
@@ -297,7 +301,7 @@ const Landing = () => {
             <div className="risk-card risk-card-warning">
               <h3 className="risk-title">Complex Term Dates</h3>
               <p className="risk-description">
-                Different universities—and even different courses within the same university—have varying term dates. <strong>Relying on a student's word or a generic website is not a valid defence</strong> in a Home Office audit.
+                Different universities, and even different courses at the same university, have different term dates. <strong>A generic calendar from the internet will not match</strong>, so you need the dates for each student's own course.
               </p>
             </div>
           </div>
@@ -314,29 +318,31 @@ const Landing = () => {
           
           <div className="risks-grid">
             <div className="risk-card risk-card-critical">
-              <h3 className="risk-title">Deportation Risk</h3>
+              <h3 className="risk-title">Visa at Risk</h3>
               <p className="risk-description">
-                Exceeding 20 hours is a <strong>criminal offence</strong>. It can lead to immediate visa cancellation, a fine of <strong>£5,000</strong>, and a <strong>permanent ban from returning to the UK</strong>. Your entire future in the UK can be destroyed by a single mistake.
+                Working more hours than your visa allows <strong>breaks your visa conditions</strong>. The Home Office can <strong>cancel your visa</strong>, and a breach can lead to removal from the UK and make it harder to get a UK visa in the future.
               </p>
             </div>
 
             <div className="risk-card risk-card-critical">
               <h3 className="risk-title">Career Protection</h3>
               <p className="risk-description">
-                Breaching rules can <strong>disqualify you from the Graduate Route</strong> (Post-Study Work visa), making all your years of study "meaningless". You could lose the opportunity to work in the UK after graduation, regardless of your qualifications.
+                A breach of your visa conditions can <strong>count against you when you apply for the Graduate Route</strong> or another UK visa later. The hours you work now can affect your plans after you graduate.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Statutory Excuse Protection Section */}
+      {/* Due Diligence Section */}
       <section className="statutory-excuse-section">
         <div className="container">
           <div className="statutory-excuse-content">
-            <h2 className="section-title">Your Solution: Statutory Excuse Protection</h2>
+            <h2 className="section-title">Your Solution: A Clear Record of Due Diligence</h2>
+            {/* a statutory excuse comes from the Home Office right to work check (share code), which this app does not do: */}
+            {/* so we say the app supports that check instead of replacing it: */}
             <p className="section-subtitle">
-              Our platform provides the evidence of "Statutory Excuse" required by the Home Office to prove you took all reasonable steps to prevent illegal working.
+              ISC Audit records what each student declared, what the employer acknowledged, and when. It supports your right-to-work process, but it does not replace the Home Office right-to-work check that gives you a statutory excuse.
             </p>
             
             <div className="statutory-features-grid">
@@ -348,23 +354,23 @@ const Landing = () => {
               </div>
 
               <div className="statutory-feature">
-                <h3 className="statutory-feature-title">Immutable Audit Log</h3>
+                <h3 className="statutory-feature-title">Append-Only Audit Log</h3>
                 <p className="statutory-feature-description">
-                  Creates a time-stamped, unchangeable record of all declarations, confirmations, and acknowledgements. Every action is logged with IP address, user agent, and timestamp for complete audit evidence.
+                  Every declaration, confirmation and acknowledgement is saved with the date, time, IP address and browser. The app only adds new entries and never edits or deletes old ones.
                 </p>
               </div>
 
               <div className="statutory-feature">
-                <h3 className="statutory-feature-title">Employer Shield</h3>
+                <h3 className="statutory-feature-title">Employer Record</h3>
                 <p className="statutory-feature-description">
-                  Provides documented proof that employers performed prescribed right-to-work checks, viewed student declarations, and acknowledged compliance rules. This evidence supports your Statutory Excuse defence.
+                  Shows that you viewed the student's declared term dates, saw the weekly limit that applied, and acknowledged it. Keep this alongside your right-to-work check.
                 </p>
               </div>
 
               <div className="statutory-feature">
                 <h3 className="statutory-feature-title">Dual-Verification</h3>
                 <p className="statutory-feature-description">
-                  Both student and employer must confirm declarations and acknowledgements, ensuring students cannot claim they were "asked" to work more. Creates mutual accountability and clear audit trails.
+                  The student confirms their term dates and the employer acknowledges the rules, so both sides have agreed on the same information. If the dates change, the employer is asked to acknowledge them again.
                 </p>
               </div>
             </div>
@@ -387,7 +393,7 @@ const Landing = () => {
             <div className="feature-showcase-item">
               <h3 className="feature-showcase-title">Employer Acknowledgements</h3>
               <p className="feature-showcase-description">
-                Employers can acknowledge student declarations and view compliance rules. Set clear work hour limits and create an audit trail of due diligence with a single click.
+                Employers can view a student's declared dates and the rules that apply, then acknowledge them with a single click. Each acknowledgement is saved as a dated record.
               </p>
             </div>
 
@@ -399,9 +405,9 @@ const Landing = () => {
             </div>
 
             <div className="feature-showcase-item">
-              <h3 className="feature-showcase-title">Compliance Alerts</h3>
+              <h3 className="feature-showcase-title">Change Tracking</h3>
               <p className="feature-showcase-description">
-                Stay informed about important compliance updates. Receive notifications when term dates change, acknowledgements are required, or compliance rules are updated.
+                When a student changes their term dates, the old and new dates are saved in the history, and the employer is asked to acknowledge the new dates.
               </p>
             </div>
 
@@ -415,7 +421,7 @@ const Landing = () => {
             <div className="feature-showcase-item">
               <h3 className="feature-showcase-title">Compliance Dashboard</h3>
               <p className="feature-showcase-description">
-                Get real-time visibility into your compliance status. View active relationships, pending confirmations, and compliance summaries all in one place.
+                See your active students, pending requests and each student's limit for today, all in one place.
               </p>
             </div>
           </div>
@@ -427,7 +433,7 @@ const Landing = () => {
         <div className="container">
           <h2 className="section-title">How It Works</h2>
           <p className="section-subtitle">
-            A clear process for students and employers to manage right-to-work compliance together
+            A clear process for students and employers to manage student work limits together
           </p>
           
           <div className="how-it-works-grid">
@@ -435,18 +441,16 @@ const Landing = () => {
               <h3 className="how-it-works-title">For International Students</h3>
               <ol className="how-it-works-steps">
                 <li>
-                  <strong>Log in</strong> and create your profile
+                  <strong>Sign up</strong> and create your profile
                 </li>
                 <li>
                   <strong>Declare your information:</strong>
                   <ul>
                     <li>Your university</li>
-                    <li>Course start & end dates</li>
-                    <li>Term and holiday dates</li>
+                    <li>Your visa type</li>
+                    <li>Your course end date</li>
+                    <li>Your term dates</li>
                   </ul>
-                </li>
-                <li>
-                  <strong>Optional:</strong> Upload your right-to-work share code
                 </li>
                 <li>
                   The system <strong>calculates automatically:</strong>
@@ -468,7 +472,7 @@ const Landing = () => {
               <h3 className="how-it-works-title">For Employers / Managers</h3>
               <ol className="how-it-works-steps">
                 <li>
-                  <strong>Search</strong> by student email or generated ID
+                  <strong>Search</strong> by the student's university ID
                 </li>
                 <li>
                   <strong>View student information:</strong>
@@ -487,7 +491,7 @@ const Landing = () => {
                 </li>
               </ol>
               <p className="how-it-works-note">
-                This gives you documented proof of due diligence in your compliance process.
+                This gives you a dated record of the checks you made.
               </p>
             </div>
           </div>
@@ -546,38 +550,38 @@ const Landing = () => {
         <div className="container">
           <h2 className="section-title">How Employers Can Improve Compliance</h2>
           <p className="section-subtitle">
-            With the Home Office tightening enforcement, businesses need to take a proactive approach. Here's how ISC Audit — International Student Compliance Audit helps you stay compliant.
+            With the Home Office tightening enforcement, businesses need to take a proactive approach. Here's how ISC Audit can help.
           </p>
           
           <div className="solutions-grid">
             <div className="solution-card">
               <h3 className="solution-title">Review and Update Policies</h3>
               <p className="solution-description">
-                Our platform ensures your HR teams understand the latest RTW check guidance. We provide clear, up-to-date compliance rules based on student-declared term dates, eliminating guesswork and confusion.
+                ISC Audit shows your team the weekly limit that applies to each student today, worked out from the term dates they declared, so nobody has to guess.
               </p>
               <ul className="solution-benefits">
                 <li>Automated compliance rule calculations</li>
                 <li>Clear term-time vs holiday distinctions</li>
-                <li>Real-time eligibility status</li>
+                <li>Today's limit for each student</li>
               </ul>
             </div>
 
             <div className="solution-card">
               <h3 className="solution-title">Train Staff Regularly</h3>
               <p className="solution-description">
-                Many compliance failures result from human error. Our platform provides an intuitive interface that guides employers through the compliance process, reducing training needs and preventing costly mistakes.
+                Many compliance failures result from human error. ISC Audit explains each rule in plain English, which helps your team avoid costly mistakes.
               </p>
               <ul className="solution-benefits">
                 <li>User-friendly dashboard interface</li>
                 <li>Clear compliance status indicators</li>
-                <li>Built-in guidance and tooltips</li>
+                <li>Plain-English rule explanations</li>
               </ul>
             </div>
 
             <div className="solution-card">
               <h3 className="solution-title">Conduct Regular Audits</h3>
               <p className="solution-description">
-                Our comprehensive audit trail feature allows you to review RTW records regularly, spot gaps, and correct issues before a Home Office audit. Export complete audit packs in PDF or JSON format.
+                The audit trail lets you review each student's declarations and your acknowledgements, spot missing or unconfirmed dates, and fix gaps early. Export audit packs as PDF or JSON.
               </p>
               <ul className="solution-benefits">
                 <li>Complete audit trail logging</li>
@@ -589,22 +593,22 @@ const Landing = () => {
             <div className="solution-card">
               <h3 className="solution-title">Use the Right Technology</h3>
               <p className="solution-description">
-                Our platform follows the statutory excuse process and provides digital verification of student declarations. We ensure all checks are properly documented and meet Home Office requirements.
+                Use the Home Office online service to check a student's right to work, then use ISC Audit to record their term dates and the weekly limit you agreed to follow.
               </p>
               <ul className="solution-benefits">
-                <li>Digital verification system</li>
-                <li>Statutory excuse documentation</li>
-                <li>Compliance with Home Office standards</li>
+                <li>Works alongside Home Office checks</li>
+                <li>Student-confirmed term dates</li>
+                <li>Employer acknowledgement records</li>
               </ul>
             </div>
 
             <div className="solution-card">
               <h3 className="solution-title">Keep Clear Records</h3>
               <p className="solution-description">
-                Retaining copies of RTW documents is essential for proving compliance. Our platform maintains immutable records of all declarations, confirmations, and acknowledgements with timestamps and IP addresses.
+                Good records show what you checked and when. ISC Audit saves every declaration, confirmation and acknowledgement with the date, time and IP address.
               </p>
               <ul className="solution-benefits">
-                <li>Immutable audit logs</li>
+                <li>Append-only audit log</li>
                 <li>Timestamped records</li>
                 <li>Complete compliance documentation</li>
               </ul>
@@ -613,12 +617,12 @@ const Landing = () => {
             <div className="solution-card">
               <h3 className="solution-title">Avoid Common Mistakes</h3>
               <p className="solution-description">
-                Our platform prevents the most common compliance failures: incorrect document checks, missed re-checks, and confusion over term dates. We automate calculations and provide clear compliance rules.
+                One of the most common mistakes is confusion over term dates and holidays. ISC Audit works out the limit from the declared dates and warns you when dates are missing or unconfirmed.
               </p>
               <ul className="solution-benefits">
                 <li>Automated term date calculations</li>
                 <li>Clear compliance rule display</li>
-                <li>Prevents document confusion</li>
+                <li>Warnings for missing or unconfirmed dates</li>
               </ul>
             </div>
           </div>
@@ -635,9 +639,9 @@ const Landing = () => {
       <section className="proof-of-fault-section">
         <div className="container">
           <div className="proof-of-fault-content">
-            <h2 className="section-title">Proof of Fault: Your Legal Defense</h2>
+            <h2 className="section-title">Evidence of Due Diligence</h2>
             <p className="section-subtitle">
-              If a student lies about their hours or works multiple jobs, our platform creates a comprehensive compliance audit trail that acts as your legal defense.
+              If something goes wrong, the audit trail shows what the student declared, what you acknowledged, and when.
             </p>
             
             <div className="proof-grid">
@@ -654,18 +658,18 @@ const Landing = () => {
               </div>
 
               <div className="proof-card">
-                <h3 className="proof-title">How This Protects You</h3>
+                <h3 className="proof-title">How This Helps You</h3>
                 <p className="proof-description">
-                  This evidence demonstrates that you performed the prescribed right-to-work checks and monitored compliance in good faith. If a student breaches their work limit, the audit trail shows:
+                  This record shows the information you were given and the rules you agreed to follow. If a student goes over their limit, the audit trail shows:
                 </p>
                 <ul className="proof-list">
                   <li>✓ You relied on student-provided information</li>
                   <li>✓ You acknowledged the correct compliance rules</li>
-                  <li>✓ You took reasonable steps to prevent illegal working</li>
+                  <li>✓ You checked the limit that applied at the time</li>
                   <li>✓ You have documented evidence of due diligence</li>
                 </ul>
                 <p className="proof-note">
-                  <strong>Important:</strong> This platform creates evidence of due diligence. It does not guarantee legal outcomes, but provides the documentation needed to support your Statutory Excuse defense.
+                  <strong>Important:</strong> This platform creates evidence of due diligence. It does not guarantee legal outcomes, and it does not replace the Home Office right-to-work check you need for a statutory excuse.
                 </p>
               </div>
             </div>
@@ -681,7 +685,7 @@ const Landing = () => {
             <div className="benefits-column">
               <h3 className="benefits-column-title">For Students</h3>
               <ul className="benefits-list">
-                <li>✓ Avoid accidental visa breaches</li>
+                <li>✓ Know your weekly limit at any time</li>
                 <li>✓ Understand weekly work limits clearly</li>
                 <li>✓ Create compliance evidence records</li>
                 <li>✓ Share compliance information with employers easily</li>
@@ -692,7 +696,7 @@ const Landing = () => {
               <ul className="benefits-list">
                 <li>✓ Documented due diligence</li>
                 <li>✓ Clear eligibility snapshots</li>
-                <li>✓ Weekly confirmation records</li>
+                <li>✓ Student-confirmed term dates</li>
                 <li>✓ Reduced compliance risk</li>
               </ul>
             </div>
@@ -705,7 +709,7 @@ const Landing = () => {
         <div className="container">
           <h2 className="section-title">Do even more with ISC Audit — International Student Compliance Audit</h2>
           <p className="section-subtitle">
-            Connect with your workflow and customize your setup to match your unique compliance needs. Our platform helps teams discover efficient ways of working, saving time and reducing risk without compromising compliance.
+            A few more things ISC Audit does for students and employers.
           </p>
           
           <div className="capabilities-grid">
@@ -719,7 +723,7 @@ const Landing = () => {
             <div className="capability-card">
               <h3 className="capability-title">Export & Integration</h3>
               <p className="capability-description">
-                Export complete audit packs in PDF or JSON format. Integrate compliance data with your existing HR and payroll systems.
+                Download audit packs as a PDF to keep or share, or as a JSON file that other software can read.
               </p>
             </div>
 
@@ -742,14 +746,14 @@ const Landing = () => {
             <div className="faq-item">
               <h3 className="faq-question">What can I get out of using ISC Audit — International Student Compliance Audit?</h3>
               <p className="faq-answer">
-                Our platform provides comprehensive compliance evidence for student employees and employers. Students can declare their academic terms and create audit trails, while employers can verify eligibility and document due diligence. Both parties benefit from clear compliance rules and complete audit records.
+                Our platform provides comprehensive compliance evidence for student employees and employers. Students can declare their academic terms and create audit trails, while employers can see each student's weekly limit and record their acknowledgements. Both parties benefit from clear compliance rules and complete audit records.
               </p>
             </div>
 
             <div className="faq-item">
-              <h3 className="faq-question">Can I import my existing student information?</h3>
+              <h3 className="faq-question">How do students add their information?</h3>
               <p className="faq-answer">
-                Yes! Students can easily add their university information, course details, and term dates through our intuitive interface. The system automatically calculates compliance rules based on your declared information.
+                Students enter their university, visa type, course end date and term dates, or start from a ready-made term template. The system then works out their weekly limit from that information.
               </p>
             </div>
 
@@ -763,7 +767,7 @@ const Landing = () => {
             <div className="faq-item">
               <h3 className="faq-question">How does the system calculate work hour limits?</h3>
               <p className="faq-answer">
-                The system automatically calculates work hour limits based on student-declared term dates. During term time, the limit is 20 hours per week. Outside term time (holidays), students can work full-time. The system clearly displays which rules apply and when.
+                The system automatically calculates work hour limits based on student-declared term dates. On a Student visa, the term-time limit is 20 hours per week (10 hours for courses below degree level), and students can work full-time in the holidays. Graduate Route visa holders have no weekly limit. If term dates are missing, the system plays safe and uses the term-time limit.
               </p>
             </div>
 
@@ -777,7 +781,7 @@ const Landing = () => {
             <div className="faq-item">
               <h3 className="faq-question">Do I have to pay to use ISC Audit — International Student Compliance Audit?</h3>
               <p className="faq-answer">
-                Currently, our platform is free to use. Students and employers can create accounts, manage relationships, and export audit trails at no cost. This helps ensure compliance is accessible to everyone who needs it.
+                No. ISC Audit is free to use. Students and employers can create accounts, manage relationships, and export audit trails at no cost. This helps ensure compliance is accessible to everyone who needs it.
               </p>
             </div>
           </div>
@@ -790,7 +794,7 @@ const Landing = () => {
           <div className="cta-content">
             <h2 className="cta-title">Ready to Get Started?</h2>
             <p className="cta-description">
-              Start managing right-to-work compliance with confidence. This platform helps you create audit-ready compliance evidence.
+              Start keeping a clear, dated record of student work limits.
             </p>
             {!isAuthenticated ? (
               <div className="hero-cta">
@@ -802,7 +806,7 @@ const Landing = () => {
                 </Link>
               </div>
             ) : (
-              <Link to="/student" className="btn btn-primary btn-large">
+              <Link to={dashboardPath} className="btn btn-primary btn-large">
                 Go to Dashboard
               </Link>
             )}
@@ -817,7 +821,7 @@ const Landing = () => {
             <div className="footer-section">
               <h4 className="footer-title">ISC Audit — International Student Compliance Audit</h4>
               <p className="footer-text">
-                Compliance assurance and audit evidence for student employees. Built for students and employers to manage right-to-work compliance together.
+                Compliance assurance and audit evidence for student employees. Built for students and employers to manage student work limits together.
               </p>
             </div>
             <div className="footer-section">
@@ -866,7 +870,8 @@ const Landing = () => {
               </p>
             </div>
             <div className="footer-copyright">
-              <p>&copy; 2024 ISC Audit — International Student Compliance Audit. All rights reserved.</p>
+              {/* the year updates by itself so the footer never looks out of date: */}
+              <p>&copy; {new Date().getFullYear()} ISC Audit — International Student Compliance Audit. All rights reserved.</p>
             </div>
           </div>
         </div>
