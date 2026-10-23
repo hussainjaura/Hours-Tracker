@@ -15,6 +15,7 @@ import {
   verifyEmailToken,
 } from "../utils/emailVerification.js";
 import { getClientIp } from "../utils/auditLogger.js";
+import { VISA_TYPES } from "../utils/workEligibility.js";
 
 const router = express.Router();
 
@@ -95,6 +96,10 @@ router.post("/register",
       }
       if (!studentProfile.fullName || !studentProfile.universityId || !studentProfile.universityName || !studentProfile.visaType || !studentProfile.courseEndDate) {
         return res.status(400).json({ error: 'All student profile fields are required: fullName, universityId, universityName, visaType, courseEndDate' });
+      }
+      // the visa type must be one we know the rules for, so made up values like "Banana" are refused:
+      if (!VISA_TYPES.includes(studentProfile.visaType)) {
+        return res.status(400).json({ error: `Invalid visa type. Must be one of: ${VISA_TYPES.join(', ')}` });
       }
       // Validate course end date is in the future
       const courseEndDate = new Date(studentProfile.courseEndDate);

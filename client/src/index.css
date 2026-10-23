@@ -6,19 +6,21 @@
 
 :root {
   /* Color Palette - Based on landing page theme */
-  --primary-color: #667eea;
-  --primary-hover: #5568d3;
-  --primary-light: #e8ebf8;
-  --secondary-color: #764ba2;
-  --accent-purple: #a78bfa;
-  --accent-lavender: #e9d5ff;
+  /* THE OLD PURPLE COLOURS ARE NOW NAVY AND GREY TO MATCH THE REST OF THE SITE: */
+  --primary-color: #1f2937;
+  --primary-hover: #111827;
+  --primary-light: #f3f4f6;
+  --secondary-color: #4b5563;
+  --accent-purple: #6b7280;
+  --accent-lavender: #e5e7eb;
   
   /* Status Colors */
   /* SUCCESS USES THE DARK THEME COLOUR SO NOTHING SHOWS UP GREEN: */
   --success-color: #1f2937;
-  --warning-color: #f59e0b;
-  --error-color: #ef4444;
-  --info-color: #3b82f6;
+  /* WARNINGS, ERRORS AND INFO ARE NAVY AND GREY TOO, THE BOXES AND BORDERS MAKE THEM STAND OUT INSTEAD OF RED OR BLUE: */
+  --warning-color: #4b5563;
+  --error-color: #1f2937;
+  --info-color: #4b5563;
   
   /* Neutral Colors - Light grey tones */
   --bg-primary: #ffffff;
@@ -160,7 +162,7 @@ code {
 .form-input:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 3px rgba(31, 41, 55, 0.1);
   background-color: var(--bg-primary);
 }
 

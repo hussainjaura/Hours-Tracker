@@ -338,11 +338,13 @@ const Register = () => {
                   onChange={(e) => setVisaType(e.target.value)}
                   required
                 >
+                  {/* only the visas the app has rules for, the server refuses anything else: */}
                   <option value="Student Visa (Tier 4)">Student Visa (Tier 4)</option>
                   <option value="Graduate Route Visa">Graduate Route Visa</option>
-                  <option value="Skilled Worker Visa">Skilled Worker Visa</option>
-                  <option value="Other">Other</option>
                 </select>
+                <small className="form-hint">
+                  Student visa: 20 hours a week in term time. Graduate visa: no weekly limit.
+                </small>
               </div>
 
               <div className="form-group">

@@ -4,6 +4,7 @@ import { authenticate, authorizeRoles } from "../middleware/auth.js";
 import { logEmployerAcknowledgement, getClientIp } from "../utils/auditLogger.js";
 import { findResetNotices } from "../utils/acknowledgements.js";
 import { requireVerifiedEmail } from "../middleware/requireVerifiedEmail.js";
+import { getWorkEligibility } from "../utils/workEligibility.js";
 
 const router = express.Router();
 
@@ -154,10 +155,17 @@ router.get(
       // this finds students whose dates changed after the employer acknowledged them:
       const resetNotices = await findResetNotices(prisma, relationships);
 
-      const visible = relationships.map((rel) =>
-        rel.status === "ACTIVE"
-          ? { ...rel, acknowledgementReset: resetNotices[rel.id] || null }
-          : { ...rel, student: { universityId: rel.student.universityId } }
+      // active students also get today's rule from the server, so the dashboard never works it out itself:
+      const visible = await Promise.all(
+        relationships.map(async (rel) =>
+          rel.status === "ACTIVE"
+            ? {
+                ...rel,
+                acknowledgementReset: resetNotices[rel.id] || null,
+                eligibility: await getWorkEligibility(prisma, rel.student),
+              }
+            : { ...rel, student: { universityId: rel.student.universityId } }
+        )
       );
 
       res.json(visible);

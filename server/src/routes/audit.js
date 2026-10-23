@@ -1,10 +1,9 @@
 import express from "express";
 import prisma from "../prisma.js";
 import { authenticate, authorizeRoles } from "../middleware/auth.js";
-import {
-  getStudentAuditTrail,
-  getRelationshipAuditTrail,
-} from "../utils/auditLogger.js";
+import { getStudentAuditTrail } from "../utils/auditLogger.js";
+// the employer's Audit Trail tab uses the same pack as their PDF, so both always match:
+import { buildRelationshipPack } from "../utils/auditPack.js";
 
 const router = express.Router();
 
@@ -162,6 +161,7 @@ router.get(
 
       const relationship = await prisma.studentEmployer.findUnique({
         where: { id: relationshipId },
+        include: { student: { include: { user: { select: { email: true } } } } },
       });
 
       if (!relationship) {
@@ -175,12 +175,14 @@ router.get(
         });
       }
 
-      const auditTrail = await getRelationshipAuditTrail(
-        prisma,
-        relationshipId
-      );
+      // the student's details are only shared while they have given this employer access:
+      if (relationship.status !== "ACTIVE") {
+        return res.status(403).json({
+          error: "The student has not given you access, so their audit trail is not available",
+        });
+      }
 
-      res.json(auditTrail);
+      res.json(await buildRelationshipPack(relationship));
     } catch (err) {
       console.error("GET RELATIONSHIP AUDIT TRAIL ERROR:", err);
       res.status(500).json({ error: "Failed to fetch audit trail" });
@@ -196,30 +198,24 @@ router.get(
   authorizeRoles("EMPLOYER"),
   async (req, res) => {
     try {
+      // only students who have given this employer access are included:
       const relationships = await prisma.studentEmployer.findMany({
-        where: { employerId: req.user.id },
-        include: {
-          student: {
-            include: {
-              user: {
-                select: { email: true },
-              },
-            },
-          },
-        },
+        where: { employerId: req.user.id, status: "ACTIVE" },
+        include: { student: { include: { user: { select: { email: true } } } } },
+        orderBy: { linkedAt: "desc" },
       });
 
+      // one pack per student, the same as the PDF the employer can download:
       const auditTrails = await Promise.all(
         relationships.map(async (rel) => {
           try {
-            const trail = await getRelationshipAuditTrail(prisma, rel.id);
             return {
               relationshipId: rel.id,
               studentUniversityId: rel.student.universityId,
               studentName: rel.student.fullName || null,
               status: rel.status,
               acknowledgedAt: rel.acknowledgedAt,
-              auditTrail: trail,
+              auditTrail: await buildRelationshipPack(rel),
             };
           } catch (err) {
             console.error(`Error fetching trail for relationship ${rel.id}:`, err);
@@ -240,4 +236,4 @@ router.get(
   }
 );
 
-export default router;
+export default router;

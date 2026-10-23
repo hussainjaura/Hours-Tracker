@@ -549,6 +549,26 @@ router.delete(
       where: { id: termId },
     });
 
+    // this records the deleted dates, so the audit trail still shows what was removed and when:
+    // before, deleting a term left no record at all in the history:
+    await prisma.auditLog.create({
+      data: {
+        action: "DELETE_TERM",
+        ipAddress: getClientIp(req),
+        entityType: "Term",
+        entityId: term.id,
+        performedBy: req.user.id,
+        universityId: student.universityId,
+        metadata: {
+          termName: term.name,
+          academicYear: term.academicYear,
+          startDate: term.startDate,
+          endDate: term.endDate,
+          wasConfirmed: !!term.confirmedAt,
+        },
+      },
+    });
+
     // this asks employers to acknowledge again because a term was removed:
     await resetAcknowledgements(prisma, student, req.user.id, `Student deleted the ${term.name} term`);
 

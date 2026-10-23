@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import MobileNavContext from '../contexts/MobileNavContext'
+import NoticeProvider from './NoticeProvider'
 import { authAPI } from '../services/api'
 import './Layout.css'
 
@@ -100,8 +101,11 @@ const Layout = ({ children }) => {
             </div>
           </div>
         )}
+        {/* the notice provider lets the dashboards show messages and confirm boxes instead of browser pop-ups: */}
         <main className="main-content">
-          {children}
+          <NoticeProvider>
+            {children}
+          </NoticeProvider>
         </main>
       </div>
     </MobileNavContext.Provider>

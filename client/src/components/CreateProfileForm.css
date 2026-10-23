@@ -57,8 +57,8 @@
 }
 
 .create-profile-error {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
   border-left: 4px solid var(--error-color);
   color: var(--error-color);
   padding: var(--spacing-md);
@@ -109,7 +109,7 @@
 .form-input:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 3px rgba(31, 41, 55, 0.1);
 }
 
 .form-input:disabled {
@@ -179,7 +179,7 @@
 }
 
 .error-close:hover {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(31, 41, 55, 0.1);
 }
 
 /* Responsive */

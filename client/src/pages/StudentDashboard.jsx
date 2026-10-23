@@ -3,16 +3,18 @@ import { studentAPI } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
 import { useMobileNav } from '../hooks/useMobileNav'
 import PersonName from '../components/PersonName'
+import { useNotice } from '../hooks/useNotice'
 import { useNavigate } from 'react-router-dom'
 import './Dashboard.css'
-import { toDayKey, getTodayKey, isTodayInTerm, daysFromToday, addDays, formatDay } from '../utils/dates'
+import { toDayKey, getTodayKey, isTodayInTerm, daysFromToday, addDays, formatDay, getAcademicYear, formatTermName } from '../utils/dates'
 
 const StudentDashboard = () => {
   const { logout } = useAuth()
   const navigate = useNavigate()
+  // these show in-page messages and confirm boxes instead of the browser's pop-ups:
+  const { showNotice, confirmAction } = useNotice()
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState(null)
-  const [complianceSummary, setComplianceSummary] = useState(null)
   const [employers, setEmployers] = useState([])
   const [pendingRequests, setPendingRequests] = useState([])
   const [terms, setTerms] = useState([])
@@ -74,7 +76,9 @@ const StudentDashboard = () => {
 
       // Load all data in parallel
       // Use Promise.allSettled to handle errors gracefully
-      const [profileRes, complianceRes, employersRes, requestsRes, termsRes, templatesRes] = await Promise.allSettled([
+      // the weekly hours summary was removed from here because hours logging is not built yet:
+      // it asked the server on every load and always got a 404 back:
+      const [profileRes, employersRes, requestsRes, termsRes, templatesRes] = await Promise.allSettled([
         studentAPI.getProfile().catch((err) => {
           // 404 is expected if profile doesn't exist yet
           if (err.status === 404 || err.response?.status === 404) {
@@ -82,7 +86,6 @@ const StudentDashboard = () => {
           }
           throw err
         }),
-        studentAPI.getComplianceSummary().catch(() => null),
         studentAPI.getEmployers().catch(() => ({ data: [] })),
         studentAPI.getRequests().catch(() => ({ data: [] })),
         studentAPI.getTerms().catch(() => ({ data: [] })),
@@ -91,17 +94,6 @@ const StudentDashboard = () => {
 
       if (profileRes.status === 'fulfilled' && profileRes.value?.data) {
         setProfile(profileRes.value.data)
-      }
-
-      if (complianceRes.status === 'fulfilled' && complianceRes.value?.data) {
-        const data = complianceRes.value.data
-        // Transform the response to match our expected format
-        setComplianceSummary({
-          compliant: data.compliant,
-          hours: data.hours,
-          context: data.context,
-          violations: data.violations
-        })
       }
 
       if (employersRes.status === 'fulfilled') {
@@ -130,7 +122,7 @@ const StudentDashboard = () => {
   const handleAcceptRequest = async (relationshipId) => {
     try {
       await studentAPI.acceptRequest(relationshipId)
-      alert('Access granted successfully!')
+      showNotice('Access granted. The employer can now see your term dates.')
       loadDashboardData()
     } catch (err) {
       setError(err.message || 'Failed to accept request')
@@ -138,12 +130,17 @@ const StudentDashboard = () => {
   }
 
   const handleRejectRequest = async (relationshipId) => {
-    if (!window.confirm('Are you sure you want to reject this access request?')) {
-      return
-    }
+    // this asks first, because the employer will have to send a new request:
+    const confirmed = await confirmAction({
+      title: 'Reject this request?',
+      message: 'The employer will not see your term dates. They would need to send a new request.',
+      confirmLabel: 'Reject request',
+      danger: true,
+    })
+    if (!confirmed) return
     try {
       await studentAPI.rejectRequest(relationshipId)
-      alert('Access request rejected.')
+      showNotice('Access request rejected.')
       loadDashboardData()
     } catch (err) {
       setError(err.message || 'Failed to reject request')
@@ -202,7 +199,7 @@ const StudentDashboard = () => {
       if (overlappingTerm) {
         const termStartStr = formatDay(overlappingTerm.startDate)
         const termEndStr = formatDay(overlappingTerm.endDate)
-        setError(`This term overlaps with your existing ${overlappingTerm.name} term (${termStartStr} - ${termEndStr}). Terms cannot have overlapping dates.`)
+        setError(`This term overlaps with your existing ${formatTermName(overlappingTerm.name)} term (${termStartStr} - ${termEndStr}). Terms cannot have overlapping dates.`)
         setSubmittingTerm(false)
         return
       }
@@ -219,7 +216,7 @@ const StudentDashboard = () => {
       setIsCustomTerm(false)
       setTermForm({ courseLevel: 'DEGREE_OR_ABOVE', name: '', customName: '', academicYear: '', startDate: '', endDate: '' })
       loadDashboardData()
-      alert('Term created successfully!')
+      showNotice('Term added. Remember to confirm the dates once you have checked them.')
     } catch (err) {
       // Handle backend duplicate/overlap error
       if (err.status === 409 || err.response?.status === 409) {
@@ -249,10 +246,14 @@ const StudentDashboard = () => {
         return
       }
 
-      // Prompt for academic year (required)
-      const academicYear = prompt('Please enter the academic year for this term (e.g., "2025/26" or "25/26"):')
-      if (!academicYear || !academicYear.trim()) {
-        setError('Academic year is required to create a term from template.')
+      // the academic year comes from the template's start date, so the student does not have to type it:
+      const academicYear = getAcademicYear(customDates?.startDate || template.startDate)
+      const confirmed = await confirmAction({
+        title: `Add the ${formatTermName(template.name)} term?`,
+        message: `${formatTermName(template.name)} term ${academicYear}: ${formatDay(customDates?.startDate || template.startDate)} to ${formatDay(customDates?.endDate || template.endDate)}.\n\nYou can edit the dates afterwards if your course is different.`,
+        confirmLabel: 'Add term',
+      })
+      if (!confirmed) {
         setSubmittingTerm(false)
         return
       }
@@ -288,7 +289,7 @@ const StudentDashboard = () => {
       if (overlappingTerm) {
         const termStartStr = formatDay(overlappingTerm.startDate)
         const termEndStr = formatDay(overlappingTerm.endDate)
-        setError(`This term overlaps with your existing ${overlappingTerm.name} term (${termStartStr} - ${termEndStr}). Terms cannot have overlapping dates.`)
+        setError(`This term overlaps with your existing ${formatTermName(overlappingTerm.name)} term (${termStartStr} - ${termEndStr}). Terms cannot have overlapping dates.`)
         setSubmittingTerm(false)
         return
       }
@@ -301,7 +302,7 @@ const StudentDashboard = () => {
       
       await studentAPI.createTermFromTemplate(data)
       loadDashboardData()
-      alert('Term created from template successfully!')
+      showNotice('Term added from your university\'s dates. Remember to confirm them.')
     } catch (err) {
       // Handle backend duplicate/overlap error
       if (err.status === 409 || err.response?.status === 409) {
@@ -351,7 +352,7 @@ const StudentDashboard = () => {
         if (overlappingTerm) {
           const termStartStr = formatDay(overlappingTerm.startDate)
           const termEndStr = formatDay(overlappingTerm.endDate)
-          setError(`This update would cause overlap with your existing ${overlappingTerm.name} term (${termStartStr} - ${termEndStr}). Terms cannot have overlapping dates.`)
+          setError(`This update would cause overlap with your existing ${formatTermName(overlappingTerm.name)} term (${termStartStr} - ${termEndStr}). Terms cannot have overlapping dates.`)
           setSubmittingTerm(false)
           return
         }
@@ -375,7 +376,7 @@ const StudentDashboard = () => {
       setIsCustomTerm(false)
       setTermForm({ courseLevel: '', name: '', customName: '', academicYear: '', startDate: '', endDate: '' })
       loadDashboardData()
-      alert('Term updated successfully!')
+      showNotice('Term updated. Please confirm the new dates.')
     } catch (err) {
       // Handle backend overlap error
       if (err.status === 409 || err.response?.status === 409) {
@@ -394,25 +395,34 @@ const StudentDashboard = () => {
   }
 
   const handleDeleteTerm = async (termId) => {
-    if (!window.confirm('Are you sure you want to delete this term?')) {
-      return
-    }
+    // this asks first, because a deleted term cannot be brought back:
+    const confirmed = await confirmAction({
+      title: 'Delete this term?',
+      message: 'The term will be removed from your dates. Your employers will need to acknowledge your dates again.',
+      confirmLabel: 'Delete term',
+      danger: true,
+    })
+    if (!confirmed) return
     try {
       await studentAPI.deleteTerm(termId)
       loadDashboardData()
-      alert('Term deleted successfully!')
+      showNotice('Term deleted.')
     } catch (err) {
       setError(err.message || 'Failed to delete term')
     }
   }
 
   const handleConfirmTerm = async (termId) => {
-    if (!window.confirm('By confirming, you declare that the term dates you have entered are accurate and current. This confirmation is required for compliance purposes and creates an audit trail.')) {
-      return
-    }
+    // this is a declaration, so the student reads exactly what they are agreeing to:
+    const confirmed = await confirmAction({
+      title: 'Confirm these term dates?',
+      message: 'By confirming, you declare that the term dates you have entered are accurate and current. This is saved in your audit trail.',
+      confirmLabel: 'Confirm dates',
+    })
+    if (!confirmed) return
     try {
       await studentAPI.confirmTerm(termId)
-      alert('Term dates confirmed successfully. This has been recorded in the audit trail.')
+      showNotice('Term dates confirmed. This has been recorded in your audit trail.')
       loadDashboardData()
     } catch (err) {
       setError(err.message || 'Failed to confirm term dates')
@@ -459,10 +469,14 @@ const StudentDashboard = () => {
     return 'past'
   }
 
+  // this is today's rule from the server, the same one employers and the PDFs see:
+  const rule = profile?.eligibility || null
+
+  // this checks the visa type, a graduate visa has no weekly hours limit:
+  const isGraduate = () => rule?.visaRule === 'GRADUATE'
+
   // Helper function to determine if current date is in term time
-  const isInTermTime = () => {
-    return terms.some(term => isTodayInTerm(term))
-  }
+  const isInTermTime = () => !!rule?.inTermTime
 
   // Get active term object if in term time
   const getActiveTerm = () => {
@@ -470,62 +484,63 @@ const StudentDashboard = () => {
   }
 
   // this checks if the course end date has passed (the end date itself still counts):
+  // a graduate visa is not tied to the course, so it never counts as ended:
   const hasCourseEnded = () => {
-    return !!profile?.courseEndDate && daysFromToday(profile.courseEndDate) < 0
+    return !isGraduate() && !!profile?.courseEndDate && daysFromToday(profile.courseEndDate) < 0
   }
 
   // this checks if the student has not added any term dates yet:
   const hasNoTerms = () => terms.length === 0
 
+  // this checks if the dates needed for today's rule are missing:
+  // that is no terms at all, or no term after the last one while the course is still running:
+  const needsTermDates = () => !!(rule?.termsMissing || rule?.termsIncomplete)
+
   // this is the word shown for the current status:
-  // with no terms we cannot say holiday so we ask for the dates instead:
+  // with missing dates we cannot say holiday so we ask for the dates instead:
   const getStatusLabel = () => {
-    if (hasNoTerms()) return 'No Terms Yet'
+    if (isGraduate()) return 'Graduate Visa'
+    if (hasCourseEnded()) return 'Course Ended'
+    if (rule?.termsMissing) return 'No Terms Yet'
+    if (rule?.termsIncomplete) return 'Dates Needed'
     return isInTermTime() ? 'Term Time' : 'Holiday'
   }
 
-  // Get allowed hours based on term time status and course level
-  const getLegalHours = () => {
-    // Check if course has ended
-    if (hasCourseEnded()) {
-      return 0
-    }
-    
-    // with no term dates we play it safe and use the term time limit:
-    if (hasNoTerms()) {
-      return 20
-    }
-
-    // If not in term time, full-time work allowed (40+ hours)
-    if (!isInTermTime()) {
-      return 40
-    }
-    
-    // Get active term to check course level
-    const activeTerm = getActiveTerm()
-    if (!activeTerm) {
-      return 20 // Default fallback
-    }
-    
-    // Check course level: BELOW_DEGREE = 10 hours, DEGREE_OR_ABOVE or null = 20 hours
-    if (activeTerm.courseLevel === 'BELOW_DEGREE') {
-      return 10
-    }
-    
-    // Default to 20 hours for DEGREE_OR_ABOVE or if courseLevel is null/undefined
-    return 20
-  }
-
   // this checks if the student's own limit is stricter than the law right now:
-  const hasLowerPersonalLimit = () => {
-    const personalLimit = profile?.maxWeeklyHours
-    return !!personalLimit && personalLimit < getLegalHours()
-  }
+  const hasLowerPersonalLimit = () => !!rule?.personalLimitApplied
 
-  // this is the limit shown everywhere: the law sets the maximum:
-  // the student's own limit can only make it lower, never higher:
-  const getAllowedHours = () => {
-    return hasLowerPersonalLimit() ? profile.maxWeeklyHours : getLegalHours()
+  // this is the limit shown everywhere: the server works it out from the law and the student's own limit:
+  const getAllowedHours = () => rule?.allowedWeeklyHours ?? 20
+
+  // this is the limit as words, a graduate visa shows "No limit" instead of a number:
+  const getHoursLabel = (suffix = 'h') => (rule?.noHoursLimit ? 'No limit' : `${getAllowedHours()}${suffix}`)
+
+  // this gives the heading and the sentence for today's rule, used by the banner and the rules card:
+  const getRuleMessage = () => {
+    const hours = getAllowedHours()
+    if (isGraduate()) {
+      return hasLowerPersonalLimit()
+        ? { title: 'Graduate Visa', detail: `Your visa has no weekly hours limit - your own limit is ${hours} hours per week` }
+        : { title: 'Graduate Visa', detail: 'Your visa has no weekly hours limit, so term dates do not change your hours' }
+    }
+    if (hasCourseEnded()) {
+      return { title: 'Your Course Has Ended', detail: 'Your course has ended. You cannot work on a Student visa.' }
+    }
+    if (rule?.termsMissing) {
+      return { title: 'Add Your Term Dates', detail: `Until you add your term dates, keep to the term time limit of ${hours} hours per week` }
+    }
+    if (rule?.termsIncomplete) {
+      return {
+        title: 'Add Your Next Term Dates',
+        detail: `Your last term has ended but your course runs until ${formatDay(profile.courseEndDate)}. Until you add your next term dates, keep to the term time limit of ${hours} hours per week`,
+      }
+    }
+    if (isInTermTime()) {
+      return { title: `Currently in the ${formatTermName(getActiveTerm()?.name)} Term`, detail: `Maximum ${hours} hours per week allowed during term time` }
+    }
+    return hasLowerPersonalLimit()
+      ? { title: 'Currently on Holiday', detail: `Full-time work allowed by law - your own limit is ${hours} hours per week` }
+      : { title: 'Currently on Holiday', detail: 'Full-time work allowed - no weekly hour limit' }
   }
 
   const formatDate = (dateString) => {
@@ -561,30 +576,14 @@ const StudentDashboard = () => {
         periods.push({
           startDate: gapStart,
           endDate: gapEnd,
-          description: `Between ${sortedTerms[i].name} and ${sortedTerms[i + 1].name} terms`
+          description: `Between ${formatTermName(sortedTerms[i].name)} and ${formatTermName(sortedTerms[i + 1].name)} terms`
         })
       }
     }
     
-    // Check for period after last term
-    const afterLastStart = addDays(toDayKey(sortedTerms[sortedTerms.length - 1].endDate), 1)
-    const oneYearLater = addDays(afterLastStart, 365)
-    
-    // Determine end date: use course end date if available, otherwise 1 year from last term end
-    let periodEnd = oneYearLater
-    if (profile?.courseEndDate && toDayKey(profile.courseEndDate) > afterLastStart) {
-      periodEnd = toDayKey(profile.courseEndDate)
-    }
-    
-    // Only add if the period hasn't completely passed and start date is valid
-    if (periodEnd > today && afterLastStart <= periodEnd) {
-      periods.push({
-        startDate: afterLastStart,
-        endDate: periodEnd,
-        description: `After ${sortedTerms[sortedTerms.length - 1].name} term`
-      })
-    }
-    
+    // the time after the last term is not shown as full time any more:
+    // until the next term dates are added we cannot know if it is a holiday, so the term time limit applies:
+
     // Filter out periods that ended more than 6 months ago
     const sixMonthsAgo = addDays(today, -183)
     
@@ -712,7 +711,7 @@ const StudentDashboard = () => {
         </div>
         <div className="mobile-dashboard-stats">
           <div className="stat-box">
-            <div className="stat-value">{getAllowedHours()}</div>
+            <div className="stat-value">{getHoursLabel('')}</div>
             <div className="stat-label">Allowed Hours/Week</div>
           </div>
           <div className="stat-box">
@@ -732,7 +731,7 @@ const StudentDashboard = () => {
         </div>
         <div className="dashboard-stats-quick">
           <div className="stat-box">
-            <div className="stat-value">{getAllowedHours()}</div>
+            <div className="stat-value">{getHoursLabel('')}</div>
             <div className="stat-label">Allowed Hours/Week</div>
           </div>
           <div className="stat-box">
@@ -787,32 +786,26 @@ const StudentDashboard = () => {
         <div className="dashboard-content" style={{ minHeight: '400px' }}>
           {/* Pending Access Requests Alert - Prominent at top */}
           {pendingRequests.length > 0 && (
+            // this card is navy and grey like the rest of the site, the thick edge makes it stand out:
             <div 
-              className="dashboard-card alert-card" 
-              style={{ 
-                backgroundColor: '#fef3c7', 
-                border: '1px solid #fcd34d',
-                borderLeft: '5px solid #d97706',
-                cursor: 'pointer',
-                marginBottom: '1.5rem'
-              }}
+              className="dashboard-card pending-requests-alert" 
               onClick={() => setActiveTab('requests')}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ flex: 1 }}>
-                  <h3 style={{ margin: '0 0 0.5rem 0', color: '#92400e' }}>
+                  <h3 className="pending-requests-alert-title">
                     Pending Access Requests
                   </h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                    <div style={{ fontSize: '1.1rem', fontWeight: '600', color: '#92400e' }}>
+                    <div className="pending-requests-alert-count">
                       {pendingRequests.length} employer{pendingRequests.length > 1 ? 's' : ''} {pendingRequests.length > 1 ? 'are' : 'is'} requesting access to your profile
                     </div>
-                    <div style={{ fontSize: '0.875rem', color: '#78350f' }}>
+                    <div className="pending-requests-alert-note">
                       Click here to review and respond →
                     </div>
                   </div>
                   {pendingRequests.length > 0 && pendingRequests[0]?.employer && (
-                    <div style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#78350f' }}>
+                    <div className="pending-requests-alert-note" style={{ marginTop: '0.75rem' }}>
                       <strong>Latest request from:</strong> {pendingRequests[0].employer.organisationName || 'Unknown Organisation'}
                       {pendingRequests[0].employer.fullName && ` (${pendingRequests[0].employer.fullName})`}
                     </div>
@@ -823,47 +816,15 @@ const StudentDashboard = () => {
           )}
 
           {/* Welcome & Status Banner */}
-          <div className={`overview-banner ${isInTermTime() || hasNoTerms() ? 'banner-term-time' : 'banner-holiday'}`} style={{ display: 'block', visibility: 'visible' }}>
+          <div className={`overview-banner ${isInTermTime() || needsTermDates() ? 'banner-term-time' : 'banner-holiday'}`}>
             <div className="banner-content">
               <div className="banner-text">
-                <h2>
-                  {(() => {
-                    try {
-                      // this banner asks for term dates when there are none:
-                      if (hasNoTerms()) return 'Add Your Term Dates'
-                      return isInTermTime()
-                        ? `Currently in ${getActiveTerm()?.name || 'Term Time'}` 
-                        : 'Currently on Holiday'
-                    } catch (e) {
-                      return 'Welcome to Your Dashboard'
-                    }
-                  })()}
-                </h2>
-                <p>
-                  {(() => {
-                    try {
-                      if (hasNoTerms()) return `Until you add your term dates, keep to the term time limit of ${getAllowedHours()} hours per week`
-                      return isInTermTime()
-                        ? `Maximum ${getAllowedHours()} hours per week allowed during term time`
-                        : hasLowerPersonalLimit()
-                          ? `Full-time work allowed by law - your own limit is ${getAllowedHours()} hours per week`
-                          : 'Full-time work allowed - no weekly hour limit'
-                    } catch (e) {
-                      return 'View your work eligibility and term information below'
-                    }
-                  })()}
-                </p>
+                {/* the heading and sentence come from the server's rule, so they match the employer's view: */}
+                <h2>{getRuleMessage().title}</h2>
+                <p>{getRuleMessage().detail}</p>
               </div>
               <div className="banner-stat">
-                <div className="banner-stat-value">
-                  {(() => {
-                    try {
-                      return `${getAllowedHours()}h`
-                    } catch (e) {
-                      return '20h'
-                    }
-                  })()}
-                </div>
+                <div className="banner-stat-value">{getHoursLabel()}</div>
                 <div className="banner-stat-label">Allowed/Week</div>
               </div>
             </div>
@@ -871,10 +832,11 @@ const StudentDashboard = () => {
 
           {/* Quick Stats Grid */}
           <div className="overview-stats-grid">
+            {/* the limit and status are already in the header, so these cards show other numbers: */}
             <div className="overview-stat-card">
               <div className="stat-card-content">
-                <div className="stat-card-value">{getAllowedHours()}h</div>
-                <div className="stat-card-label">Weekly Limit</div>
+                <div className="stat-card-value">{terms.filter(t => t.confirmedAt).length}/{terms.length}</div>
+                <div className="stat-card-label">Terms Confirmed</div>
               </div>
             </div>
             <div className="overview-stat-card">
@@ -891,8 +853,8 @@ const StudentDashboard = () => {
             </div>
             <div className="overview-stat-card">
               <div className="stat-card-content">
-                <div className="stat-card-value">{getStatusLabel()}</div>
-                <div className="stat-card-label">Current Status</div>
+                <div className="stat-card-value">{pendingRequests.length}</div>
+                <div className="stat-card-label">Pending Requests</div>
               </div>
             </div>
           </div>
@@ -911,7 +873,7 @@ const StudentDashboard = () => {
                     <div className="current-term-card">
                       <div className="current-term-header">
                         <div>
-                          <div className="current-term-name">{activeTerm.name}</div>
+                          <div className="current-term-name">{formatTermName(activeTerm.name)}</div>
                           {activeTerm.academicYear && (
                             <div className="current-term-year">Academic Year: {activeTerm.academicYear}</div>
                           )}
@@ -956,7 +918,7 @@ const StudentDashboard = () => {
                       {upcomingTerms.map(term => (
                         <div key={term.id} className="upcoming-term-item">
                           <div className="upcoming-term-info">
-                            <div className="upcoming-term-name">{term.name}</div>
+                            <div className="upcoming-term-name">{formatTermName(term.name)}</div>
                             {term.academicYear && (
                               <div className="upcoming-term-year">{term.academicYear}</div>
                             )}
@@ -1022,29 +984,23 @@ const StudentDashboard = () => {
                 {pendingRequests.length > 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {pendingRequests.slice(0, 3).map((request) => (
-                      <div key={request.id} style={{ 
-                        padding: '1rem', 
-                        backgroundColor: '#fef3c7', 
-                        borderRadius: '8px',
-                        border: '1px solid #f59e0b',
-                        marginBottom: '0.5rem'
-                      }}>
+                      <div key={request.id} className="pending-request-mini">
                         <div style={{ marginBottom: '0.75rem' }}>
-                          <div style={{ fontWeight: '600', fontSize: '0.95rem', marginBottom: '0.25rem', color: '#92400e' }}>
+                          <div className="pending-request-mini-name">
                             {request.employer?.organisationName || 'Unknown Organisation'}
                           </div>
                           {request.employer?.fullName && (
-                            <div style={{ fontSize: '0.875rem', color: '#78350f' }}>
+                            <div className="pending-request-mini-detail">
                               {request.employer.fullName}
                               {request.employer.role && ` • ${request.employer.role}`}
                             </div>
                           )}
                           {request.employer?.workEmail && (
-                            <div style={{ fontSize: '0.875rem', color: '#78350f' }}>
+                            <div className="pending-request-mini-detail">
                               {request.employer.workEmail}
                             </div>
                           )}
-                          <div style={{ fontSize: '0.75rem', color: '#78350f', marginTop: '0.25rem' }}>
+                          <div className="pending-request-mini-detail" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
                             Requested: {formatDate(request.linkedAt)}
                           </div>
                         </div>
@@ -1070,7 +1026,7 @@ const StudentDashboard = () => {
                       <div 
                         className="view-all-link" 
                         onClick={() => setActiveTab('requests')} 
-                        style={{ marginTop: '0.5rem', textAlign: 'center', cursor: 'pointer', color: '#8b5cf6', fontWeight: '500' }}
+                        style={{ marginTop: '0.5rem', textAlign: 'center', cursor: 'pointer', fontWeight: '500' }}
                       >
                         View all {pendingRequests.length} requests →
                       </div>
@@ -1084,7 +1040,6 @@ const StudentDashboard = () => {
                     borderRadius: '8px',
                     border: '1px dashed #e5e7eb'
                   }}>
-                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📭</div>
                     <p style={{ color: '#6b7280', margin: 0, fontSize: '0.875rem' }}>
                       No pending access requests
                     </p>
@@ -1218,53 +1173,60 @@ const StudentDashboard = () => {
               {/* Work Eligibility & Rules */}
               <div className="dashboard-card">
                 <h3>Work Eligibility & Rules</h3>
-                <div className={`compliance-status-overview ${isInTermTime() || hasNoTerms() ? 'term-time' : 'holiday'}`}>
+                <div className={`compliance-status-overview ${isInTermTime() || needsTermDates() ? 'term-time' : 'holiday'}`}>
                   <div className="compliance-text">
                     <div className="compliance-title-large">
                       {(() => {
-                        if (hasCourseEnded()) {
-                          return 'Cannot Work'
-                        }
-                        // this title stays on the safe side when no terms are added:
-                        if (hasNoTerms()) return 'Can Work - Term Time Limit Until Dates Added'
+                        if (isGraduate()) return 'Can Work - Graduate Visa'
+                        if (hasCourseEnded()) return 'Cannot Work'
+                        // this title stays on the safe side when term dates are missing:
+                        if (needsTermDates()) return 'Can Work - Term Time Limit Until Dates Added'
                         return isInTermTime() ? 'Can Work - Term Time' : 'Can Work - Holiday Period'
                       })()}
                     </div>
-                    <div className="compliance-description">
-                      {(() => {
-                        if (hasCourseEnded()) {
-                          return 'Your course has ended. You cannot work on a Student visa.'
-                        }
-                        if (hasNoTerms()) return `Maximum ${getAllowedHours()} hours per week until you add your term dates`
-                        return isInTermTime()
-                          ? `Maximum ${getAllowedHours()} hours per week allowed during term time`
-                          : hasLowerPersonalLimit()
-                            ? `Full-time work allowed by law during holidays - your own limit is ${getAllowedHours()} hours per week`
-                            : 'Full-time work allowed - no weekly hour limit during holidays'
-                      })()}
-                    </div>
+                    <div className="compliance-description">{getRuleMessage().detail}</div>
                   </div>
                 </div>
                 
-                <div className="compliance-rules-section" style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #e5e7eb' }}>
-                  <h4 style={{ marginBottom: '1rem', fontSize: '0.95rem', fontWeight: '600' }}>Compliance Rules</h4>
-                  <div className="rules-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    <div className="rule-item" style={{ padding: '0.75rem', backgroundColor: '#f9fafb', borderRadius: '6px' }}>
-                      <strong>During Term Time:</strong> Maximum {getAllowedHours()} hours per week
-                      {getActiveTerm()?.courseLevel === 'BELOW_DEGREE' && ' (10 hours for courses below degree level)'}
-                      {(!getActiveTerm()?.courseLevel || getActiveTerm()?.courseLevel === 'DEGREE_OR_ABOVE') && ' (20 hours for degree level and above)'}
-                    </div>
-                    <div className="rule-item" style={{ padding: '0.75rem', backgroundColor: '#f9fafb', borderRadius: '6px' }}>
-                      <strong>Outside Term Time:</strong> Full-time allowed (no weekly limit)
-                    </div>
+                <div className="compliance-rules-section">
+                  <h4>Compliance Rules</h4>
+                  {/* a graduate visa has one simple rule, a student visa has term time and holiday rules: */}
+                  <div className="rules-list">
+                    {isGraduate() ? (
+                      <div className="rule-item">
+                        <strong>Graduate Visa:</strong> No weekly hours limit
+                      </div>
+                    ) : (
+                      <>
+                        <div className="rule-item">
+                          <strong>During Term Time:</strong> Maximum 20 hours per week (10 hours for courses below degree level)
+                        </div>
+                        <div className="rule-item">
+                          <strong>Outside Term Time:</strong> Full-time allowed (no weekly limit)
+                        </div>
+                      </>
+                    )}
+                    {profile.maxWeeklyHours && (
+                      <div className="rule-item">
+                        <strong>Your Own Limit:</strong> {profile.maxWeeklyHours} hours per week (used whenever it is lower than the law)
+                      </div>
+                    )}
                   </div>
-                  {terms.length === 0 && (
-                    <div style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: '#fef3c7', borderRadius: '6px', fontSize: '0.875rem' }}>
-                      <strong>Note:</strong> Add your term dates in the <button 
+                  {!isGraduate() && needsTermDates() && (
+                    <div className="rules-note">
+                      <strong>Note:</strong> Add your {hasNoTerms() ? '' : 'next '}term dates in the <button 
                         className="btn-link" 
                         onClick={() => setActiveTab('terms')}
-                        style={{ textDecoration: 'underline', background: 'none', border: 'none', color: '#8b5cf6', cursor: 'pointer', padding: 0 }}
                       >Terms tab</button> to ensure accurate eligibility calculations.
+                    </div>
+                  )}
+                  {/* this reminds the student that employers can see which dates are not confirmed yet: */}
+                  {!isGraduate() && rule?.datesUnconfirmed && (
+                    <div className="rules-note">
+                      <strong>Not confirmed:</strong> {rule.termCount - rule.confirmedTermCount} of your {rule.termCount} terms {rule.termCount - rule.confirmedTermCount === 1 ? 'is' : 'are'} not confirmed yet. Your employers can see this, so please check and confirm them in the <button
+                        className="btn-link"
+                        onClick={() => setActiveTab('terms')}
+                      >Terms tab</button>.
                     </div>
                   )}
                 </div>
@@ -1557,7 +1519,7 @@ const StudentDashboard = () => {
                   {templates.map((template) => (
                     <div key={template.id} className="template-card">
                       <div className="template-header">
-                        <div className="template-name">{template.name}</div>
+                        <div className="template-name">{formatTermName(template.name)}</div>
                         <div className="template-dates">
                           {formatDay(template.startDate)} - {formatDay(template.endDate)}
                         </div>
@@ -1616,7 +1578,7 @@ const StudentDashboard = () => {
                                   <div key={term.id} className={`term-card term-${status}`}>
                                     <div className="term-header">
                                       <div>
-                                        <div className="term-name">{term.name}</div>
+                                        <div className="term-name">{formatTermName(term.name)}</div>
                                         <div className="term-academic-year">Academic Year: {term.academicYear || 'Not set'}</div>
                                         <div className="term-dates">
                                           {formatDay(term.startDate)} - {formatDay(term.endDate)}
@@ -1677,7 +1639,7 @@ const StudentDashboard = () => {
                                   <div key={term.id} className={`term-card term-${status}`}>
                                     <div className="term-header">
                                       <div>
-                                        <div className="term-name">{term.name}</div>
+                                        <div className="term-name">{formatTermName(term.name)}</div>
                                         <div className="term-academic-year">Academic Year: {term.academicYear || 'Not set'}</div>
                                         <div className="term-dates">
                                           {formatDay(term.startDate)} - {formatDay(term.endDate)}
@@ -1742,7 +1704,7 @@ const StudentDashboard = () => {
             )}
 
             {/* Full-Time Work Periods Section */}
-            {terms.length > 0 && (() => {
+            {terms.length > 0 && !isGraduate() && (() => {
               const fullTimePeriods = calculateFullTimePeriods()
               return fullTimePeriods.length > 0 ? (
                 <div className="full-time-periods-section">
@@ -1812,7 +1774,6 @@ const StudentDashboard = () => {
                       await studentAPI.downloadTermLetterPDF()
                     } catch (err) {
                       const errorMessage = err.response?.data?.error || err.message || 'Failed to download term letter'
-                      alert(`Error: ${errorMessage}`)
                       setError(errorMessage)
                     }
                   }}
@@ -1870,21 +1831,34 @@ const StudentDashboard = () => {
 
                 <div className="profile-section">
                   <h3>Compliance Rules</h3>
+                  {/* the rules shown depend on the visa type: */}
                   <div className="profile-rules">
-                    <div className="rule-card">
-                      <div className="rule-content">
-                        <div className="rule-title">During Term Time</div>
-                        <div className="rule-description">Maximum 20 hours per week allowed</div>
+                    {isGraduate() ? (
+                      <div className="rule-card">
+                        <div className="rule-content">
+                          <div className="rule-title">Graduate Visa</div>
+                          <div className="rule-description">No weekly hours limit, term dates do not change your hours</div>
+                        </div>
+                        <div className="rule-hours">No limit</div>
                       </div>
-                      <div className="rule-hours">20h/week</div>
-                    </div>
-                    <div className="rule-card">
-                      <div className="rule-content">
-                        <div className="rule-title">Outside Term Time (Holidays)</div>
-                        <div className="rule-description">Full-time work allowed (no weekly limit)</div>
-                      </div>
-                      <div className="rule-hours">40h+/week</div>
-                    </div>
+                    ) : (
+                      <>
+                        <div className="rule-card">
+                          <div className="rule-content">
+                            <div className="rule-title">During Term Time</div>
+                            <div className="rule-description">Maximum 20 hours per week allowed (10 hours below degree level)</div>
+                          </div>
+                          <div className="rule-hours">20h/week</div>
+                        </div>
+                        <div className="rule-card">
+                          <div className="rule-content">
+                            <div className="rule-title">Outside Term Time (Holidays)</div>
+                            <div className="rule-description">Full-time work allowed (no weekly limit)</div>
+                          </div>
+                          <div className="rule-hours">40h+/week</div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -1893,23 +1867,18 @@ const StudentDashboard = () => {
                   <div className="profile-status-grid">
                     <div className="status-card">
                       <div className="status-label">Current Period</div>
-                      <div className={`status-value ${isInTermTime() || hasNoTerms() ? 'term-time' : 'holiday'}`}>
+                      <div className={`status-value ${isInTermTime() || needsTermDates() ? 'term-time' : 'holiday'}`}>
                         {getStatusLabel()}
                       </div>
-                      {getActiveTerm() && (
-                        <div className="status-detail">Active Term: {getActiveTerm().name}</div>
+                      {getActiveTerm() && !isGraduate() && (
+                        <div className="status-detail">Active Term: {formatTermName(getActiveTerm().name)}</div>
                       )}
                     </div>
                     <div className="status-card">
                       <div className="status-label">Allowed Hours This Week</div>
-                      <div className="status-value">{getAllowedHours()}h</div>
-                      <div className="status-detail">
-                        {hasNoTerms()
-                          ? 'Add your term dates. Until then the term time limit applies'
-                          : isInTermTime()
-                            ? '20-hour limit applies during term time'
-                            : 'Full-time work allowed during holidays'}
-                      </div>
+                      <div className="status-value">{getHoursLabel()}</div>
+                      {/* this is the same sentence as the banner on the overview: */}
+                      <div className="status-detail">{getRuleMessage().detail}</div>
                     </div>
                   </div>
                 </div>
@@ -1973,7 +1942,7 @@ const StudentDashboard = () => {
                                         }}>
                                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
                                             <div>
-                                              <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>{term.name} Term</div>
+                                              <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>{formatTermName(term.name)} Term</div>
                                               <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
                                                 {formatDay(term.startDate)} - {formatDay(term.endDate)}
                                               </div>
@@ -2012,7 +1981,7 @@ const StudentDashboard = () => {
                                         }}>
                                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
                                             <div>
-                                              <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>{term.name} Term</div>
+                                              <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>{formatTermName(term.name)} Term</div>
                                               <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
                                                 {formatDay(term.startDate)} - {formatDay(term.endDate)}
                                               </div>
@@ -2234,7 +2203,7 @@ const AuditTrailTab = ({ profile, onExport }) => {
                     <div key={idx} className="audit-declaration-card">
                       <div className="declaration-header">
                         <div>
-                          <div className="declaration-term-name">{decl.term.name} Term</div>
+                          <div className="declaration-term-name">{formatTermName(decl.term.name)} Term</div>
                           <div className="declaration-academic-year">{decl.term.academicYear}</div>
                         </div>
                         {decl.confirmedAt ? (

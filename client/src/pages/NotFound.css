@@ -1,0 +1,95 @@
+/* THE 404 CARD IS CENTRED TEXT, THE REST COMES FROM THE LOGIN CARD IN AUTH.CSS: */
+.not-found-card {
+  text-align: center;
+}
+
+/* THE LOGO MATCHES THE ONE IN THE DASHBOARD HEADER: */
+.not-found-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 2rem;
+}
+
+.not-found-logo-icon {
+  width: 36px;
+  height: 36px;
+  background: #000000;
+  color: #ffffff;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+
+.not-found-logo-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  letter-spacing: -0.02em;
+}
+
+/* THE BIG 404 NUMBER IN LIGHT GREY SO THE HEADING UNDER IT READS FIRST: */
+.not-found-code {
+  font-size: 5.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #e5e7eb;
+  letter-spacing: -0.04em;
+}
+
+.not-found-title {
+  margin-top: 0.75rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.not-found-text {
+  margin-top: 0.75rem;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+/* THE ADDRESS THAT WAS NOT FOUND, IN A SMALL GREY BOX: */
+.not-found-path {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.1rem 0.45rem;
+  border-radius: 6px;
+  background: #f3f4f6;
+  color: #1f2937;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  font-size: 0.875rem;
+  word-break: break-all;
+}
+
+/* THE TWO BUTTONS SIT SIDE BY SIDE AND STACK ON A PHONE: */
+.not-found-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.not-found-actions .btn {
+  text-decoration: none;
+}
+
+@media (max-width: 480px) {
+  .not-found-code {
+    font-size: 4.25rem;
+  }
+
+  .not-found-actions {
+    flex-direction: column;
+  }
+
+  .not-found-actions .btn {
+    width: 100%;
+  }
+}

@@ -232,7 +232,7 @@
 
 .shift-card.pending {
   border-left: 4px solid var(--warning-color);
-  background: rgba(245, 158, 11, 0.05);
+  background: rgba(107, 114, 128, 0.05);
 }
 
 .shift-header {
@@ -293,9 +293,9 @@
 }
 
 .status-rejected {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(31, 41, 55, 0.1);
   color: var(--error-color);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  border: 1px solid rgba(31, 41, 55, 0.3);
 }
 
 /* ACTIVE BADGE IS SOLID DARK SO IT STANDS OUT THE MOST AND THIS WAY MY SITE LOOKS GOOD: */
@@ -328,8 +328,8 @@
 }
 
 .compliance-status.non-compliant {
-  background: rgba(239, 68, 68, 0.1);
-  border: 2px solid rgba(239, 68, 68, 0.3);
+  background: rgba(31, 41, 55, 0.1);
+  border: 2px solid rgba(31, 41, 55, 0.3);
 }
 
 .compliance-icon {
@@ -401,17 +401,17 @@
 
 .severity-high,
 .severity-critical {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(31, 41, 55, 0.1);
   color: var(--error-color);
 }
 
 .severity-medium {
-  background: rgba(245, 158, 11, 0.1);
+  background: rgba(107, 114, 128, 0.1);
   color: var(--warning-color);
 }
 
 .severity-low {
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(107, 114, 128, 0.1);
   color: var(--info-color);
 }
 
@@ -535,7 +535,7 @@
 .student-note {
   margin-top: var(--spacing-sm);
   padding: var(--spacing-sm);
-  background: rgba(245, 158, 11, 0.1);
+  background: rgba(107, 114, 128, 0.1);
   border-radius: var(--radius-sm);
   font-size: 0.875rem;
   color: var(--warning-color);
@@ -583,8 +583,8 @@
 }
 
 .eligibility-status.cannot-work {
-  background: rgba(239, 68, 68, 0.1);
-  border: 2px solid rgba(239, 68, 68, 0.3);
+  background: rgba(31, 41, 55, 0.1);
+  border: 2px solid rgba(31, 41, 55, 0.3);
 }
 
 .eligibility-icon {
@@ -630,16 +630,16 @@
 .compliance-warning-box {
   margin-top: var(--spacing-md);
   padding: var(--spacing-md);
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  border-left: 3px solid #f59e0b;
+  background: rgba(107, 114, 128, 0.1);
+  border: 1px solid rgba(107, 114, 128, 0.3);
+  border-left: 3px solid #6b7280;
   border-radius: var(--radius-md);
   color: #1f2937;
   font-size: 0.9375rem;
 }
 
 .compliance-warning-box strong {
-  color: #f59e0b;
+  color: #6b7280;
 }
 
 /* HOLIDAY INFO BOX IS LIGHT GREY WITH A DARK EDGE INSTEAD OF GREEN: */
@@ -707,8 +707,8 @@
 
 /* Error Message */
 .dashboard-error {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
   border-left: 4px solid var(--error-color);
   color: var(--error-color);
   padding: var(--spacing-md);
@@ -736,7 +736,7 @@
 }
 
 .error-close:hover {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(31, 41, 55, 0.1);
 }
 
 /* Empty State */
@@ -1116,7 +1116,7 @@
 .compliance-rules {
   margin: var(--spacing-md) 0;
   padding: var(--spacing-md);
-  background: rgba(99, 102, 241, 0.05);
+  background: rgba(31, 41, 55, 0.05);
   border-radius: var(--radius-md);
   border-left: 4px solid #1f2937;
 }
@@ -1372,8 +1372,8 @@
 }
 
 .eligibility-preview.term-time-warning {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(31, 41, 55, 0.1);
+  border: 1px solid rgba(31, 41, 55, 0.3);
   color: var(--error-color);
 }
 
@@ -1537,9 +1537,9 @@
 }
 
 .profile-status-badge.expired {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid #ef4444;
+  background: rgba(31, 41, 55, 0.1);
+  color: var(--error-color);
+  border: 1px solid var(--error-color);
 }
 
 /* DAYS REMAINING BADGE IS A DARK OUTLINE: */
@@ -1578,7 +1578,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(139, 92, 246, 0.1);
+  background: rgba(31, 41, 55, 0.1);
   border-radius: var(--radius-full);
   flex-shrink: 0;
 }
@@ -1686,8 +1686,8 @@
   border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
   margin-bottom: var(--spacing-lg);
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
-  border: 2px solid rgba(139, 92, 246, 0.2);
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.1) 0%, rgba(31, 41, 55, 0.05) 100%);
+  border: 2px solid rgba(31, 41, 55, 0.2);
 }
 
 /* TERM TIME BANNER IS SOFT GREY INSTEAD OF BLUE: */
@@ -1715,7 +1715,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(139, 92, 246, 0.15);
+  background: rgba(31, 41, 55, 0.15);
   border-radius: var(--radius-full);
   flex-shrink: 0;
 }
@@ -1799,7 +1799,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(139, 92, 246, 0.1);
+  background: rgba(31, 41, 55, 0.1);
   border-radius: var(--radius-full);
   flex-shrink: 0;
 }
@@ -1989,9 +1989,9 @@
 }
 
 .status-badge-small.expired {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid #ef4444;
+  background: rgba(31, 41, 55, 0.1);
+  color: var(--error-color);
+  border: 1px solid var(--error-color);
 }
 
 /* SMALL ACTIVE BADGE IS SOLID DARK: */
@@ -2065,12 +2065,12 @@
 }
 
 .view-all-link:hover {
-  background: rgba(139, 92, 246, 0.1);
+  background: rgba(31, 41, 55, 0.1);
 }
 
 .alert-card {
-  background: rgba(245, 158, 11, 0.05);
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  background: rgba(107, 114, 128, 0.05);
+  border: 1px solid rgba(107, 114, 128, 0.2);
 }
 
 .alert-content {
@@ -2116,8 +2116,8 @@
 }
 
 .compliance-status-overview.non-compliant {
-  background: rgba(239, 68, 68, 0.05);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: rgba(31, 41, 55, 0.05);
+  border: 1px solid rgba(31, 41, 55, 0.2);
 }
 
 .compliance-icon-large {
@@ -2138,8 +2138,8 @@
 }
 
 .compliance-status-overview.non-compliant .compliance-icon-large {
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
+  background: rgba(31, 41, 55, 0.15);
+  color: var(--error-color);
 }
 
 .compliance-text {
@@ -2166,8 +2166,8 @@
 
 /* Employer Dashboard Specific Styles */
 .banner-employer {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
-  border-color: rgba(139, 92, 246, 0.2);
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.1) 0%, rgba(31, 41, 55, 0.05) 100%);
+  border-color: rgba(31, 41, 55, 0.2);
 }
 
 .compliance-summary-box {
@@ -2192,7 +2192,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(139, 92, 246, 0.1);
+  background: rgba(31, 41, 55, 0.1);
   border-radius: var(--radius-full);
   flex-shrink: 0;
 }
@@ -2235,7 +2235,7 @@
 
 .quick-action-btn:hover {
   border-color: #1f2937;
-  background: rgba(139, 92, 246, 0.05);
+  background: rgba(31, 41, 55, 0.05);
   transform: translateX(4px);
 }
 
@@ -2246,7 +2246,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(139, 92, 246, 0.1);
+  background: rgba(31, 41, 55, 0.1);
   border-radius: var(--radius-full);
   flex-shrink: 0;
 }
@@ -2257,8 +2257,8 @@
 }
 
 .info-card {
-  background: rgba(59, 130, 246, 0.03);
-  border: 1px solid rgba(59, 130, 246, 0.1);
+  background: rgba(107, 114, 128, 0.03);
+  border: 1px solid rgba(107, 114, 128, 0.1);
 }
 
 .info-list {
@@ -2314,7 +2314,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(139, 92, 246, 0.1);
+  background: rgba(31, 41, 55, 0.1);
   border-radius: var(--radius-full);
   flex-shrink: 0;
 }
@@ -2368,9 +2368,9 @@
 
 .role-note {
   padding: var(--spacing-md);
-  background: rgba(245, 158, 11, 0.05);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-  border-left: 3px solid #f59e0b;
+  background: rgba(107, 114, 128, 0.05);
+  border: 1px solid rgba(107, 114, 128, 0.2);
+  border-left: 3px solid #6b7280;
   border-radius: var(--radius-md);
   font-size: 0.9375rem;
   color: #1f2937;
@@ -2379,7 +2379,7 @@
 }
 
 .role-note strong {
-  color: #f59e0b;
+  color: #6b7280;
 }
 
 /* ============================================
@@ -2408,7 +2408,7 @@
 .export-info {
   margin-top: var(--spacing-sm);
   padding: var(--spacing-sm);
-  background: rgba(139, 92, 246, 0.05);
+  background: rgba(31, 41, 55, 0.05);
   border-radius: var(--radius-sm);
   border-left: 3px solid #1f2937;
 }
@@ -2495,7 +2495,7 @@
 
 .audit-declaration-card:hover {
   border-color: #1f2937;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+  box-shadow: 0 4px 12px rgba(31, 41, 55, 0.1);
 }
 
 .declaration-header {
@@ -2567,7 +2567,7 @@
 .declaration-text {
   margin-top: var(--spacing-md);
   padding: var(--spacing-md);
-  background: rgba(139, 92, 246, 0.05);
+  background: rgba(31, 41, 55, 0.05);
   border-left: 3px solid #1f2937;
   border-radius: var(--radius-sm);
   font-size: 0.9375rem;
@@ -2776,9 +2776,9 @@
 .audit-disclaimer {
   margin-top: var(--spacing-xl);
   padding: var(--spacing-lg);
-  background: rgba(245, 158, 11, 0.05);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-  border-left: 3px solid #f59e0b;
+  background: rgba(107, 114, 128, 0.05);
+  border: 1px solid rgba(107, 114, 128, 0.2);
+  border-left: 3px solid #6b7280;
   border-radius: var(--radius-md);
   font-size: 0.9375rem;
   color: #1f2937;
@@ -2786,7 +2786,7 @@
 }
 
 .audit-disclaimer strong {
-  color: #f59e0b;
+  color: #6b7280;
 }
 
 /* Employer Audit Trail Layout */
@@ -2829,13 +2829,13 @@
 
 .relationship-item:hover {
   border-color: #1f2937;
-  background: rgba(139, 92, 246, 0.05);
+  background: rgba(31, 41, 55, 0.05);
   transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .relationship-item.active {
   border-color: #1f2937;
-  background: rgba(139, 92, 246, 0.1);
+  background: rgba(31, 41, 55, 0.1);
 }
 
 .relationship-student-id {
@@ -3342,4 +3342,221 @@
   margin: 0;
   font-size: 0.875rem;
   color: #6b7280;
+}
+
+/* ROUND 7 ADDITIONS: */
+/* THE OLD AMBER, RED, BLUE AND PURPLE COLOURS IN THIS FILE WERE SWAPPED FOR NAVY AND GREY: */
+
+/* THE STUDENT'S "PENDING ACCESS REQUESTS" CARD ON THE OVERVIEW, NAVY EDGE INSTEAD OF AMBER: */
+.pending-requests-alert {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-left: 5px solid #1f2937;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+}
+
+.pending-requests-alert-title {
+  margin: 0 0 0.5rem 0;
+  color: #1f2937;
+}
+
+.pending-requests-alert-count {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.pending-requests-alert-note {
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+/* EACH SMALL REQUEST CARD IN THE OVERVIEW LIST: */
+.pending-request-mini {
+  padding: 1rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #1f2937;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.pending-request-mini-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+  color: #1f2937;
+}
+
+.pending-request-mini-detail {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* THE RULES LIST UNDER "WORK ELIGIBILITY & RULES" ON THE STUDENT OVERVIEW: */
+.compliance-rules-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.compliance-rules-section h4 {
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.compliance-rules-section .rules-list {
+  gap: 0.75rem;
+}
+
+.compliance-rules-section .rule-item {
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+/* A GREY NOTE BOX WITH A NAVY EDGE, USED FOR "ADD YOUR DATES" AND "NOT CONFIRMED": */
+.rules-note {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #f3f4f6;
+  border-left: 3px solid #1f2937;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+/* A BUTTON THAT LOOKS LIKE AN UNDERLINED LINK: */
+.btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #1f2937;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* THE SMALL GREY LINE THAT SAYS THE TERM LETTER IS NOT READY YET: */
+.dates-warning-text {
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+/* THE EMPLOYER'S WARNING WHEN A STUDENT HAS NOT CONFIRMED THEIR DATES: */
+.dates-unconfirmed-warning {
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  background: #ffffff;
+  border: 1px dashed #9ca3af;
+  border-left: 4px solid #1f2937;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #1f2937;
+}
+
+/* THE FOUR SUMMARY BOXES AT THE TOP OF THE EMPLOYER'S AUDIT TRAIL, LIKE PAGE ONE OF THE PDF: */
+.audit-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-md);
+}
+
+.audit-summary-box {
+  padding: var(--spacing-md);
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-top: 4px solid #1f2937;
+  border-radius: var(--radius-md);
+}
+
+.audit-summary-value {
+  margin-top: 0.35rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+/* THE SENTENCE THAT EXPLAINS TODAY'S RULE: */
+.audit-rule-reason {
+  margin-top: var(--spacing-md);
+  color: #4b5563;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+/* THE LIST OF TERM DATES THE EMPLOYER SAW WHEN THEY ACKNOWLEDGED: */
+.acknowledged-terms {
+  margin-top: var(--spacing-md);
+  font-size: 0.9375rem;
+  color: #1f2937;
+}
+
+.acknowledged-terms ul {
+  margin: 0.5rem 0 0 1.25rem;
+  color: #4b5563;
+}
+
+/* THE DATE COLUMN NEVER WRAPS AND THE DETAILS COLUMN IS A LITTLE SMALLER: */
+.audit-when {
+  white-space: nowrap;
+}
+
+.audit-details {
+  font-size: 0.875rem;
+  color: #4b5563;
+  min-width: 220px;
+}
+
+/* ON TABLETS THE SUMMARY BOXES GO TWO BY TWO, ON PHONES ONE PER ROW: */
+@media (max-width: 900px) {
+  .audit-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .audit-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* SMALL BADGES IN THE AUDIT TRAIL SIDEBAR, THEY HAD NO STYLE BEFORE SO THEY SHOWED AS PLAIN TEXT: */
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #1f2937;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-right: 0.35rem;
+}
+
+/* ACTIVE IS SOLID NAVY, THE SAME AS THE OTHER ACTIVE BADGES: */
+.badge-success {
+  background: #1f2937;
+  border-color: #1f2937;
+  color: #ffffff;
+}
+
+.badge-warning {
+  border-style: dashed;
+}
+
+/* KEEPS THE SMALL NAVY BAR NEXT TO EACH AUDIT HEADING ON A PHONE, IT USED TO DROP ONTO ITS OWN LINE: */
+.audit-trail-content .audit-section h3 {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+
+.audit-trail-content .audit-section h3::before {
+  flex-shrink: 0;
+  margin-top: 0.2em;
 }

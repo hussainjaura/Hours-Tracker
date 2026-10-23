@@ -24,7 +24,9 @@ router.get(
         return res.status(404).json({ error: "Student profile not found" });
       }
 
-      res.json(student);
+      // the dashboard shows the server's rule for today, so the website and the PDFs always agree:
+      const eligibility = await getWorkEligibility(prisma, student);
+      res.json({ ...student, eligibility });
     } catch (err) {
       console.error("GET PROFILE ERROR:", err);
       res.status(500).json({ error: "Internal server error" });

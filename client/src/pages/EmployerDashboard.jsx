@@ -3,13 +3,53 @@ import { employerAPI } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
 import { useMobileNav } from '../hooks/useMobileNav'
 import PersonName from '../components/PersonName'
+import { useNotice } from '../hooks/useNotice'
 import { useNavigate } from 'react-router-dom'
 import './Dashboard.css'
-import { toDayKey, getTodayKey, isTodayInTerm, formatDay } from '../utils/dates'
+import { toDayKey, getTodayKey, isTodayInTerm, formatDay, formatTermName } from '../utils/dates'
+
+// this turns the server's rule for a student into words, so every tab says the same thing:
+// it sits outside the components so the Audit Trail tab can use it too:
+// rule is the eligibility the server sends with each student:
+const describeRule = (rule) => {
+  if (!rule) return { title: 'Rules not available', period: 'Unknown', limit: 'N/A', limitNote: '' }
+  const hours = `${rule.allowedWeeklyHours}h`
+  if (rule.visaRule === 'GRADUATE') {
+    return { title: 'Student Can Work - Graduate Visa', period: 'Graduate Visa', limit: rule.noHoursLimit ? 'No limit' : hours, limitNote: rule.personalLimitApplied ? "Student's own lower limit" : 'No weekly limit on this visa' }
+  }
+  if (rule.canWork === false && rule.reason === 'Course has ended') {
+    return { title: 'Student Cannot Work - Course Ended', period: 'Course Ended', limit: '0h', limitNote: 'Course has ended' }
+  }
+  // missing dates are treated as term time to stay on the safe side:
+  if (rule.termsMissing) {
+    return { title: 'Student Can Work - Term Dates Not Added Yet', period: 'Unknown - No Term Dates', limit: hours, limitNote: rule.personalLimitApplied ? "Student's own lower limit" : 'Term time limit' }
+  }
+  if (rule.termsIncomplete) {
+    return { title: 'Student Can Work - Next Term Dates Missing', period: 'Unknown - Next Term Dates Missing', limit: hours, limitNote: rule.personalLimitApplied ? "Student's own lower limit" : 'Term time limit' }
+  }
+  if (rule.inTermTime) {
+    return { title: 'Student Can Work - Term Time Rules Apply', period: `Term Time (${formatTermName(rule.activeTerm)})`, limit: hours, limitNote: rule.personalLimitApplied ? "Student's own lower limit" : 'Term time limit' }
+  }
+  return { title: 'Student Can Work - Holiday Period', period: 'Holiday', limit: rule.personalLimitApplied ? hours : 'Full time', limitNote: rule.personalLimitApplied ? "Student's own lower limit" : 'Full-time allowed' }
+}
+
+// this warns the manager when the limit is based on dates the student has not confirmed:
+const renderDatesWarning = (rule) => {
+  if (!rule || rule.visaRule === 'GRADUATE' || !rule.datesUnconfirmed) return null
+  const unconfirmed = rule.termCount - rule.confirmedTermCount
+  return (
+    <div className="dates-unconfirmed-warning" role="note">
+      <strong>Dates not confirmed:</strong> {unconfirmed} of this student's {rule.termCount} term{rule.termCount === 1 ? '' : 's'} {unconfirmed === 1 ? 'is' : 'are'} not confirmed yet
+      {rule.inTermTime && rule.activeTermConfirmed === false ? ', including the current term' : ''}. The weekly limit is based on dates the student has not checked, so please ask them to confirm.
+    </div>
+  )
+}
 
 const EmployerDashboard = () => {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  // these show in-page messages and confirm boxes instead of the browser's pop-ups:
+  const { showNotice, confirmAction } = useNotice()
   const [loading, setLoading] = useState(true)
   const [students, setStudents] = useState([])
   const [error, setErrorMessage] = useState('')
@@ -110,13 +150,16 @@ const EmployerDashboard = () => {
   const handleAcknowledgeStudent = async (relationshipId) => {
     // these are the same words the server saves with the acknowledgement, so the audit pack matches:
     const statement = "I have reviewed this student's declared term dates and understand the weekly working hour limits that apply to them. I will use these limits when scheduling their work."
-    if (!window.confirm(`By acknowledging, you agree to this statement:\n\n"${statement}"\n\nIt will be saved in the audit trail with the date and time.`)) {
-      return
-    }
+    const confirmed = await confirmAction({
+      title: 'Acknowledge these term dates?',
+      message: `By acknowledging, you agree to this statement:\n\n"${statement}"\n\nIt will be saved in the audit trail with the date and time.`,
+      confirmLabel: 'Acknowledge',
+    })
+    if (!confirmed) return
     
     try {
       await employerAPI.acknowledgeStudent(relationshipId)
-      alert('Student declarations acknowledged successfully. This has been recorded in the audit trail.')
+      showNotice('Acknowledged. This has been recorded in the audit trail.')
       loadDashboardData()
     } catch (err) {
       setError(err.message || 'Failed to acknowledge student declarations')
@@ -131,10 +174,8 @@ const EmployerDashboard = () => {
 
     try {
       setError('')
-      console.log('Requesting access for university ID:', universityId.trim())
-      const response = await employerAPI.requestAccess(universityId.trim())
-      console.log('Access request response:', response)
-      alert('Access request sent! Waiting for student approval.')
+      await employerAPI.requestAccess(universityId.trim())
+      showNotice('Access request sent. The student needs to accept it before you can see their dates.')
       loadDashboardData()
       // Clear search-related state
       setSearchedStudent(null)
@@ -146,13 +187,11 @@ const EmployerDashboard = () => {
         const relationship = err.relationship || err.response?.data?.relationship || err.response?.data?.error?.relationship
         const status = relationship?.status || 'existing'
         const message = `You already have a ${status.toLowerCase()} relationship with this student. Check your "My Students" tab.`
-        alert(message)
         setError(message)
         // Reload to show the existing relationship
         loadDashboardData()
       } else {
         const errorMessage = err.response?.data?.error?.message || err.response?.data?.message || err.message || 'Failed to request access'
-        alert(`Error: ${errorMessage}`)
         setError(errorMessage)
       }
     }
@@ -727,7 +766,7 @@ const EmployerDashboard = () => {
                               </div>
                             )}
                             {!hasConfirmedTerms(student.universityId) && (
-                              <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#92400e' }}>
+                              <div className="dates-warning-text" style={{ marginTop: '0.5rem' }}>
                                 The term letter isn't available yet because the student hasn't confirmed their term dates.
                               </div>
                             )}
@@ -743,7 +782,6 @@ const EmployerDashboard = () => {
                                 await employerAPI.downloadStudentTermLetter(student.universityId)
                               } catch (err) {
                                 const errorMessage = err.response?.data?.error || err.message || 'Failed to download term letter'
-                                alert(`Error: ${errorMessage}`)
                                 setError(errorMessage)
                               }
                             }}
@@ -761,15 +799,28 @@ const EmployerDashboard = () => {
                         </div>
                       </div>
                       
+                      {/* today's rule comes from the server, with a warning if the dates are not confirmed: */}
+                      {renderDatesWarning(rel.eligibility)}
                       <div className="compliance-rules">
                         <h4>Compliance Rules</h4>
                         <div className="rules-list">
                           <div className="rule-item">
-                            <strong>During Term Time:</strong> Maximum 20 hours per week
+                            <strong>Today:</strong> {describeRule(rel.eligibility).period}, weekly limit {describeRule(rel.eligibility).limit} ({describeRule(rel.eligibility).limitNote.toLowerCase()})
                           </div>
-                          <div className="rule-item">
-                            <strong>Outside Term Time:</strong> Full-time allowed (no weekly limit)
-                          </div>
+                          {rel.eligibility?.visaRule === 'GRADUATE' ? (
+                            <div className="rule-item">
+                              <strong>Graduate Visa:</strong> No weekly hours limit
+                            </div>
+                          ) : (
+                            <>
+                              <div className="rule-item">
+                                <strong>During Term Time:</strong> Maximum 20 hours per week (10 below degree level)
+                              </div>
+                              <div className="rule-item">
+                                <strong>Outside Term Time:</strong> Full-time allowed (no weekly limit)
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                       
@@ -781,7 +832,7 @@ const EmployerDashboard = () => {
                               <div key={term.id} className="term-info-card">
                                 <div className="term-info-header">
                                   <div>
-                                    <div className="term-name">{term.name}</div>
+                                    <div className="term-name">{formatTermName(term.name)}</div>
                                     {term.academicYear && (
                                       <div className="term-academic-year">Academic Year: {term.academicYear}</div>
                                     )}
@@ -982,19 +1033,24 @@ const EmployerDashboard = () => {
                       return (
                         <div className="student-term-schedule">
                           {/* this pill says no dates yet instead of holiday when the student has no terms: */}
-                          <div className={`term-now ${current || !rel.student.terms?.length ? 'term-now-term' : 'term-now-holiday'}`}>
-                            {!rel.student.terms?.length
-                              ? 'Now: No term dates added yet (treat as term time, max 20h a week)'
-                              : current
-                                ? `Now: Term time (${current.name}, until ${formatDay(current.endDate)})`
-                                : `Now: Holiday${upcoming[0] ? ` (next term starts ${formatDay(upcoming[0].startDate)})` : ''}`}
+                          {/* the "Now" line uses the server's rule, so a missing summer term shows as term time: */}
+                          <div className={`term-now ${rel.eligibility?.inTermTime || rel.eligibility?.termsMissing || rel.eligibility?.termsIncomplete ? 'term-now-term' : 'term-now-holiday'}`}>
+                            {(() => {
+                              const rule = rel.eligibility
+                              if (rule?.visaRule === 'GRADUATE') return 'Now: Graduate visa (no weekly hours limit)'
+                              if (rule?.termsMissing) return `Now: No term dates added yet (treat as term time, max ${rule.allowedWeeklyHours}h a week)`
+                              if (rule?.termsIncomplete) return `Now: Next term dates missing (treat as term time, max ${rule.allowedWeeklyHours}h a week)`
+                              if (current) return `Now: Term time (${formatTermName(current.name)}, until ${formatDay(current.endDate)}, max ${rule?.allowedWeeklyHours ?? 20}h a week)`
+                              return `Now: Holiday${upcoming[0] ? ` (next term starts ${formatDay(upcoming[0].startDate)})` : ''}`
+                            })()}
                           </div>
+                          {renderDatesWarning(rel.eligibility)}
                           {shownTerms.length > 0 ? (
                             <ul className="term-schedule-list">
                               {shownTerms.map((term) => (
                                 <li key={term.id} className="term-schedule-row">
                                   <div>
-                                    <span className="term-schedule-name">{term.name}</span>
+                                    <span className="term-schedule-name">{formatTermName(term.name)}</span>
                                     {term.academicYear && <span className="term-schedule-year">{term.academicYear}</span>}
                                     <div className="term-schedule-dates">
                                       {formatDay(term.startDate)} – {formatDay(term.endDate)}
@@ -1108,20 +1164,13 @@ const EmployerDashboard = () => {
                 </div>
 
                 {/* Eligibility Information Section */}
+                {/* every word here comes from describeRule, so it matches the other tabs and the PDFs: */}
                 <div className="eligibility-result" style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid #e5e7eb' }}>
                   <h3>Work Eligibility & Compliance Information</h3>
+                  {renderDatesWarning(searchedStudent)}
                   <div className={`eligibility-status ${searchedStudent.canWork !== false ? 'can-work' : 'cannot-work'}`}>
                     <div>
-                      <div className="eligibility-title">
-                        {searchedStudent.canWork === false 
-                          ? 'Student Cannot Work'
-                          : searchedStudent.termsMissing
-                            // this title warns the manager when the student has no term dates:
-                            ? 'Student Can Work - Term Dates Not Added Yet'
-                            : searchedStudent.inTermTime
-                              ? 'Student Can Work - Term Time Rules Apply'
-                              : 'Student Can Work - Holiday Period'}
-                      </div>
+                      <div className="eligibility-title">{describeRule(searchedStudent).title}</div>
                       {searchedStudent.reason && (
                         <div className="eligibility-reason">{searchedStudent.reason}</div>
                       )}
@@ -1132,46 +1181,25 @@ const EmployerDashboard = () => {
                     <div className="detail-item">
                       <span className="detail-label">Weekly Hour Limit:</span>
                       <span className="detail-value">
-                        {searchedStudent.allowedWeeklyHours || 'N/A'}h
-                        {/* this says where the limit comes from: the student's own lower limit or the law: */}
-                        {searchedStudent.personalLimitApplied && (
-                          <span className="detail-note"> (Student's own lower limit)</span>
-                        )}
-                        {!searchedStudent.personalLimitApplied && (searchedStudent.inTermTime || searchedStudent.termsMissing) && (
-                          <span className="detail-note"> (Term time limit)</span>
-                        )}
-                        {!searchedStudent.personalLimitApplied && !searchedStudent.inTermTime && !searchedStudent.termsMissing && (
-                          <span className="detail-note"> (Full-time allowed)</span>
-                        )}
+                        {describeRule(searchedStudent).limit}
+                        {/* this says where the limit comes from: the student's own lower limit, the law or the visa: */}
+                        <span className="detail-note"> ({describeRule(searchedStudent).limitNote})</span>
                       </span>
                     </div>
                     <div className="detail-item">
                       <span className="detail-label">Current Period:</span>
-                      <span className="detail-value">
-                        {/* this shows unknown instead of holiday when there are no term dates: */}
-                        {searchedStudent.termsMissing ? 'Unknown - No Term Dates' : searchedStudent.inTermTime ? 'Term Time' : 'Holiday'}
-                      </span>
+                      <span className="detail-value">{describeRule(searchedStudent).period}</span>
                     </div>
-                    {searchedStudent.activeTerm && (
-                      <div className="detail-item">
-                        <span className="detail-label">Active Term:</span>
-                        <span className="detail-value">
-                          {typeof searchedStudent.activeTerm === 'object' 
-                            ? searchedStudent.activeTerm.name || searchedStudent.activeTerm 
-                            : searchedStudent.activeTerm}
-                        </span>
-                      </div>
-                    )}
-                    {(searchedStudent.inTermTime || searchedStudent.termsMissing) && (
+                    {(searchedStudent.inTermTime || searchedStudent.termsMissing || searchedStudent.termsIncomplete) && (
                       <div className="compliance-warning-box">
-                        <strong>Compliance Rule:</strong> During term time, this student must not be scheduled for more than {searchedStudent.allowedWeeklyHours} hours per week.
+                        <strong>Compliance Rule:</strong> {searchedStudent.inTermTime ? 'During term time' : 'Until the missing term dates are added'}, this student must not be scheduled for more than {searchedStudent.allowedWeeklyHours} hours per week.
                         {/* this keeps the legal wording true when the student chose a lower limit: */}
                         {searchedStudent.personalLimitApplied
                           ? ' This is the student\'s own limit, which is lower than the legal maximum for UK student visas.'
                           : ' This is a legal requirement for UK student visas.'}
                       </div>
                     )}
-                    {!searchedStudent.inTermTime && !searchedStudent.termsMissing && (
+                    {searchedStudent.visaRule !== 'GRADUATE' && searchedStudent.canWork !== false && !searchedStudent.inTermTime && !searchedStudent.termsMissing && !searchedStudent.termsIncomplete && (
                       <div className="compliance-info-box">
                         <strong>Holiday Period:</strong>{' '}
                         {searchedStudent.personalLimitApplied
@@ -1179,12 +1207,17 @@ const EmployerDashboard = () => {
                           : 'During holidays, this student can work full-time with no weekly hour limit.'}
                       </div>
                     )}
+                    {searchedStudent.visaRule === 'GRADUATE' && (
+                      <div className="compliance-info-box">
+                        <strong>Graduate Visa:</strong> There is no weekly hours limit on this visa, so term dates do not change how many hours this person can work.
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="student-profile-actions" style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap' }}>
                   {!hasConfirmedTerms(searchedStudent.universityId) && (
-                    <span style={{ fontSize: '0.875rem', color: '#92400e' }}>
+                    <span className="dates-warning-text">
                       The term letter isn't available yet because the student hasn't confirmed their term dates.
                     </span>
                   )}
@@ -1196,7 +1229,6 @@ const EmployerDashboard = () => {
                         await employerAPI.downloadStudentTermLetter(searchedStudent.universityId)
                       } catch (err) {
                         const errorMessage = err.response?.data?.error || err.message || 'Failed to download term letter'
-                        alert(`Error: ${errorMessage}`)
                         setError(errorMessage)
                       }
                     }}
@@ -1309,14 +1341,16 @@ const EmployerAuditTrailTab = ({ students }) => {
     }
   }
 
-  const formatDate = (dateString) => {
+  // this shows a date and time in UK time, like 23 Oct 2026, 11:05:
+  const formatDateTime = (dateString) => {
     if (!dateString) return 'N/A'
-    return new Date(dateString).toLocaleDateString('en-GB', {
+    return new Date(dateString).toLocaleString('en-GB', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      timeZone: 'Europe/London'
     })
   }
 
@@ -1389,18 +1423,24 @@ const EmployerAuditTrailTab = ({ students }) => {
 
             {/* Right Content - Audit Trail Details */}
             <div className="audit-trail-content">
-              {selectedAuditTrail ? (
+              {selectedAuditTrail ? (() => {
+                // the server sends the same pack the PDF is made from, so the screen and the PDF always match:
+                const pack = selectedAuditTrail
+                const rel = pack.relationship || {}
+                const rule = pack.currentRule || {}
+                // the history is shown newest first, which is easier to read on a screen:
+                const history = [...(pack.history || [])].reverse()
+                return (
                 <>
                   <div className="audit-trail-header">
                     <div>
-                      <h3>Audit Trail for {selectedAuditTrail.student?.universityId || 'Student'}</h3>
-                      <PersonName name={selectedAuditTrail.student?.fullName} />
+                      <h3>Audit Trail for {pack.student?.name}</h3>
                       <p className="text-secondary">
-                        Relationship ID: {selectedRelationship}
+                        University ID {pack.student?.universityId} • Reference {pack.reference}
                       </p>
                       <div className="export-info">
                         <small className="text-secondary">
-                          <strong>PDF:</strong> Professional document ready for submission | <strong>JSON:</strong> Machine-readable data format
+                          <strong>PDF:</strong> a printable copy of this page | <strong>JSON:</strong> the same data for other systems
                         </small>
                       </div>
                     </div>
@@ -1409,7 +1449,7 @@ const EmployerAuditTrailTab = ({ students }) => {
                         className="btn btn-primary"
                         onClick={() => handleExportAuditPack(selectedRelationship, 'pdf')}
                         disabled={exporting}
-                        title="Export as PDF document - Ready for Home Office submission"
+                        title="Download this audit trail as a PDF document"
                       >
                         {exporting ? 'Exporting...' : 'Export PDF'}
                       </button>
@@ -1417,215 +1457,94 @@ const EmployerAuditTrailTab = ({ students }) => {
                         className="btn btn-secondary"
                         onClick={() => handleExportAuditPack(selectedRelationship, 'json')}
                         disabled={exporting}
-                        title="Export as JSON file - Machine-readable format"
+                        title="Download this audit trail as a JSON file"
                       >
                         {exporting ? 'Exporting...' : 'Export JSON'}
                       </button>
                     </div>
                   </div>
 
-                  {/* Layer 1: Identity */}
+                  {/* Section 1: the summary for today, the same four boxes as page one of the PDF */}
                   <div className="audit-section">
-                    <h3>1. Identity & Context</h3>
+                    <h3>1. Summary</h3>
+                    <div className="audit-summary-grid">
+                      <div className="audit-summary-box">
+                        <div className="identity-label">Status today</div>
+                        <div className="audit-summary-value">{rule.statusLabel || 'Unknown'}</div>
+                      </div>
+                      <div className="audit-summary-box">
+                        <div className="identity-label">Weekly limit today</div>
+                        <div className="audit-summary-value">{rule.limitLabel || 'N/A'}</div>
+                      </div>
+                      <div className="audit-summary-box">
+                        <div className="identity-label">Access</div>
+                        <div className="audit-summary-value">{rel.statusLabel}</div>
+                      </div>
+                      <div className="audit-summary-box">
+                        <div className="identity-label">Acknowledgement</div>
+                        <div className="audit-summary-value">
+                          {rel.acknowledgedAt ? formatDay(rel.acknowledgedAt) : rel.resetAt ? 'Needed again' : 'Not yet'}
+                        </div>
+                      </div>
+                    </div>
+                    {rule.reason && <p className="audit-rule-reason">{rule.reason}</p>}
+                    {renderDatesWarning(rule)}
+                  </div>
+
+                  {/* Section 2: who this record is about, names instead of ID codes */}
+                  <div className="audit-section">
+                    <h3>2. Student and Employer</h3>
                     <div className="audit-identity-grid">
                       <div className="audit-identity-item">
-                        <div className="identity-label">Student University ID</div>
-                        <div className="identity-value">{selectedAuditTrail.student?.universityId || 'N/A'}</div>
-                      </div>
-                      <div className="audit-identity-item">
-                        <div className="identity-label">Student Name</div>
-                        <div className="identity-value">{selectedAuditTrail.student?.fullName || 'Name not provided'}</div>
+                        <div className="identity-label">Student</div>
+                        <div className="identity-value">{pack.student?.name}</div>
                       </div>
                       <div className="audit-identity-item">
                         <div className="identity-label">University</div>
-                        <div className="identity-value">{selectedAuditTrail.student?.universityName || 'Unknown University'}</div>
+                        <div className="identity-value">{pack.student?.universityName || 'Not given'}</div>
                       </div>
                       <div className="audit-identity-item">
                         <div className="identity-label">Visa Type</div>
-                        <div className="identity-value">{selectedAuditTrail.student?.visaType || 'N/A'}</div>
+                        <div className="identity-value">{pack.student?.visaType}</div>
                       </div>
                       <div className="audit-identity-item">
                         <div className="identity-label">Course End Date</div>
-                        <div className="identity-value">{formatDay(selectedAuditTrail.student?.courseEndDate)}</div>
+                        <div className="identity-value">{formatDay(pack.student?.courseEndDate)}</div>
                       </div>
                       <div className="audit-identity-item">
-                        <div className="identity-label">Employer ID</div>
-                        <div className="identity-value">{selectedAuditTrail.relationship?.employerId || 'N/A'}</div>
+                        <div className="identity-label">Employer</div>
+                        <div className="identity-value">
+                          {pack.employer?.name}{pack.employer?.role ? ` (${pack.employer.role})` : ''}
+                        </div>
+                      </div>
+                      <div className="audit-identity-item">
+                        <div className="identity-label">Organisation</div>
+                        <div className="identity-value">{pack.employer?.organisation || 'Not given'}</div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Layer 2: Student Declarations */}
+                  {/* Section 3: the term dates the student declared, and whether each one is confirmed */}
                   <div className="audit-section">
-                    <h3>2. Student Term Declarations</h3>
-                    {selectedAuditTrail.studentDeclarations && selectedAuditTrail.studentDeclarations.length > 0 ? (
-                      <div className="audit-declarations-list">
-                        {selectedAuditTrail.studentDeclarations.map((decl, idx) => (
-                          <div key={idx} className="audit-declaration-card">
-                            <div className="declaration-header">
-                              <div>
-                                <div className="declaration-term-name">{decl.term.name} Term</div>
-                                <div className="declaration-academic-year">{decl.term.academicYear}</div>
-                              </div>
-                              {decl.confirmedAt ? (
-                                <span className="badge badge-success">Confirmed</span>
-                              ) : (
-                                <span className="badge badge-warning">Pending</span>
-                              )}
-                            </div>
-                            <div className="declaration-dates">
-                              <div className="date-item">
-                                <span className="date-label">Start:</span>
-                                <span className="date-value">{formatDay(decl.term.startDate)}</span>
-                              </div>
-                              <div className="date-item">
-                                <span className="date-label">End:</span>
-                                <span className="date-value">{formatDay(decl.term.endDate)}</span>
-                              </div>
-                            </div>
-                            <div className="declaration-meta">
-                              <div className="meta-item">
-                                <span className="meta-label">Declared:</span>
-                                <span className="meta-value">{formatDate(decl.declaredAt)}</span>
-                              </div>
-                              {decl.confirmedAt && (
-                                <div className="meta-item">
-                                  <span className="meta-label">Confirmed:</span>
-                                  <span className="meta-value">{formatDate(decl.confirmedAt)}</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="empty-state">
-                        <p className="text-secondary">No student declarations available.</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Layer 3: Employer Acknowledgement */}
-                  <div className="audit-section">
-                    <h3>3. Employer Acknowledgement</h3>
-                    {selectedAuditTrail.employerAcknowledgement ? (
-                      <div className="audit-acknowledgement-card">
-                        <div className="acknowledgement-header">
-                          <div>
-                            <div className="acknowledgement-status">Acknowledged</div>
-                            <div className="acknowledgement-date">
-                              Date: {formatDate(selectedAuditTrail.employerAcknowledgement.acknowledgedAt)}
-                            </div>
-                          </div>
-                          <span className="badge badge-success">Acknowledged</span>
-                        </div>
-                        {selectedAuditTrail.employerAcknowledgement.acknowledgementText && (
-                          <div className="acknowledgement-text">
-                            <strong>Employer Statement:</strong> "{selectedAuditTrail.employerAcknowledgement.acknowledgementText}"
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="empty-state">
-                        <p className="text-secondary">No acknowledgement recorded yet.</p>
-                        <p className="text-secondary">Please acknowledge student declarations in the Compliance Rules tab.</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Layer 4: Compliance Rules */}
-                  <div className="audit-section">
-                    <h3>4. System-Generated Compliance Rules</h3>
-                    {selectedAuditTrail.complianceRules && selectedAuditTrail.complianceRules.length > 0 ? (
-                      <div className="audit-rules-list">
-                        {selectedAuditTrail.complianceRules.map((rule, idx) => (
-                          <div key={idx} className="audit-rule-card">
-                            <div className="rule-header">
-                              <div className="rule-action">{rule.action}</div>
-                              <div className="rule-date">{formatDate(rule.createdAt)}</div>
-                            </div>
-                            {rule.complianceRule && (
-                              <div className="rule-details">
-                                <div className="rule-detail-item">
-                                  <span className="rule-detail-label">Rule Applied:</span>
-                                  <span className="rule-detail-value">{rule.complianceRule.ruleApplied || 'N/A'}</span>
-                                </div>
-                                {rule.complianceRule.allowedWeeklyHours && (
-                                  <div className="rule-detail-item">
-                                    <span className="rule-detail-label">Allowed Hours:</span>
-                                    <span className="rule-detail-value">{rule.complianceRule.allowedWeeklyHours}h/week</span>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="empty-state">
-                        <p className="text-secondary">No compliance rules generated yet.</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Layer 5: Change History */}
-                  <div className="audit-section">
-                    <h3>5. Change History</h3>
-                    {selectedAuditTrail.changeHistory && selectedAuditTrail.changeHistory.length > 0 ? (
-                      <div className="audit-changes-list">
-                        {selectedAuditTrail.changeHistory.map((change, idx) => (
-                          <div key={idx} className="audit-change-card">
-                            <div className="change-header">
-                              <div className="change-action">{change.action}</div>
-                              <div className="change-date">{formatDate(change.createdAt)}</div>
-                            </div>
-                            {change.changeHistory && (
-                              <div className="change-details">
-                                <div className="change-before">
-                                  <strong>Before:</strong>
-                                  <pre>{JSON.stringify(change.changeHistory.before, null, 2)}</pre>
-                                </div>
-                                <div className="change-arrow">→</div>
-                                <div className="change-after">
-                                  <strong>After:</strong>
-                                  <pre>{JSON.stringify(change.changeHistory.after, null, 2)}</pre>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="empty-state">
-                        <p className="text-secondary">No changes recorded yet.</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* All Audit Logs */}
-                  <div className="audit-section">
-                    <h3>Complete Audit Log</h3>
-                    <p className="text-secondary">All audit events for this relationship.</p>
-                    {selectedAuditTrail.allAuditLogs && selectedAuditTrail.allAuditLogs.length > 0 ? (
+                    <h3>3. Term Dates Declared by the Student</h3>
+                    {pack.terms?.length > 0 ? (
                       <div className="audit-logs-table">
                         <table>
                           <thead>
                             <tr>
-                              <th>Date & Time</th>
-                              <th>Action</th>
-                              <th>Entity Type</th>
-                              <th>Performed By</th>
-                              <th>IP Address</th>
+                              <th>Term</th>
+                              <th>Dates</th>
+                              <th>Weekly limit</th>
+                              <th>Confirmed</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {selectedAuditTrail.allAuditLogs.map((log) => (
-                              <tr key={log.id}>
-                                <td>{formatDate(log.createdAt)}</td>
-                                <td>{log.action}</td>
-                                <td>{log.entityType}</td>
-                                <td>{log.performedBy}</td>
-                                <td>{log.ipAddress || 'N/A'}</td>
+                            {pack.terms.map((term, idx) => (
+                              <tr key={idx}>
+                                <td>{term.name} {term.academicYear}</td>
+                                <td>{formatDay(term.startDate)} to {formatDay(term.endDate)}</td>
+                                <td>{term.weeklyLimit} hours</td>
+                                <td>{term.confirmedAt ? formatDay(term.confirmedAt) : 'Not confirmed'}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -1633,17 +1552,93 @@ const EmployerAuditTrailTab = ({ students }) => {
                       </div>
                     ) : (
                       <div className="empty-state">
-                        <p className="text-secondary">No audit logs available.</p>
+                        <p className="text-secondary">The student has not added any term dates yet.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Section 4: the exact statement this employer agreed to, and the dates they saw */}
+                  <div className="audit-section">
+                    <h3>4. Your Acknowledgement</h3>
+                    {rel.acknowledgedAt ? (
+                      <div className="audit-acknowledgement-card">
+                        <div className="acknowledgement-header">
+                          <div>
+                            <div className="acknowledgement-status">Acknowledged</div>
+                            <div className="acknowledgement-date">
+                              {formatDateTime(rel.acknowledgedAt)}{rel.acknowledgedByName ? ` by ${rel.acknowledgedByName}` : ''}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="acknowledgement-text">
+                          <strong>Statement agreed to:</strong> "{rel.acknowledgementText}"
+                        </div>
+                        {rel.acknowledgedTerms?.length > 0 && (
+                          <div className="acknowledged-terms">
+                            <strong>Term dates shown at that moment:</strong>
+                            <ul>
+                              {rel.acknowledgedTerms.map((term, idx) => (
+                                <li key={idx}>{term.name} {term.academicYear || ''}: {formatDay(term.startDate)} to {formatDay(term.endDate)}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="empty-state">
+                        <p className="text-secondary">
+                          {rel.resetAt
+                            ? `Your earlier acknowledgement was cleared on ${formatDay(rel.resetAt)} because ${rel.resetReason ? rel.resetReason.charAt(0).toLowerCase() + rel.resetReason.slice(1) : 'the term dates changed'}.`
+                            : 'You have not acknowledged this student\'s term dates yet.'}
+                        </p>
+                        <p className="text-secondary">You can acknowledge them in the Compliance Rules tab.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Section 5: everything that happened, in plain words, the same rows as the PDF */}
+                  <div className="audit-section">
+                    <h3>5. Activity History</h3>
+                    <p className="text-secondary">Newest first. Times are UK time.</p>
+                    {history.length > 0 ? (
+                      <div className="audit-logs-table">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>When</th>
+                              <th>What happened</th>
+                              <th>Details</th>
+                              <th>By</th>
+                              <th>IP Address</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {history.map((row, idx) => (
+                              <tr key={idx}>
+                                <td className="audit-when">{formatDateTime(row.at)}</td>
+                                <td>{row.event}</td>
+                                <td className="audit-details">{row.details}</td>
+                                <td>{row.by}</td>
+                                <td>{row.ip || 'Not recorded'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="empty-state">
+                        <p className="text-secondary">No activity recorded yet.</p>
                       </div>
                     )}
                   </div>
 
                   {/* Disclaimer */}
                   <div className="audit-disclaimer">
-                    <strong>Important:</strong> This system records declarations and acknowledgements. It does not replace payroll or legal advice. This export is for compliance evidence purposes only.
+                    <strong>Important:</strong> {pack.disclaimer}
                   </div>
                 </>
-              ) : (
+                )
+              })() : (
                 <div className="empty-state">
                   <p className="text-secondary">Select a student relationship to view audit trail.</p>
                 </div>

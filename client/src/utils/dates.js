@@ -40,3 +40,17 @@ export function formatDay(date) {
     timeZone: 'UTC'
   })
 }
+
+// this works out the academic year from a date, like 21 Sept 2026 is "2026/27":
+// a new academic year starts in August, so January to July belong to the year before:
+export function getAcademicYear(date) {
+  const [year, month] = toDayKey(date).split('-').map(Number)
+  const startYear = month >= 8 ? year : year - 1
+  return `${startYear}/${String((startYear + 1) % 100).padStart(2, '0')}`
+}
+
+// this turns a saved term name like AUTUMN into Autumn so it does not look like shouting:
+export function formatTermName(name) {
+  if (!name) return 'Term'
+  return name.charAt(0) + name.slice(1).toLowerCase()
+}
