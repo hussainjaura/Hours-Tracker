@@ -7,21 +7,73 @@
 import express from "express";
 import prisma from "../prisma.js";
 import { authenticate, authorizeRoles } from "../middleware/auth.js";
-import { getWeeklyHours, getWeekStart } from "../utils/weeklyHours.js";
+import { getWeeklyHours, getHoursInRange } from "../utils/weeklyHours.js";
 import { getWorkEligibility } from "../utils/workEligibility.js";
-import { getHoursInRange } from "../utils/weeklyHours.js";
-import {
-  detectViolation,
-  logViolation,
-  checkWeekForViolations,
-  getStudentViolationStats,
-  getEmployerViolationStats,
-} from "../utils/compliance.js";
+import { getStudentViolationStats, getEmployerViolationStats } from "../utils/compliance.js";
 
 const router = express.Router();
 
 
 // WEEKLY HOUR SUMMARIES:
+
+
+// the /me routes must come before the /:param ones: Express checks routes in order,
+// so otherwise "me" would be treated as a university ID or employer ID:
+// GET /compliance/weekly-summary/me
+// Student views their own weekly summary:
+router.get(
+  "/weekly-summary/me",
+  authenticate,
+  authorizeRoles("STUDENT"),
+  async (req, res) => {
+    try {
+      const { weekStart } = req.query;
+
+      const student = await prisma.student.findUnique({
+        where: { userId: req.user.id },
+      });
+
+      if (!student) {
+        return res.status(404).json({ error: "Student profile not found" });
+      }
+
+      const date = weekStart ? new Date(weekStart) : new Date();
+      const weeklyData = await getWeeklyHours(prisma, student.id, date);
+      const eligibility = await getWorkEligibility(prisma, student);
+
+      const violations = await prisma.complianceViolation.findMany({
+        where: {
+          studentId: student.id,
+          weekStart: weeklyData.weekStart,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      res.json({
+        week: {
+          weekStart: weeklyData.weekStart,
+          weekEnd: weeklyData.weekEnd,
+        },
+        hours: {
+          total: weeklyData.totalHours,
+          allowed: eligibility.allowedWeeklyHours,
+          remaining: Math.max(0, eligibility.allowedWeeklyHours - weeklyData.totalHours),
+          excess: Math.max(0, weeklyData.totalHours - eligibility.allowedWeeklyHours),
+        },
+        context: {
+          inTermTime: eligibility.inTermTime,
+          activeTerm: eligibility.activeTerm,
+        },
+        shifts: weeklyData.shifts,
+        violations: violations.length > 0 ? violations : null,
+        compliant: violations.length === 0 && weeklyData.totalHours <= eligibility.allowedWeeklyHours,
+      });
+    } catch (error) {
+      console.error("GET MY WEEKLY SUMMARY ERROR:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
 
 
 // GET /compliance/weekly-summary/:universityId
@@ -115,63 +167,6 @@ router.get(
       });
     } catch (error) {
       console.error("GET WEEKLY SUMMARY ERROR:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-);
-
-
-// GET /compliance/weekly-summary/me
-// Student views their own weekly summary:
-router.get(
-  "/weekly-summary/me",
-  authenticate,
-  authorizeRoles("STUDENT"),
-  async (req, res) => {
-    try {
-      const { weekStart } = req.query;
-
-      const student = await prisma.student.findUnique({
-        where: { userId: req.user.id },
-      });
-
-      if (!student) {
-        return res.status(404).json({ error: "Student profile not found" });
-      }
-
-      const date = weekStart ? new Date(weekStart) : new Date();
-      const weeklyData = await getWeeklyHours(prisma, student.id, date);
-      const eligibility = await getWorkEligibility(prisma, student);
-
-      const violations = await prisma.complianceViolation.findMany({
-        where: {
-          studentId: student.id,
-          weekStart: weeklyData.weekStart,
-        },
-        orderBy: { createdAt: "desc" },
-      });
-
-      res.json({
-        week: {
-          weekStart: weeklyData.weekStart,
-          weekEnd: weeklyData.weekEnd,
-        },
-        hours: {
-          total: weeklyData.totalHours,
-          allowed: eligibility.allowedWeeklyHours,
-          remaining: Math.max(0, eligibility.allowedWeeklyHours - weeklyData.totalHours),
-          excess: Math.max(0, weeklyData.totalHours - eligibility.allowedWeeklyHours),
-        },
-        context: {
-          inTermTime: eligibility.inTermTime,
-          activeTerm: eligibility.activeTerm,
-        },
-        shifts: weeklyData.shifts,
-        violations: violations.length > 0 ? violations : null,
-        compliant: violations.length === 0 && weeklyData.totalHours <= eligibility.allowedWeeklyHours,
-      });
-    } catch (error) {
-      console.error("GET MY WEEKLY SUMMARY ERROR:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   }
@@ -467,6 +462,93 @@ router.get(
 //EMPLOYER ACTIVITY REPORTS:
 
 
+// the /me routes must come before the /:param ones: Express checks routes in order,
+// so otherwise "me" would be treated as a university ID or employer ID:
+// GET /compliance/employer-activity/me:
+// Employer views their own activity report:
+router.get(
+  "/employer-activity/me",
+  authenticate,
+  authorizeRoles("EMPLOYER"),
+  async (req, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+
+      const start = startDate ? new Date(startDate) : new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+      const end = endDate ? new Date(endDate) : new Date();
+
+      const shifts = await prisma.workShift.findMany({
+        where: {
+          employerId: req.user.id,
+          createdAt: {
+            gte: start,
+            lte: end,
+          },
+        },
+        include: {
+          student: {
+            include: {
+              user: {
+                select: {
+                  email: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      const violations = await prisma.complianceViolation.findMany({
+        where: {
+          employerId: req.user.id,
+          createdAt: {
+            gte: start,
+            lte: end,
+          },
+        },
+        include: {
+          student: {
+            include: {
+              user: {
+                select: {
+                  email: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      const totalShifts = shifts.length;
+      const confirmedShifts = shifts.filter((s) => s.status === "CONFIRMED").length;
+      const totalHours = shifts
+        .filter((s) => s.status === "CONFIRMED")
+        .reduce((sum, s) => sum + Number(s.hours), 0);
+
+      res.json({
+        period: {
+          startDate: start,
+          endDate: end,
+        },
+        summary: {
+          totalShifts,
+          confirmedShifts,
+          totalHours: parseFloat(totalHours.toFixed(2)),
+          totalViolations: violations.length,
+        },
+        violations: violations.slice(0, 20),
+        recentShifts: shifts.slice(0, 20),
+      });
+    } catch (error) {
+      console.error("GET MY EMPLOYER ACTIVITY ERROR:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+);
+
+
 // GET /compliance/employer-activity/:employerId
 // Get activity report for an employer (ADMIN only):
 router.get(
@@ -631,91 +713,6 @@ router.get(
       });
     } catch (error) {
       console.error("GET EMPLOYER ACTIVITY ERROR:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-);
-
-
-// GET /compliance/employer-activity/me:
-// Employer views their own activity report:
-router.get(
-  "/employer-activity/me",
-  authenticate,
-  authorizeRoles("EMPLOYER"),
-  async (req, res) => {
-    try {
-      const { startDate, endDate } = req.query;
-
-      const start = startDate ? new Date(startDate) : new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-      const end = endDate ? new Date(endDate) : new Date();
-
-      const shifts = await prisma.workShift.findMany({
-        where: {
-          employerId: req.user.id,
-          createdAt: {
-            gte: start,
-            lte: end,
-          },
-        },
-        include: {
-          student: {
-            include: {
-              user: {
-                select: {
-                  email: true,
-                },
-              },
-            },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-      });
-
-      const violations = await prisma.complianceViolation.findMany({
-        where: {
-          employerId: req.user.id,
-          createdAt: {
-            gte: start,
-            lte: end,
-          },
-        },
-        include: {
-          student: {
-            include: {
-              user: {
-                select: {
-                  email: true,
-                },
-              },
-            },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-      });
-
-      const totalShifts = shifts.length;
-      const confirmedShifts = shifts.filter((s) => s.status === "CONFIRMED").length;
-      const totalHours = shifts
-        .filter((s) => s.status === "CONFIRMED")
-        .reduce((sum, s) => sum + Number(s.hours), 0);
-
-      res.json({
-        period: {
-          startDate: start,
-          endDate: end,
-        },
-        summary: {
-          totalShifts,
-          confirmedShifts,
-          totalHours: parseFloat(totalHours.toFixed(2)),
-          totalViolations: violations.length,
-        },
-        violations: violations.slice(0, 20),
-        recentShifts: shifts.slice(0, 20),
-      });
-    } catch (error) {
-      console.error("GET MY EMPLOYER ACTIVITY ERROR:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   }

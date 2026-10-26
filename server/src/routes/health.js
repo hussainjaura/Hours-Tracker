@@ -4,7 +4,6 @@
 
 import express from "express";
 import prisma from "../prisma.js";
-import { AppError } from "../utils/errors.js";
 import { clearRateLimitStore } from "../middleware/security.js";
 
 const router = express.Router();

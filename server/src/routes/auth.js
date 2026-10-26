@@ -1,6 +1,5 @@
 import express from "express";
 import bcrypt from "bcrypt";
-import { Prisma } from "@prisma/client";
 import prisma from "../prisma.js";
 import { signToken } from "../utils/jwt.js";
 import requireAuth from "../middleware/requireAuth.js";

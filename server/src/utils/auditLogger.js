@@ -1,9 +1,8 @@
 /**
- * Comprehensive Audit Logger Utility
- * Implements all 6 layers of audit trail for Home Office compliance
+ * Audit Logger Utility
+ * Writes the audit log entries for term declarations, employer acknowledgements, rules and change history
  */
 
-import prisma from "../prisma.js";
 import { getTodayUk } from "./dates.js";
 
 // Get client IP address from request:
@@ -20,35 +19,6 @@ export function getClientIp(req) {
 // Get user agent from request:
 export function getUserAgent(req) {
   return req.headers["user-agent"] || "unknown";
-}
-
-
-// Layer 1: Identity & Context
-// Captures: Student name, Employer name, Visa category, Academic year, University name:
-export async function logIdentityContext(prisma, action, entityType, entityId, performedBy, universityId, contextData, req = null) {
-  const metadata = {
-    // Layer 1: Identity & Context
-    studentName: contextData.studentName,
-    employerName: contextData.employerName,
-    visaCategory: contextData.visaType || contextData.visaCategory,
-    academicYear: contextData.academicYear,
-    universityName: contextData.universityName,
-    universityCode: contextData.universityCode || universityId,
-    ...contextData.additionalContext,
-  };
-
-  return await prisma.auditLog.create({
-    data: {
-      action,
-      entityType,
-      entityId,
-      performedBy,
-      universityId,
-      metadata,
-      ipAddress: req ? getClientIp(req) : null,
-      userAgent: req ? getUserAgent(req) : null,
-    },
-  });
 }
 
 
@@ -395,63 +365,4 @@ export async function getStudentAuditTrail(prisma, studentId, universityId) {
   };
 
   return auditTrail;
-}
-
-
-// Get audit trail for an employer-student relationship:
-export async function getRelationshipAuditTrail(prisma, relationshipId) {
-  const relationship = await prisma.studentEmployer.findUnique({
-    where: { id: relationshipId },
-    include: {
-      student: {
-        include: {
-          user: {
-            select: { email: true },
-          },
-        },
-      },
-    },
-  });
-
-  if (!relationship) {
-    throw new Error("Relationship not found");
-  }
-
-  // Get all audit logs related to this relationship:
-  // an employer only sees this link's history, the student's term changes, and their own checks:
-  // before, every log with the student's ID was included, so one employer could see another employer's activity:
-  const auditLogs = await prisma.auditLog.findMany({
-    where: {
-      OR: [
-        { entityType: "StudentEmployer", entityId: relationshipId },
-        { entityType: "Term", universityId: relationship.student.universityId },
-        {
-          entityType: "Student",
-          universityId: relationship.student.universityId,
-          performedBy: { in: [relationship.employerId, "SYSTEM"] },
-        },
-      ],
-    },
-    orderBy: { createdAt: "asc" },
-  });
-
-  return {
-    relationship: {
-      id: relationship.id,
-      studentId: relationship.studentId,
-      employerId: relationship.employerId,
-      status: relationship.status,
-      linkedAt: relationship.linkedAt,
-      acknowledgedAt: relationship.acknowledgedAt,
-      acknowledgedBy: relationship.acknowledgedBy,
-    },
-    student: {
-      universityId: relationship.student.universityId,
-      fullName: relationship.student.fullName || null,
-      universityName: relationship.student.universityName || null,
-      visaType: relationship.student.visaType,
-      courseEndDate: relationship.student.courseEndDate,
-    },
-    auditLogs,
-  };
 }

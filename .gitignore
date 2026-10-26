@@ -1,6 +1,12 @@
 node_modules
 .env
 .env.*
+# the example files only hold placeholders, so they are safe to share:
+!.env.example
 dist
 client/dist
 client/node_modules
+
+# saved web pages and design files that are not part of the app:
+logo.html
+logo_files/

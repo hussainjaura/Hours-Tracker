@@ -551,10 +551,6 @@ const StudentDashboard = () => {
     })
   }
 
-  const formatHours = (hours) => {
-    return parseFloat(hours).toFixed(2)
-  }
-
   // Calculate full-time work periods (gaps between terms)
   const calculateFullTimePeriods = () => {
     if (terms.length === 0) return []
@@ -2038,7 +2034,7 @@ const StudentDashboard = () => {
 }
 
 // Audit Trail Tab Component
-const AuditTrailTab = ({ profile, onExport }) => {
+const AuditTrailTab = ({ profile }) => {
   const [auditTrail, setAuditTrail] = useState(null)
   const [auditLogs, setAuditLogs] = useState([])
   const [loading, setLoading] = useState(true)

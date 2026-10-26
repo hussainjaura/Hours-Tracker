@@ -5,7 +5,6 @@ import { validate, validateDateRangeFields, validateDate, validateDateRange, val
 import {
   logTermDeclaration,
   logChangeHistory,
-  createComprehensiveAuditLog,
   getClientIp,
 } from "../utils/auditLogger.js";
 import { generateTermLetterPDF } from "../utils/pdfGenerator.js";

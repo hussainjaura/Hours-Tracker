@@ -152,7 +152,6 @@ export const validateTermDatesAgainstAcademicYear = (academicYear, startDate, en
   }
 
   let startYear = parseInt(match[1]);
-  const endYearShort = parseInt(match[2]);
   
   // Convert short year format to full year if needed
   if (startYear < 100) {

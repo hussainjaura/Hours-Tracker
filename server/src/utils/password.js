@@ -1,7 +1,5 @@
 // Password validation utilities:
 
-import { AppError } from "./errors.js";
-
 /**
  * Validates password strength
  * @param {string} password - Password to validate
@@ -82,7 +80,7 @@ export const validatePasswordStrength = (password) => {
 };
 
 // Password validator for use in validation middleware:
-export const passwordValidator = (password, fieldName = "password") => {
+export const passwordValidator = (password) => {
   return validatePasswordStrength(password);
 };
 

@@ -17,7 +17,7 @@ import healthRouter from "./routes/health.js";
 // Middleware
 import { requestIdMiddleware } from "./middleware/requestId.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
-import { rateLimiter, authRateLimiter, requestSizeLimiter, securityHeaders } from "./middleware/security.js";
+import { rateLimiter, requestSizeLimiter, securityHeaders } from "./middleware/security.js";
 
 const app = express();
 

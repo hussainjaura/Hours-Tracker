@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { authAPI } from '../services/api'
 import './Auth.css'
 
@@ -8,7 +8,6 @@ const ForgotPassword = () => {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
-  const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -17,7 +16,7 @@ const ForgotPassword = () => {
     setLoading(true)
 
     try {
-      const response = await authAPI.forgotPassword(email)
+      await authAPI.forgotPassword(email)
       setSuccess(true)
     } catch (err) {
       setError(err.message || 'Failed to send reset email. Please try again.')

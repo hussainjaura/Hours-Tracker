@@ -46,7 +46,7 @@ const renderDatesWarning = (rule) => {
 }
 
 const EmployerDashboard = () => {
-  const { user, logout } = useAuth()
+  const { logout } = useAuth()
   const navigate = useNavigate()
   // these show in-page messages and confirm boxes instead of the browser's pop-ups:
   const { showNotice, confirmAction } = useNotice()
@@ -227,10 +227,6 @@ const EmployerDashboard = () => {
       month: 'short',
       year: 'numeric'
     })
-  }
-
-  const formatHours = (hours) => {
-    return parseFloat(hours).toFixed(2)
   }
 
   if (loading) {
@@ -872,122 +868,6 @@ const EmployerDashboard = () => {
         </div>
       )}
       
-      {/* Legacy Log Hours Tab - REMOVED */}
-      {false && activeTab === 'log-hours' && (
-        <div className="dashboard-content">
-          <div className="dashboard-card">
-            <h2>Log Work Hours</h2>
-            <p className="text-secondary">This feature has been removed. Use your payroll system to track hours.</p>
-            
-            <form onSubmit={handleLogHours} className="log-hours-form">
-              <div className="form-group">
-                <label className="form-label" htmlFor="studentUniversityId">
-                  Student University ID *
-                </label>
-                <input
-                  id="studentUniversityId"
-                  type="text"
-                  className="form-input"
-                  value={logHoursForm.studentUniversityId}
-                  onChange={(e) => {
-                    setLogHoursForm({ ...logHoursForm, studentUniversityId: e.target.value })
-                    setTimeout(handleCheckEligibilityForLogging, 500)
-                  }}
-                  required
-                  placeholder="Enter student's university ID"
-                />
-                <small className="form-hint">
-                  You must have an active relationship with this student
-                </small>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="date">
-                  Date *
-                </label>
-                <input
-                  id="date"
-                  type="date"
-                  className="form-input"
-                  value={logHoursForm.date}
-                  onChange={(e) => {
-                    setLogHoursForm({ ...logHoursForm, date: e.target.value })
-                    setTimeout(handleCheckEligibilityForLogging, 500)
-                  }}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="hours">
-                  Hours *
-                </label>
-                <input
-                  id="hours"
-                  type="number"
-                  step="0.5"
-                  min="0.5"
-                  max="24"
-                  className="form-input"
-                  value={logHoursForm.hours}
-                  onChange={(e) => {
-                    setLogHoursForm({ ...logHoursForm, hours: e.target.value })
-                    setTimeout(handleCheckEligibilityForLogging, 500)
-                  }}
-                  required
-                  placeholder="e.g., 8.5"
-                />
-                {logHoursEligibilityCheck && (
-                  <div className={`eligibility-preview ${logHoursEligibilityCheck.inTermTime ? 'term-time-warning' : 'non-term-time'}`}>
-                    {logHoursEligibilityCheck.inTermTime ? (
-                      <div>
-                        <strong>TERM TIME:</strong> Student is in {logHoursEligibilityCheck.activeTerm || 'term time'}. 
-                        Maximum 20 hours/week allowed. 
-                        {logHoursForm.hours && (
-                          <span>
-                            {' '}Current: {logHoursEligibilityCheck.currentWeeklyHours}h, 
-                            Adding: {parseFloat(logHoursForm.hours) || 0}h = {((logHoursEligibilityCheck.currentWeeklyHours || 0) + (parseFloat(logHoursForm.hours) || 0)).toFixed(1)}h total.
-                            {((logHoursEligibilityCheck.currentWeeklyHours || 0) + (parseFloat(logHoursForm.hours) || 0)) > 20 && (
-                              <strong className="text-error"> This exceeds the 20-hour limit!</strong>
-                            )}
-                          </span>
-                        )}
-                      </div>
-                    ) : (
-                      <div>
-                        <strong>Non-Term Time:</strong> Student can work full-time. No weekly limit.
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="description">
-                  Description (Optional)
-                </label>
-                <textarea
-                  id="description"
-                  className="form-input"
-                  rows="3"
-                  value={logHoursForm.description}
-                  onChange={(e) => setLogHoursForm({ ...logHoursForm, description: e.target.value })}
-                  placeholder="Brief description of work performed"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={loggingHours}
-              >
-                {loggingHours ? 'Logging...' : 'Log Hours'}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
       {/* Students Tab */}
       {activeTab === 'students' && (
         <div className="dashboard-content">
