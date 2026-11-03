@@ -15,12 +15,29 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+
+    // Check the fields ourselves the form has noValidate so the message matches our design:
+    const emailMissing = !email.trim();
+    const passwordMissing = !password;
+    if (emailMissing && passwordMissing) {
+      setError('Please enter your email and password.');
+      return;
+    }
+    if (emailMissing) {
+      setError('Please enter your email.');
+      return;
+    }
+    if (passwordMissing) {
+      setError('Please enter your password.');
+      return;
+    }
+
     setLoading(true)
 
     const result = await login(email, password)
     
     if (result.success) {
-      // Redirect based on user role
+      // redirect based on user role:
       const savedUser = localStorage.getItem('user')
       if (savedUser && savedUser !== 'undefined' && savedUser !== 'null') {
         try {
@@ -61,9 +78,20 @@ const Login = () => {
           <p className="auth-subtitle">Sign in to continue to your account</p>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {/* red alert box with a small warning icon that makes screen readers read it out: */}
+        {error && (
+          <div className="error-message" role="alert">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span>{error}</span>
+          </div>
+        )}
 
-        <form onSubmit={handleSubmit} className="auth-form">
+        {/* noValidate turns off the browser's own fill out this field bubble our handleSubmit checks instead: */}
+        <form onSubmit={handleSubmit} className="auth-form" noValidate>
           <div className="form-group">
             <label className="form-label" htmlFor="email">
               Email Address

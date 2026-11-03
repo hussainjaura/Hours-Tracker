@@ -123,15 +123,39 @@
   line-height: 1.6;
 }
 
+/* soft red alert message: */
 .error-message {
-  background-color: #f3f4f6;
-  color: var(--error-color);
-  padding: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-left: 3px solid #dc2626;
+  padding: 0.65rem 0.9rem;
   border-radius: var(--radius-md);
   margin-bottom: 1.5rem;
-  border: 1px solid #d1d5db;
   font-size: 0.875rem;
   line-height: 1.5;
+  /* slide in so the alert catches the eye when it appears: */
+  animation: errorSlideIn 0.2s ease-out;
+}
+
+/* Keep the icon its own size and line it up with the first line of text: */
+.error-message svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+@keyframes errorSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .form-hint {
@@ -244,7 +268,7 @@
   padding: 0 1rem;
 }
 
-/* Select styling */
+/* select styling: */
 .auth-card select.form-input {
   cursor: pointer;
   appearance: none;
@@ -254,7 +278,7 @@
   padding-right: 2.5rem;
 }
 
-/* Responsive adjustments */
+/* responsive adjustments: */
 @media (max-width: 640px) {
   .auth-card {
     padding: 2rem 1.5rem;

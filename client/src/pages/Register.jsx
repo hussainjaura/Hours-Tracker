@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import './Auth.css'
 
-// Same password rules as the server (server/src/utils/password.js), so users see the exact problem before submitting
+// Same password rules as the server (server/src/utils/password.js), so users see the exact problem before submitting:
 const getPasswordError = (password) => {
   if (password.length < 8) return 'Password must be at least 8 characters long'
   if (password.length > 128) return 'Password must be no more than 128 characters long'
@@ -21,7 +21,7 @@ const getPasswordError = (password) => {
 }
 
 const Register = () => {
-  // Scroll to top when component mounts
+  // Scroll to top when component mounts:
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
@@ -60,7 +60,22 @@ const Register = () => {
     e.preventDefault()
     setError('')
 
-    // Validation
+    // validation
+    // form has noValidate, so check email and password are filled in here first:
+    if (!email.trim()) {
+      showError('Please enter your email.');
+      return;
+    }
+    // simple something@something.something check, the server does the full check:
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      showError('Please enter a valid email address.');
+      return;
+    }
+    if (!password) {
+      showError('Please enter a password.');
+      return;
+    }
+
     if (password !== confirmPassword) {
       showError('Passwords do not match')
       return
@@ -72,7 +87,7 @@ const Register = () => {
       return
     }
 
-    // Validate employer profile fields if role is EMPLOYER
+    // validate employer profile fields if role is EMPLOYER:
     if (role === 'EMPLOYER') {
       if (!fullName.trim()) {
         showError('Full name is required')
@@ -88,7 +103,7 @@ const Register = () => {
       }
     }
 
-    // Validate student profile fields if role is STUDENT
+    // validate student profile fields if role is STUDENT:
     if (role === 'STUDENT') {
       if (!fullName.trim()) {
         showError('Full name is required')
@@ -111,7 +126,7 @@ const Register = () => {
         return
       }
 
-      // Validate course end date is in the future
+      // Validate course end date is in the future:
       const endDate = new Date(courseEndDate)
       const today = new Date()
       today.setHours(0, 0, 0, 0)
@@ -120,7 +135,7 @@ const Register = () => {
         return
       }
 
-      // Validate maxWeeklyHours if provided
+      // Validate maxWeeklyHours if provided:
       if (maxWeeklyHours && maxWeeklyHours.trim() !== '') {
         const hours = parseFloat(maxWeeklyHours)
         if (isNaN(hours) || hours < 1 || hours > 168) {
@@ -132,14 +147,14 @@ const Register = () => {
 
     setLoading(true)
 
-    // Prepare registration data
+    // Prepare registration data:
     const registrationData = {
       email,
       password,
       role,
     }
 
-    // Add employer profile data if role is EMPLOYER
+    // Add employer profile data if role is EMPLOYER:
     if (role === 'EMPLOYER') {
       registrationData.employerProfile = {
         fullName: fullName.trim(),
@@ -164,7 +179,7 @@ const Register = () => {
     const result = await register(registrationData)
     
     if (result.success) {
-      // Redirect based on user role
+      // redirect based on user role:
       const savedUser = localStorage.getItem('user')
       if (savedUser && savedUser !== 'undefined' && savedUser !== 'null') {
         try {
@@ -203,9 +218,20 @@ const Register = () => {
           <p className="auth-subtitle">Create your account to begin</p>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {/* red alert box with a small warning icon alert makes screen readers read it out: */}
+        {error && (
+          <div className="error-message" role="alert">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span>{error}</span>
+          </div>
+        )}
 
-        <form onSubmit={handleSubmit} className="auth-form">
+        {/* noValidate turns off the browsers own fill out this field bubble handleSubmit checks instead: */}
+        <form onSubmit={handleSubmit} className="auth-form" noValidate>
           <div className="form-group">
             <label className="form-label" htmlFor="email">
               Email Address
@@ -270,7 +296,7 @@ const Register = () => {
             </select>
           </div>
 
-          {/* Student Profile Fields */}
+          {/* student profile fields: */}
           {role === 'STUDENT' && (
             <>
               <div className="form-group">
@@ -386,7 +412,7 @@ const Register = () => {
             </>
           )}
 
-          {/* Employer Profile Fields */}
+          {/* employer profile fields: */}
           {role === 'EMPLOYER' && (
             <>
               <div className="form-group">
