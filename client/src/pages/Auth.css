@@ -305,3 +305,49 @@
     font-size: 0.9375rem;
   }
 }
+
+/* forgot password the check your email screen after the link is sent: */
+.reset-sent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.reset-sent-email {
+  font-weight: 600;
+  color: #1f2937;
+  word-break: break-all;
+  margin-bottom: 0.5rem;
+}
+
+.reset-sent-hint {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+/* the Back to Login link is styled like a full width button and no underline: */
+.reset-sent-btn {
+  display: block;
+  text-decoration: none;
+}
+
+.reset-sent-btn:hover {
+  text-decoration: none;
+}
+
+/* plain text button that sends them back to the form: */
+.reset-sent-retry {
+  background: none;
+  border: none;
+  margin-top: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.reset-sent-retry:hover {
+  color: #1f2937;
+  text-decoration: underline;
+}

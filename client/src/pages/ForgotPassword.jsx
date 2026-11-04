@@ -33,25 +33,32 @@ const ForgotPassword = () => {
             <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </Link>
+        {/* the heading changes once the reset link has been sent: */}
         <div className="auth-header">
-          <h1>Forgot Password</h1>
-          <p className="auth-subtitle">Enter your email address and we'll send you a link to reset your password</p>
+          <h1>{success ? 'Check your email' : 'Forgot Password'}</h1>
+          <p className="auth-subtitle">
+            {success
+              ? 'If an account exists for this email, we have sent a link to reset your password'
+              : "Enter your email address and we'll send you a link to reset your password"}
+          </p>
         </div>
 
         {success ? (
-          <div className="success-message" style={{ marginBottom: '1.5rem' }}>
-            <p style={{ marginBottom: '1rem' }}>
-              If an account with that email exists, a password reset link has been sent.
+          <div className="reset-sent">
+            {/* this shows the email they typed so they can spot a typo: */}
+            <p className="reset-sent-email">{email}</p>
+            <p className="reset-sent-hint">
+              The link expires in 1 hour. If you can't see it, check your spam folder.
             </p>
-            <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-              Please check your email and click the link to reset your password. The link will expire in 1 hour.
-            </p>
-            <p style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.5rem' }}>
-              <strong>Note:</strong> In development mode, check the server console for the reset link.
-            </p>
-            <Link to="/login" className="btn btn-primary" style={{ marginTop: '1rem', display: 'inline-block' }}>
+
+            <Link to="/login" className="btn btn-primary auth-submit-btn reset-sent-btn">
               Back to Login
             </Link>
+
+            {/* this takes them back to the form so they can fix the email or send again: */}
+            <button type="button" className="reset-sent-retry" onClick={() => setSuccess(false)}>
+              Didn't get it? Try again
+            </button>
           </div>
         ) : (
           <>
@@ -91,13 +98,18 @@ const ForgotPassword = () => {
           </>
         )}
 
-        <div className="auth-divider">
-          <span>or</span>
-        </div>
+        {/* the sign in link is only needed on the form the sent screen has its own button: */}
+        {!success && (
+          <>
+            <div className="auth-divider">
+              <span>or</span>
+            </div>
 
-        <p className="auth-footer">
-          Remember your password? <Link to="/login">Sign in here</Link>
-        </p>
+            <p className="auth-footer">
+              Remember your password? <Link to="/login">Sign in here</Link>
+            </p>
+          </>
+        )}
       </div>
     </div>
   )
