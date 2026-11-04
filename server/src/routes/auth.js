@@ -293,7 +293,15 @@ router.post("/register",
     res.status(201).json(response);
   } catch (error) {
     if (error.code === "P2002") {
-      // Log failed registration attempt (duplicate email)
+      // this finds which unique field was duplicated, prisma puts it in meta.target:
+      const target = String(error.meta?.target || "");
+      const isStudentId = target.includes("universityId");
+      const duplicateMessage = isStudentId
+        ? "This student ID is already registered"
+        : "Email already in use";
+      const duplicateCode = isStudentId ? "STUDENT_ID_ALREADY_EXISTS" : "EMAIL_ALREADY_EXISTS";
+
+      // log failed registration attempt duplicate email or student ID:
       try {
         await prisma.auditLog.create({
           data: {
@@ -306,7 +314,7 @@ router.post("/register",
               email: req.body.email,
               role: req.body.role,
               success: false,
-              reason: "Email already in use",
+              reason: duplicateMessage,
             },
           },
         });
@@ -316,15 +324,15 @@ router.post("/register",
       return res.status(409).json({ 
         success: false,
         error: {
-          message: "Email already in use",
-          code: "EMAIL_ALREADY_EXISTS",
+          message: duplicateMessage,
+          code: duplicateCode,
           requestId: req.requestId || null,
           timestamp: new Date().toISOString(),
         }
       });
     }
 
-    // Log failed registration attempt (other errors)
+    // log failed registration attempt other errors:
     try {
       await prisma.auditLog.create({
         data: {

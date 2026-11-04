@@ -1,12 +1,5 @@
 /**
- * Email sending.
- *
- * Uses Resend's HTTP API (https://resend.com), which needs no extra npm
- * package because Node 18+ has fetch built in. Set these in .env:
- *   RESEND_API_KEY - API key from the Resend dashboard
- *   EMAIL_FROM     - sender, e.g. "ISC Audit <no-reply@yourdomain.com>"
- *                    (the domain must be verified in Resend)
- *
+ * Email sending:
  * Without them, emails are printed to the server console instead, which is
  * handy in development. In production that means nobody receives the email,
  * so a warning is logged.
@@ -19,7 +12,7 @@ export const isEmailConfigured = () =>
 
 /**
  * Sends an email. Throws if the provider rejects it, so callers can decide
- * whether that should fail the request.
+ * whether that should fail the request:
  */
 export async function sendEmail({ to, subject, text, html }) {
   if (!isEmailConfigured()) {
@@ -35,6 +28,7 @@ export async function sendEmail({ to, subject, text, html }) {
     return { delivered: false };
   }
 
+  // fetching url:
   const response = await fetch(RESEND_URL, {
     method: "POST",
     headers: {
