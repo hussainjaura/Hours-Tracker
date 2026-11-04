@@ -327,7 +327,8 @@ const Landing = () => {
             <div className="risk-card risk-card-critical">
               <h3 className="risk-title">Career Protection</h3>
               <p className="risk-description">
-                A breach of your visa conditions can <strong>count against you when you apply for the Graduate Route</strong> or another UK visa later. The hours you work now can affect your plans after you graduate.
+                {/* mentioning PSW visa */}
+                A breach of your visa conditions can <strong>put your Graduate (PSW) visa at risk</strong>. The Home Office can <strong>refuse your Graduate Route application</strong> or another UK visa later. The hours you work now can affect your plans after you graduate.
               </p>
             </div>
           </div>
