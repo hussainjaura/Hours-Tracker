@@ -771,6 +771,14 @@ const Landing = () => {
               </p>
             </div>
 
+            {/* overworking can affect the Graduate psw visa, so we say it plainly: */}
+            <div className="faq-item">
+              <h3 className="faq-question">Can working too many hours affect my Graduate (PSW) visa?</h3>
+              <p className="faq-answer">
+                Yes, it can. Working more than your allowed hours breaks your Student visa conditions. The Home Office can cancel your current visa, and it can refuse future applications, including the Graduate (post-study work) visa. It isn't automatic, because each case is looked at individually, but it is a real risk. Keeping a clear record of your hours helps you stay within the limit.
+              </p>
+            </div>
+
             <div className="faq-item">
               <h3 className="faq-question">Is this platform a legal authority?</h3>
               <p className="faq-answer">
