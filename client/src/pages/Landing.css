@@ -111,11 +111,12 @@
   color: #111827;
 }
 
+/* links sit closer now because each one has its own padding for the hover background: */
 .landing-nav-center {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2.5rem;
+  gap: 0.25rem;
 }
 
 @media (max-width: 768px){
@@ -141,21 +142,22 @@
 /* this adds some extra space on top of the header when you visit a link using navbar */
 section[id] { scroll-margin-top: 70px; }
 
+/* softer grey links that never break onto two lines: */
 .nav-link {
-  color: #1f2937;
+  color: #4b5563;
   text-decoration: none;
   font-weight: 500;
-  transition: all 0.2s ease;
   font-size: 0.9375rem;
-  position: relative;
-  padding-bottom: 0.25rem;
+  white-space: nowrap;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  transition: background 150ms ease, color 150ms ease;
 }
 
+/* on hover the link goes dark with a light grey background instead of an underline: */
 .nav-link:hover {
-  color: #1f2937;
-  text-decoration: underline;
-  text-underline-offset: 0.5rem;
-  text-decoration-thickness: 2px;
+  color: #111827;
+  background: #f3f4f6;
 }
 
 .nav-link-active {
@@ -197,38 +199,40 @@ section[id] { scroll-margin-top: 70px; }
   white-space: nowrap;
 }
 
-/* Between 995px and 768px - shrink everything gradually */
-@media (max-width: 995px) {
+/* on smaller laptops the links get a bit tighter so they still fit on one line: */
+@media (max-width: 1340px) {
     .landing-header-content {
-        padding: 1rem 1.5rem;  /* smaller padding */
-        gap: 1.5rem;           /* smaller gap */
+        gap: 1.5rem;
+        padding: 1rem 1.5rem;
     }
 
-    /* shrink nav links */
+    .nav-link {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.5rem;
+    }
+}
+
+/* below 1140px the six links do not fit next to the buttons so we swap them for the menu button: */
+@media (max-width: 1140px) {
+    .landing-header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+    }
+
+    .mobile-left {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
     .landing-nav-center {
-        gap: 1rem;
-        font-size: 0.8rem;
+        display: none;
     }
 
-    .nav-link{
-      font-size: small;
-    }
-
-    /* shrink logo text */
-    .landing-logo {
-        font-size: 1.2rem;
-    }
-
-    /* shrink login link */
-    .btn-login {
-        font-size: 0.8rem;
-    }
-
-    /* shrink start for free button */
-    .btn-start-free {
-        padding: 0.5rem 0.875rem;
-        font-size: 0.8rem;
-        white-space: nowrap;
+    .mobile-landing-menu {
+        display: inline-flex;
     }
 
     .landing-nav-right {
