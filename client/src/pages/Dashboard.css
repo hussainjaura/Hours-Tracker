@@ -2947,26 +2947,33 @@
     display: none;
   }
 
-  /* Side drawer */
+  /* Side drawer styling! */
+  /* dark layer behind the menu that fades in: */
   .mobile-dashboard-drawer-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(17, 24, 39, 0.42);
-    backdrop-filter: blur(2px);
+    background: rgba(17, 24, 39, 0.35);
     z-index: 2000;
     display: flex;
+    animation: mobileOverlayIn 180ms ease-out;
+  }
+
+  @keyframes mobileOverlayIn {
+    from {
+      opacity: 0;
+    }
   }
 
   .mobile-dashboard-drawer {
-    width: min(84vw, 340px);
+    width: min(80vw, 300px);
     height: 100%;
     background: #ffffff;
-    border-right: 1px solid #e5e7eb;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    box-shadow: 4px 0 24px rgba(17, 24, 39, 0.12);
     transform: translateX(-102%);
-    animation: mobileDrawerIn 180ms ease-out forwards;
+    animation: mobileDrawerIn 200ms ease-out forwards;
     display: flex;
     flex-direction: column;
+    text-align: left;
   }
 
   @keyframes mobileDrawerIn {
@@ -2975,76 +2982,116 @@
     }
   }
 
+  /* logo on the left, close button on the right: */
   .mobile-dashboard-drawer-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    padding: 1rem 1rem 0.75rem;
-    border-bottom: 1px solid #e5e7eb;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #f1f3f5;
   }
 
   .mobile-dashboard-drawer-title {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    font-weight: 900;
+    gap: 0.625rem;
+    font-size: 1.0625rem;
+    font-weight: 700;
     letter-spacing: -0.02em;
     color: #111827;
   }
 
-  .mobile-dashboard-drawer-title .brand-mark {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    background: #111827;
-    color: #ffffff;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 900;
-    user-select: none;
+  .mobile-dashboard-drawer-title .logo-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
   }
 
+  .mobile-dashboard-drawer-title .logo-icon-inner {
+    font-size: 14px;
+  }
+
+  /* plain close button, grey circle only on hover: */
   .mobile-dashboard-drawer-close {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    background: #ffffff;
-    color: #111827;
-    font-size: 1.25rem;
-    line-height: 1;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: #4b5563;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    transition: background 150ms ease, color 150ms ease;
+  }
+
+  .mobile-dashboard-drawer-close:hover {
+    background: #f3f4f6;
+    color: #111827;
+  }
+
+  /* small uppercase label above the tabs: */
+  .mobile-dashboard-drawer-label {
+    margin: 1.25rem 1.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #9ca3af;
   }
 
   .mobile-dashboard-drawer-nav {
-    padding: 0.85rem 1rem 1rem;
-    display: grid;
-    gap: 0.5rem;
+    padding: 0 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
     overflow: auto;
     -webkit-overflow-scrolling: touch;
   }
 
+  /* flat tabs with no boxes, left aligned: */
   .mobile-dashboard-drawer-nav button {
     width: 100%;
     text-align: left;
-    padding: 0.9rem 1rem;
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
-    color: #111827;
-    font-weight: 700;
+    padding: 0.7rem 0.75rem;
+    background: transparent;
+    border: none;
+    border-left: 2px solid transparent;
+    border-radius: 0 6px 6px 0;
+    color: #374151;
+    font-family: inherit;
+    font-size: 0.9375rem;
+    font-weight: 500;
     cursor: pointer;
+    transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
   }
 
+  .mobile-dashboard-drawer-nav button:hover {
+    background: #f9fafb;
+    color: #111827;
+  }
+
+  /* the open tab gets the dark line on the left and bold text: */
   .mobile-dashboard-drawer-nav button.tab-active {
-    background: #111827;
-    border-color: #111827;
-    color: #ffffff;
+    background: #f3f4f6;
+    border-left-color: #111827;
+    color: #111827;
+    font-weight: 600;
+  }
+
+  /* logout is split off from the tabs with a thin line above it: */
+  .mobile-dashboard-drawer-nav button.drawer-logout {
+    margin-top: 0.75rem;
+    padding-top: 0.95rem;
+    border-top: 1px solid #f1f3f5;
+    border-radius: 0;
+    color: #b91c1c;
+  }
+
+  .mobile-dashboard-drawer-nav button.drawer-logout:hover {
+    background: #fef2f2;
+    color: #991b1b;
   }
 
   .mobile-dashboard-header {

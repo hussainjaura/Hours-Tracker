@@ -280,9 +280,12 @@ const EmployerDashboard = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mobile-dashboard-drawer-header">
+              {/* same logo and name as the top bar: */}
               <div className="mobile-dashboard-drawer-title">
-                <span className="brand-mark" aria-hidden="true">ISC</span>
-                <span>Menu</span>
+                <div className="logo-icon">
+                  <div className="logo-icon-inner">ISC.</div>
+                </div>
+                <span>ISC Audit</span>
               </div>
               <button
                 type="button"
@@ -290,10 +293,14 @@ const EmployerDashboard = () => {
                 aria-label="Close menu"
                 onClick={() => setMobileNavOpen(false)}
               >
-                ×
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6 6L18 18M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
               </button>
             </div>
 
+            {/* small grey label above the tabs: */}
+            <p className="mobile-dashboard-drawer-label">Dashboard</p>
             <div className="mobile-dashboard-drawer-nav">
               <button
                 className={activeTab === 'overview' ? 'tab-active' : ''}
@@ -332,9 +339,10 @@ const EmployerDashboard = () => {
                 Audit Trail
               </button>
 
+              {/* logout sits on its own under a thin line so it is not mixed with the tabs: */}
               <button
+                className="drawer-logout"
                 onClick={() => { setMobileNavOpen(false); handleLogout() }}
-                style={{ marginTop: '0.5rem' }}
               >
                 Logout
               </button>

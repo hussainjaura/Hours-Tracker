@@ -3,6 +3,8 @@
  * Without them, emails are printed to the server console instead, which is
  * handy in development. In production that means nobody receives the email,
  * so a warning is logged.
+ * 
+ * Hussain Email is not going to work on AWS so basically I need my own Domain Name so till then the reset link might not work!
  */
 
 const RESEND_URL = "https://api.resend.com/emails";
