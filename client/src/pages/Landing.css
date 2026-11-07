@@ -27,19 +27,36 @@
 }
 
 .mobile-landing-menu {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
   color: #111827;
-  font-size: 1.25rem;
-  line-height: 1;
-  display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   display: none;
+  transition: background 150ms ease;
+}
+
+.mobile-landing-menu:hover {
+  background: #f3f4f6;
+}
+
+/* the three lines of the menu button: */
+.menu-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 18px;
+}
+
+.menu-lines span {
+  display: block;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
 }
 
 /* now when it goes below 770px we are supposed to have a navigation menu bar that pops up open! */
@@ -2235,88 +2252,122 @@ section[id] { scroll-margin-top: 70px; }
 }
 
 /* STYLING FOR THE MENU BUTTON */
-/* Dark layer covering the whole screen */
+/* dark layer covering the whole screen: */
 .landing-drawer-overlay {
   position: fixed;          /* pinned to the screen, not the page */
   inset: 0;                 /* top/right/bottom/left: 0 = full screen */
-  background: rgba(17, 24, 39, 0.42);
-  backdrop-filter: blur(2px);
+  background: rgba(17, 24, 39, 0.35);
   z-index: 2000;            /* above the header (which is 100) */
   display: flex;            /* panel sits on the left edge */
+  animation: landingOverlayIn 180ms ease-out;
 }
 
-/* The white panel */
+@keyframes landingOverlayIn {
+  from { opacity: 0; }
+}
+
+/* the white panel, a bit slimmer so it does not take the whole screen: */
 .landing-drawer {
-  width: min(84vw, 340px);  /* 84% of the screen, but never wider than 340px */
+  width: min(80vw, 300px);
   height: 100%;
-  background: #fff;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  background: #ffffff;
+  box-shadow: 4px 0 24px rgba(17, 24, 39, 0.12);
   display: flex;
   flex-direction: column;
-  transform: translateX(-100%);                     /* start off-screen left */
-  animation: landingDrawerIn 180ms ease-out forwards;
+  text-align: left;                           
+  transform: translateX(-100%);                  
+  animation: landingDrawerIn 200ms ease-out forwards;
 }
 
 @keyframes landingDrawerIn {
   to { transform: translateX(0); }                  /* slide into place */
 }
 
+/* logo on the left close button on the right: */
 .landing-drawer-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;  /* title left, × right */
-  padding: 1rem;
-  border-bottom: 1px solid #e5e7eb;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #f1f3f5;
 }
 
-.landing-drawer-title {
+.landing-drawer-brand {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  font-weight: 900;
-  color: #111827;
+  gap: 0.625rem;
 }
 
-.landing-drawer-mark {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: #111827;
-  color: #fff;
+.landing-drawer-brand .logo-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+}
+
+.landing-drawer-brand .logo-icon-inner {
+  font-size: 14px;
+}
+
+.landing-drawer-name {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.02em;
+}
+
+/* plain close button with no border, grey circle only on hover: */
+.landing-drawer-close {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #4b5563;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
 }
 
-.landing-drawer-close {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  font-size: 1.25rem;
-  cursor: pointer;
+.landing-drawer-close:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+/* small uppercase label above the links: */
+.landing-drawer-label {
+  margin: 1.25rem 1.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9ca3af;
 }
 
 .landing-drawer-nav {
-  display: grid;
-  gap: 0.5rem;
-  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  padding: 0 0.75rem 1rem;
   overflow-y: auto;  /* scroll inside the panel if links don't fit */
 }
 
+/* flat links with no boxes left aligned like a proper side menu: */
 .landing-drawer-nav a {
   display: block;
-  padding: 0.9rem 1rem;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  color: #111827;
-  font-weight: 700;
+  padding: 0.7rem 0.75rem;
+  border-left: 2px solid transparent;
+  border-radius: 0 6px 6px 0;
+  color: #374151;
+  font-size: 0.9375rem;
+  font-weight: 500;
   text-decoration: none;  /* remove the link underline */
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
 }
 
+/* on hover a thin dark line shows on the left: */
 .landing-drawer-nav a:hover {
-  background: #111827;
-  color: #fff;
+  background: #f9fafb;
+  border-left-color: #111827;
+  color: #111827;
 }
