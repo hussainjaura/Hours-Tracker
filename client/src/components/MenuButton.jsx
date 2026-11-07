@@ -1,4 +1,6 @@
-function MenuButton({ isOpen, onClose, links, onToggle }) {
+import { Link } from 'react-router-dom'
+
+function MenuButton({ isOpen, onClose, links, onToggle, isAuthenticated, dashboardPath }) {
 
     return (
     <>
@@ -35,6 +37,19 @@ function MenuButton({ isOpen, onClose, links, onToggle }) {
               {links.map(link => (
                 <a key={link.href} href={link.href} onClick={onClose}>{link.label}</a>
               ))}
+            </nav>
+
+            {/* account links, logged in people just get a link back to their dashboard: */}
+            <p className="landing-drawer-label">Account</p>
+            <nav className="landing-drawer-nav">
+              {isAuthenticated ? (
+                <Link to={dashboardPath} onClick={onClose}>Go to Dashboard</Link>
+              ) : (
+                <>
+                  <Link to="/login" onClick={onClose}>Log in</Link>
+                  <Link to="/register" onClick={onClose}>Get started</Link>
+                </>
+              )}
             </nav>
           </aside>
         </div>

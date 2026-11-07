@@ -33,7 +33,7 @@ const Landing = () => {
         <div className="landing-header-content">
           <div className="mobile-left">
             {/* Menu button: */}
-            <MenuButton isOpen={menuOpen} onClose={closeMenu} links={navLinks} onToggle={toggleMenu}  />
+            <MenuButton isOpen={menuOpen} onClose={closeMenu} links={navLinks} onToggle={toggleMenu} isAuthenticated={isAuthenticated} dashboardPath={dashboardPath} />
             {/* clicking the logo takes you back to the top of the page: */}
             <Link to="/" className="landing-logo" aria-label="ISC Audit home" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
               <div className="logo-icon">
