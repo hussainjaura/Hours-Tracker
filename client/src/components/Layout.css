@@ -27,15 +27,17 @@
   /* Empty spacer to push actions to the right */
 }
 
+/* the logo is a link to the home page, so it needs the underline taken off: */
 .dashboard-logo {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.625rem;
   font-weight: 700;
-  font-size: 1.5rem;
-  color: #1f2937;
+  font-size: 1.25rem;
+  color: #111827;
   letter-spacing: -0.02em;
   flex-shrink: 0;
+  text-decoration: none;
 }
 
 .dashboard-header-left {
@@ -46,19 +48,37 @@
 
 /* Opens the dashboard's mobile drawer; hidden on desktop where tabs show */
 .dashboard-menu-button {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
   color: #111827;
-  font-size: 1.25rem;
-  line-height: 1;
   display: none;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
+  transition: background 150ms ease;
+}
+
+.dashboard-menu-button:hover {
+  background: #f3f4f6;
+}
+
+/* the three lines of the menu button, same as the landing page: */
+.menu-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 18px;
+}
+
+.menu-lines span {
+  display: block;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
 }
 
 /* Matches the breakpoint where Dashboard.css swaps the tabs for the drawer */
@@ -69,10 +89,10 @@
 }
 
 .logo-icon {
-  width: 36px;
-  height: 36px;
-  background: #000000;
-  border-radius: 6px;
+  width: 34px;
+  height: 34px;
+  background: #111827;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -84,7 +104,7 @@
 .logo-icon-inner {
   color: #ffffff;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: -1px;
   line-height: 1;
@@ -95,7 +115,7 @@
 .logo-text {
   letter-spacing: -0.02em;
   font-weight: 700;
-  color: #1f2937;
+  color: #111827;
 }
 
 .dashboard-header-actions {

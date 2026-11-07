@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import MobileNavContext from '../contexts/MobileNavContext'
 import NoticeProvider from './NoticeProvider'
 import { authAPI } from '../services/api'
@@ -58,14 +58,20 @@ const Layout = ({ children }) => {
                 aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
                 onClick={() => setMobileNavOpen(prev => !prev)}
               >
-                ☰
+                {/* three thin lines drawn with css instead of the menu character: */}
+                <span className="menu-lines" aria-hidden="true">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </span>
               </button>
-              <div className="dashboard-logo">
+              {/* clicking the logo takes you back to the home page: */}
+              <Link to="/" className="dashboard-logo" aria-label="ISC Audit home">
                 <div className="logo-icon">
                   <div className="logo-icon-inner">ISC.</div>
                 </div>
                 <span className="logo-text">ISC Audit</span>
-              </div>
+              </Link>
             </div>
             <div className="dashboard-header-spacer"></div>
             <div className="dashboard-header-actions">

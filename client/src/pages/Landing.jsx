@@ -28,18 +28,19 @@ const Landing = () => {
 
   return (
     <div className="landing-page">
-      {/* Header Navigation */}
+      {/* Header Navigation: */}
       <header className="landing-header">
         <div className="landing-header-content">
           <div className="mobile-left">
-            {/* Menu button */}
+            {/* Menu button: */}
             <MenuButton isOpen={menuOpen} onClose={closeMenu} links={navLinks} onToggle={toggleMenu}  />
-            <div className="landing-logo">
+            {/* clicking the logo takes you back to the top of the page: */}
+            <Link to="/" className="landing-logo" aria-label="ISC Audit home" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
               <div className="logo-icon">
                 <div className="logo-icon-inner">ISC.</div>
               </div>
               <span className="logo-text">ISC Audit</span>
-            </div>
+            </Link>
           </div>
           <nav className="landing-nav-center">
             <a href="#how-it-works" className="nav-link">How It Works</a>
@@ -116,7 +117,7 @@ const Landing = () => {
         <div className="hero-wave-bg"></div>
       </section>
 
-      {/* Main Value Proposition Section */}
+      {/* Main Value Proposition Section: */}
       <section className="value-proposition-section">
         <div className="value-prop-container">
           <div className="value-prop-left">
