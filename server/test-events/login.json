@@ -1,0 +1,11 @@
+{
+  "version": "2.0",
+  "rawPath": "/auth/login",
+  "rawQueryString": "",
+  "headers": { "host": "localhost", "content-type": "application/json", "x-forwarded-for": "203.0.113.7" },
+  "requestContext": {
+    "http": { "method": "POST", "path": "/auth/login", "sourceIp": "203.0.113.7", "protocol": "HTTP/1.1", "userAgent": "local-test" }
+  },
+  "body": "{\"email\":\"aisha.khan@demo.iscaudit.app\",\"password\":\"DemoPass@2026\"}",
+  "isBase64Encoded": false
+}

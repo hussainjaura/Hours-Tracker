@@ -1,0 +1,10 @@
+{
+  "version": "2.0",
+  "rawPath": "/health",
+  "rawQueryString": "",
+  "headers": { "host": "localhost", "x-forwarded-for": "203.0.113.7" },
+  "requestContext": {
+    "http": { "method": "GET", "path": "/health", "sourceIp": "203.0.113.7", "protocol": "HTTP/1.1", "userAgent": "local-test" }
+  },
+  "isBase64Encoded": false
+}
