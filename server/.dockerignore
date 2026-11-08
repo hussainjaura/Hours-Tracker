@@ -1,0 +1,6 @@
+// these should not go in the docker image:
+node_modules
+.env
+.env*
+!.env.example
+npm-debug.log
