@@ -4,7 +4,7 @@ import app from './app.js';
 
 // if a setting is missing then the function should refuse to start:
 // I would get the reason in cloudwatch:
-const missing = ['', ''].filter((name) => !process.env(name));
+const missing = ['DATABASE_URL', 'JWT_SECRET'].filter((name) => !process.env[name]);
 
 if (missing.length > 0) {
   throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
