@@ -44,21 +44,19 @@
   background: #f3f4f6;
 }
 
-/* the three lines of the menu button, square ends and whole pixel sizes so they stay sharp: */
+/* the three lines of the menu button: */
 .menu-lines {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  width: 22px;
-  /* stops the browser placing the bars on half pixels which made them blurry: */
-  transform: translateZ(0);
+  gap: 4px;
+  width: 18px;
 }
 
 .menu-lines span {
   display: block;
-  height: 3px;
-  border-radius: 0;
-  background: #4b5563;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
 }
 
 /* now when it goes below 770px we are supposed to have a navigation menu bar that pops up open! */

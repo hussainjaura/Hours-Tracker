@@ -66,22 +66,19 @@
   background: #f3f4f6;
 }
 
-/* the three lines of the menu button, same as the landing page square ends so they stay sharp: */
+/* the three lines of the menu button, same as the landing page: */
 .menu-lines {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  width: 22px;
-  /* fixed the blurred lines issue: */
-  /* stops the browser placing the bars on half pixels which made them blurry: */
-  transform: translateZ(0);
+  gap: 4px;
+  width: 18px;
 }
 
 .menu-lines span {
   display: block;
-  height: 3px;
-  border-radius: 0;
-  background: #4b5563;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
 }
 
 /* Matches the breakpoint where Dashboard.css swaps the tabs for the drawer */
@@ -262,7 +259,7 @@
   }
 }
 
-/* Extra-tight mobile header (below 768×921): keep header slim, move actions into drawer */
+/* Extra tight mobile header (below 768×921): keep header slim, move actions into drawer: */
 @media (max-width: 768px) and (max-height: 921px) {
   .dashboard-header-content {
     grid-template-columns: auto 1fr;
